@@ -1,0 +1,26 @@
+<div class="navbar">
+  <div class="navbar__izquierda">
+    <img src="assets/images/logo.png" class="logo-izquierda" alt="Logo" />
+    <p>Clinica Salud</p>
+    @if (logueado) {
+    <a routerLink="/chat" class="text">🗨️ Mensajes</a>
+    <a routerLink="/resultados" routerLinkActive="active" class="text">⭐ Puntajes</a>
+    <a routerLink="/encuesta" routerLinkActive="active" class="text">📝Encuesta</a>
+    }
+  </div>
+
+  <div class="navbar__derecha">
+    <div class="navbar__derecha">
+      @if (!logueado) {
+      <button (click)="navegarALogin()" class="button-inicio">Iniciar sesión</button>
+      <button (click)="navegarARegistro()" class="button-registro">Registrarse</button>
+      } @if (logueado) {
+      <a (click)="cerrarSesion()" class="text">Salir</a>
+      }
+    </div>
+  </div>
+</div>
+
+@if (cargando) {
+<app-spinner />
+}

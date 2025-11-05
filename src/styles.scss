@@ -1,1 +1,140 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap');
+
+// 1. Definir paleta personalizada
+$my-custom-primary-map: (
+  50: #e7f7f3,
+  100: #c1e8dd,
+  200: #96d8c4,
+  300: #6ec8aa,
+  400: #54c198,
+  500: #3db886,
+  600: #36a479,
+  700: #2e8f6a,
+  800: #277b5c,
+  900: #1a5c43,
+  A100: #b0fff4,
+  A200: #7dffea,
+  A400: #4affa5,
+  A700: #2aff87,
+  contrast: (
+    500: #fff
+  )
+);
+
+$my-app-primary: mat.define-palette($my-custom-primary-map);
+$my-app-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
+
+// 2. Crear el tema con tipografía directa
+$my-app-light-theme: mat.define-light-theme((
+  color: (
+    primary: $my-app-primary,
+    accent: $my-app-accent,
+  ),
+  typography: (
+    font-family: 'Poppins, sans-serif',
+  ),
+));
+
+// 3. Aplicar el tema
+html {
+  @include mat.all-component-themes($my-app-light-theme);
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.container-verde{
+  background: linear-gradient(#D5F3CA, #9DC7B5);
+  display: block;
+  position: relative;
+  min-height: 100vh;
+}
+
+
+.text{
+  color: #23630c;
+}
+
+
+.login-container {
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.login-form {
+
+  color: white;
+  width: 400px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  
+  label {
+    font-size: 16px;
+    margin-top: 16px;
+    margin-bottom: -10px;
+    color: black;
+    text-align: left;
+  }
+  input {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: rgb(22, 21, 21);
+    background: #fff;
+  }
+  button {
+    background: #f33464;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+    max-width: 300px;
+    height: 50px;
+    font-size: 1.2rem;
+    margin: 0 auto;
+    &:hover {
+      background: #f80f32;
+      transform: scale(1.1);
+    }
+  }
+}
+
+
+.scrollable-form {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  scrollbar-width: thin;
+  scrollbar-color: #6aaa2e #e0e0e0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #6aaa2e;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #e0e0e0;
+  }
+}

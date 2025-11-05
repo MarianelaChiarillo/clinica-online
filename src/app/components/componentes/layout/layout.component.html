@@ -1,0 +1,8 @@
+<div class="wrapper">
+  <div class="contenedor-blanco fade-in" [class]="tamano + (sinMargen ? ' sin-margen' : '')">
+    @if(titulo) {
+    <p [class]="'titulo-chat text ' + tituloClase">{{ titulo }}</p>
+    }
+    <ng-content></ng-content>
+  </div>
+</div>

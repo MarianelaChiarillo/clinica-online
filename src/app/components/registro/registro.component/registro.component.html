@@ -1,0 +1,15 @@
+<div class="container-verde">
+  <app-menu></app-menu>
+
+  @if (!estaEnFormulario) {
+    <div class="opciones-container fade-in">
+      <button (click)="router.navigate(['paciente'], { relativeTo: route })" class="button-paciente">
+        <img src="assets/images/pacientes.png" alt="Paciente" /> Soy Paciente
+      </button>
+      <button (click)="router.navigate(['especialista'], { relativeTo: route })" class="button-especialista">
+        <img src="assets/images/medico.png" alt="Especialista" /> Soy Especialista
+      </button>
+    </div>
+  }
+  <router-outlet></router-outlet>
+</div>
