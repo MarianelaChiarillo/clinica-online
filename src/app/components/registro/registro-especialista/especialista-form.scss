@@ -1,0 +1,104 @@
+$danger-color: #ff4d4d;
+$text-color: #333;
+$background-color: #ffffff;
+$spacing-xs: 8px;
+$spacing-sm: 12px;
+$color-fondo: #ffff;
+$color-submit-bg: #0e799a;
+$color-submit-hover: #0ea0c0;
+.background-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.inputs__derecha mat-form-field {
+  width: 80%;
+}
+
+
+.especialidades-personalizadas {
+  margin-top: $spacing-sm;
+
+  .especialidad-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    margin-bottom: $spacing-xs;
+    flex-wrap: nowrap;
+  }
+
+  .especialidad-item input {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  .btn-eliminar {
+    flex-shrink: 0;
+    background-color: transparent;
+    border: none;
+    color: $danger-color;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: darken($danger-color, 20%);
+      transform: scale(1.2);
+    }
+  }
+}
+
+.custom-file-upload2 {
+  background-color: $color-submit-bg;
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  transition: 0.3s;
+  width: fit-content;
+  margin-left: 1rem;
+  i {
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background-color: $color-submit-hover;
+  }
+}
+
+.submit-button {
+  width: 40%;
+  padding: 0.8rem;
+  background: $color-submit-bg;
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  margin: 0 auto;
+
+  &:hover {
+    background: $color-submit-hover;
+  }
+}
+
+.btn-agregar {
+  background: #04ad6c;
+  border-radius: 6px;
+  border: none;
+  padding: 10px;
+  color: #ffff;
+  font-size: 0.9rem;
+}
+
+.labelA {
+  padding: 0 1.5rem;
+}

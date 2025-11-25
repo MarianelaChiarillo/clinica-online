@@ -1,20 +1,25 @@
 import { Routes } from '@angular/router';
-import { RegistroComponent } from './registro.component/registro.component';
-import { EspecialistaForm } from './registro-form/especialista-form';
-import { PacienteForm } from './registro-form/paciente-form';
+import { RegistroComponent } from './registro.component';
 
 export const Registro: Routes = [
   {
     path: '',
-    component: RegistroComponent, 
+    component: RegistroComponent,
     children: [
       {
         path: 'paciente',
-        component: PacienteForm,
+        loadComponent: () =>
+          import('./registro-paciente/paciente-form').then((m) => m.PacienteForm),
       },
       {
         path: 'especialista',
-        component: EspecialistaForm,
+        loadComponent: () =>
+          import('./registro-especialista/especialista-form').then((m) => m.EspecialistaForm),
+      },
+      {
+        path: 'admin',
+        loadComponent: () =>
+          import('./registro-admin/admin-form').then((m) => m.AdministradorFormComponent),
       },
     ],
   },

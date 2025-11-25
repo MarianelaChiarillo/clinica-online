@@ -1,0 +1,22 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <h3>Calificar atención</h3>
+
+    <label>Calificación (1-5)</label>
+    <div class="rating">
+      <button *ngFor="let n of [1,2,3,4,5]" (click)="calificacion = n" [class.active]="calificacion===n">{{n}}</button>
+    </div>
+
+    <label>Comentario (opcional)</label>
+    <textarea [(ngModel)]="comentario" rows="4" placeholder="Contanos cómo fue la atención"></textarea>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+
+    <div class="actions">
+      <button class="btn ghost" (click)="cerrarModal()" [disabled]="saving">Cerrar</button>
+      <button class="btn primary" (click)="confirmarCalificar()" [disabled]="saving">
+        {{ saving ? 'Guardando...' : 'Enviar calificación' }}
+      </button>
+    </div>
+  </div>
+</div>

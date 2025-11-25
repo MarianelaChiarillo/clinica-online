@@ -1,26 +1,43 @@
 <div class="navbar">
-  <div class="navbar__izquierda">
-    <img src="assets/images/logo.png" class="logo-izquierda" alt="Logo" />
-    <p>Clinica Salud</p>
-    @if (logueado) {
-    <a routerLink="/chat" class="text">🗨️ Mensajes</a>
-    <a routerLink="/resultados" routerLinkActive="active" class="text">⭐ Puntajes</a>
-    <a routerLink="/encuesta" routerLinkActive="active" class="text">📝Encuesta</a>
-    }
-  </div>
-
-  <div class="navbar__derecha">
-    <div class="navbar__derecha">
-      @if (!logueado) {
-      <button (click)="navegarALogin()" class="button-inicio">Iniciar sesión</button>
-      <button (click)="navegarARegistro()" class="button-registro">Registrarse</button>
-      } @if (logueado) {
-      <a (click)="cerrarSesion()" class="text">Salir</a>
-      }
+    <div class="navbar__izquierda">
+        <img src="../../../../../assets/images/icon.png" class="logo-izquierda" alt="Logo" />
+        <p>Clinica Salud</p>
     </div>
-  </div>
-</div>
 
+@if (logueado) {
+    <div class="navbar__centro"> 
+                
+        @if (rolUsuario === 'paciente') {
+            <a routerLink="/home/paciente" class="text">Inicio</a>
+            <a routerLink="/turnos/paciente" routerLinkActive="active" class="text">Mis Turnos</a>
+            <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
+            <a routerLink="/perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+        }
+        @if (rolUsuario === 'especialista') {
+            <a routerLink="/home/especialista" class="text">Inicio</a>
+            <a routerLink="/turnos/especialista" routerLinkActive="active" class="text">Mis Turnos</a>
+            <a routerLink="/perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+            <a routerLink="/pacientes" routerLinkActive="active" class="text">Pacientes</a>
+        }
+        @if (rolUsuario === 'administrador') {
+            <a routerLink="/home/administrador" class="text">Inicio</a>
+            <a routerLink="/usuarios" routerLinkActive="active" class="text"> Usuarios</a>
+            <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
+            <a routerLink="/turnos" routerLinkActive="active" class="text">Turnos</a>
+            <a routerLink="/perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+        }
+
+    </div>
+}
+
+<div class="navbar__derecha">
+    @if (!logueado) {
+        <button (click)="navegarALogin()" class="button-inicio">Iniciar sesión</button>
+        <button (click)="navegarARegistro()" class="button-registro">Registrarse</button>
+    } @if (logueado) {
+        <button (click)="cerrarSesion()" class="button-registro">Salir</button>
+    }
+</div>
 @if (cargando) {
-<app-spinner />
+    <app-spinner />
 }

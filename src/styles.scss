@@ -1,49 +1,36 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap');
-
-// 1. Definir paleta personalizada
-$my-custom-primary-map: (
-  50: #e7f7f3,
-  100: #c1e8dd,
-  200: #96d8c4,
-  300: #6ec8aa,
-  400: #54c198,
-  500: #3db886,
-  600: #36a479,
-  700: #2e8f6a,
-  800: #277b5c,
-  900: #1a5c43,
-  A100: #b0fff4,
-  A200: #7dffea,
-  A400: #4affa5,
-  A700: #2aff87,
-  contrast: (
-    500: #fff
-  )
-);
-
-$my-app-primary: mat.define-palette($my-custom-primary-map);
-$my-app-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
-
-// 2. Crear el tema con tipografía directa
-$my-app-light-theme: mat.define-light-theme((
-  color: (
-    primary: $my-app-primary,
-    accent: $my-app-accent,
-  ),
-  typography: (
-    font-family: 'Poppins, sans-serif',
-  ),
-));
-
-// 3. Aplicar el tema
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+$transicion-default: 0.3s ease-in-out;
+$color-azul-boton-hover: #135f87;
+$color-fondo: #fff;
+$color-titulo: #02273b;
+$color-subtexto: #31585f;
+$color-input-text: #333;
+$color-seccion-titulo: #0a869c;
+$color-titulo: #02273b;
+$color-subtexto: #31585f;
+$color-iconito: #2159a3;
+$color-enlace: #2159a3;
+$color-enlace-hover: #05a166;
+$color-submit-bg: #0e799a;
+$color-submit-hover: #0ea0c0;
+$color-input-border: #ccc;
 html {
-  @include mat.all-component-themes($my-app-light-theme);
-}
-
-body {
-  font-family: 'Poppins', sans-serif;
-  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        secondary: mat.$green-palette,
+      ),
+      typography: Poppins,
+      density: 1,
+    )
+  );
 }
 
 * {
@@ -51,82 +38,30 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Poppins', sans-serif;
+  background: none;
 }
 
-.container-verde{
-  background: linear-gradient(#D5F3CA, #9DC7B5);
-  display: block;
-  position: relative;
+.text {
+  color: #010200;
+}
+
+.background-container {
+  background: linear-gradient(#95e4f6, #e9fbff);
   min-height: 100vh;
+  width: 100%;
+  position: relative;
 }
-
-
-.text{
-  color: #23630c;
-}
-
-
-.login-container {
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
-}
-
-.login-form {
-
-  color: white;
-  width: 400px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  
-  label {
-    font-size: 16px;
-    margin-top: 16px;
-    margin-bottom: -10px;
-    color: black;
-    text-align: left;
-  }
-  input {
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    color: rgb(22, 21, 21);
-    background: #fff;
-  }
-  button {
-    background: #f33464;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: 0.3s;
-    width: 100%;
-    max-width: 300px;
-    height: 50px;
-    font-size: 1.2rem;
-    margin: 0 auto;
-    &:hover {
-      background: #f80f32;
-      transform: scale(1.1);
-    }
-  }
-}
-
 
 .scrollable-form {
-  max-height: 70vh;
+  max-height: 90vh;
   overflow-y: auto;
-  padding-right: 0.5rem;
-
+  margin-bottom: 40px;
   scrollbar-width: thin;
-  scrollbar-color: #6aaa2e #e0e0e0;
+  scrollbar-color: #2e6eaa #e0e0e0;
+  margin-right: -15px;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 2px;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -137,4 +72,240 @@ body {
   &::-webkit-scrollbar-track {
     background-color: #e0e0e0;
   }
+}
+
+.enlace-volver {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  font-size: 1.3rem;
+  color: $color-azul-boton-hover;
+  font-weight: 600;
+  text-decoration: none;
+  transition: $transicion-default;
+
+  &:hover {
+    text-decoration: underline;
+    transform: translateX(-3px);
+    color: #1a3a52;
+  }
+}
+
+.registro-container {
+  background: $color-fondo;
+  padding: 3rem;
+  border-radius: 10px;
+  width: 60%;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  color: $color-titulo;
+  font-weight: bold;
+  font-size: 2.6rem;
+  text-align: center;
+  padding-top: 1rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.subtexto {
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+  color: $color-subtexto;
+  font-size: 1.3rem;
+}
+
+.form-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 3rem;
+  margin-left: 0;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    color: $color-input-text;
+    margin-bottom: 0rem;
+    font-size: 1rem;
+  }
+}
+
+.seccion-titulo {
+  color: $color-seccion-titulo;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.clave-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.clave-container .input-inicio {
+  width: 100%;
+  margin-bottom: 0;
+  padding-right: 3rem;
+}
+
+.iconito {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $color-iconito;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.input-inicio {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid $color-input-border;
+  border-radius: 8px;
+  font-size: 14px;
+  color: $color-input-text;
+  margin-top: 0.2rem;
+  margin-bottom: 1rem;
+}
+
+.files-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
+
+.enlace-cuenta {
+  font-size: 1.1rem;
+  margin-bottom: -1rem;
+  color: $color-enlace;
+  font-weight: 400;
+  text-align: center;
+
+  &:hover {
+    color: $color-enlace-hover;
+  }
+}
+
+.files-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+.custom-file-upload {
+  background-color: $color-submit-bg;
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  transition: 0.3s;
+  width: fit-content;
+
+  i {
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background-color: $color-submit-hover;
+  }
+}
+
+.file-name {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: $color-titulo;
+  font-weight: 600;
+}
+
+.custom-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: lighten($color-titulo, 50%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 600;
+  color: $color-titulo;
+  text-align: center;
+
+  &:hover {
+    background: lighten($color-titulo, 45%);
+  }
+
+  input[type='file'] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .custom-file-text {
+    pointer-events: none;
+    font-size: 0.95rem;
+  }
+}
+.input-inicio {
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 4px;
+
+  &.input-error {
+    border-color: red;
+    color: red;
+  }
+}
+
+.text-danger {
+  color: red;
+}
+
+.enlace-cuenta {
+  font-size: 1.1rem;
+  margin-bottom: -1rem;
+  color: $color-enlace;
+  font-weight: 400;
+  text-align: center;
+
+  &:hover {
+    color: $color-enlace-hover;
+  }
+}
+
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }

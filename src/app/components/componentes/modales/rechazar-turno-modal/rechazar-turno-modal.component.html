@@ -1,0 +1,17 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <h3>Rechazar turno</h3>
+    <p>Para rechazar el turno, dejá un motivo:</p>
+
+    <textarea [(ngModel)]="motivo" rows="4" placeholder="Motivo del rechazo"></textarea>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+
+    <div class="actions">
+      <button class="btn ghost" (click)="cerrarModal()" [disabled]="saving">Cerrar</button>
+      <button class="btn warn" (click)="confirmarRechazo()" [disabled]="saving">
+        {{ saving ? 'Guardando...' : 'Rechazar turno' }}
+      </button>
+    </div>
+  </div>
+</div>

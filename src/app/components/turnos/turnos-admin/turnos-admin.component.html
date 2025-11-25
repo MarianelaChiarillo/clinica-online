@@ -1,0 +1,69 @@
+<div class="w-full bg-white shadow rounded-xl p-4">
+
+  <h2 class="text-2xl font-bold mb-4">Turnos de la Clínica</h2>
+
+  <!-- FILTRO ÚNICO -->
+  <input
+    type="text"
+    class="w-full p-2 border rounded mb-4"
+    placeholder="Filtrar por especialidad o especialista..."
+    [(ngModel)]="filtro"
+    (input)="aplicarFiltro()"
+  />
+
+  <!-- TABLA -->
+  <table class="min-w-full">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="p-3 border-b">Paciente</th>
+        <th class="p-3 border-b">Especialista</th>
+        <th class="p-3 border-b">Especialidad</th>
+        <th class="p-3 border-b">Fecha</th>
+        <th class="p-3 border-b">Estado</th>
+        <th class="p-3 border-b text-center">Acción</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let t of turnosFiltrados" class="hover:bg-gray-50">
+
+        <td class="p-3 border-b">
+          {{ t.pacientes.nombre }} {{ t.pacientes.apellido }}
+        </td>
+
+        <td class="p-3 border-b">
+          {{ t.especialistas.nombre }} {{ t.especialistas.apellido }}
+        </td>
+
+        <td class="p-3 border-b">
+          {{ t.especialidades.nombre }}
+        </td>
+
+        <td class="p-3 border-b">
+          {{ t.fecha_turno | date }}
+        </td>
+
+        <td class="p-3 border-b">
+          {{ t.estado | titlecase }}
+        </td>
+
+        <td class="p-3 border-b text-center">
+          <button
+            *ngIf="puedeCancelar(t)"
+            (click)="abrirCancelar(t)"
+            class="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
+          >
+            Cancelar
+          </button>
+        </td>
+
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<app-cancelar-turno-modal
+  *ngIf="modalCancelar"
+  [turno]="turnoSeleccionado"
+  (cerrar)="cerrarModal($event)">
+</app-cancelar-turno-modal>

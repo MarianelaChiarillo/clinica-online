@@ -1,0 +1,154 @@
+<div class="contenedor-turno">
+
+  <!-- ======================================================
+       0) ADMIN: SELECCIÓN DE PACIENTE
+  ======================================================== -->
+  <ng-container *ngIf="esAdmin && !pacienteSeleccionado">
+
+    <h2>Seleccionar paciente</h2>
+
+    <!-- FILTRO -->
+    <app-filtro-general
+      placeholder="Buscar paciente por nombre, apellido o DNI..."
+      (filtroChange)="filtrarPacientes($event)">
+    </app-filtro-general>
+
+    <!-- LISTA -->
+    <div class="lista-pacientes-scroll">
+
+     <div *ngFor="let p of pacientesFiltrados" (click)="seleccionarPaciente(p)">
+
+  {{ p.nombre }} {{ p.apellido }}
+</div>
+
+
+      <p *ngIf="pacientesFiltrados.length === 0" class="sin-resultados">
+        No se encontraron pacientes.
+      </p>
+    </div>
+
+    <hr />
+  </ng-container>
+
+
+
+  <!-- ======================================================
+       0B) ADMIN: PACIENTE YA ELEGIDO
+  ======================================================== -->
+  <div *ngIf="esAdmin && pacienteSeleccionado" class="paciente-seleccionado">
+    <p>
+      📌 Turno para:
+    <strong>{{ pacienteSeleccionado.apellido }}, {{ pacienteSeleccionado.nombre }}</strong>
+<span *ngIf="pacienteSeleccionado.dni">
+  (DNI {{ pacienteSeleccionado.dni }})
+</span>
+
+
+    </p>
+
+    <button (click)="pacienteSeleccionado = null">
+      Cambiar paciente
+    </button>
+
+    <hr />
+  </div>
+
+
+
+  <!-- ======================================================
+       PASO 1 ➤ ESPECIALIDAD
+  ======================================================== -->
+  <div *ngIf="pasoActual === 1">
+    <h2>Seleccionar especialidad</h2>
+
+    <select 
+      [(ngModel)]="turnoData.especialidadId" 
+      (change)="onEspecialidadSelect()">
+
+      <option value="">-- Seleccionar --</option>
+
+      <option 
+        *ngFor="let esp of especialidades" 
+        [value]="esp.id">
+        {{ esp.nombre }}
+      </option>
+
+    </select>
+  </div>
+
+
+
+  <!-- ======================================================
+       PASO 2 ➤ ESPECIALISTA
+  ======================================================== -->
+  <div *ngIf="pasoActual === 2">
+    <h2>Seleccionar especialista</h2>
+
+    <div
+      *ngFor="let e of especialistas"
+      class="opcion"
+      [class.selected]="turnoData.especialistaId === e.id"
+      (click)="turnoData.especialistaId = e.id; onEspecialistaSelect()">
+
+      👨‍⚕️ <strong>{{ e.nombre }} {{ e.apellido }}</strong>
+    </div>
+
+    <button (click)="volverPasoAnterior()">Atrás</button>
+  </div>
+
+
+
+  <!-- ======================================================
+       PASO 3 ➤ FECHA
+  ======================================================== -->
+  <div *ngIf="pasoActual === 3">
+    <h2>Seleccionar fecha</h2>
+
+    <div class="fechas-grid">
+
+    <button
+  *ngFor="let f of fechasDisponibles"
+  (click)="seleccionarFecha(f)">
+
+  {{ f.label }}
+</button>
+
+
+    </div>
+
+    <button (click)="volverPasoAnterior()">Atrás</button>
+  </div>
+
+
+
+  <!-- ======================================================
+       PASO 4 ➤ HORARIO
+  ======================================================== -->
+  <div *ngIf="pasoActual === 4">
+    <h2>Seleccionar horario</h2>
+
+    <div class="horarios-grid">
+
+      <button
+        *ngFor="let h of horariosDisponibles"
+        [class.ocupado]="esHorarioOcupado(h)"
+        [disabled]="esHorarioOcupado(h)"
+        (click)="turnoData.hora = h">
+
+        {{ h }}
+      </button>
+
+    </div>
+
+    <button (click)="volverPasoAnterior()">Atrás</button>
+
+    <button
+      class="btn-confirmar"
+      [disabled]="procesando || !turnoData.hora"
+      (click)="solicitarTurno()">
+
+      {{ procesando ? 'Procesando...' : 'Confirmar turno' }}
+    </button>
+  </div>
+
+</div>

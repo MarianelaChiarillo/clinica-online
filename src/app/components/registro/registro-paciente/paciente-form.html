@@ -1,0 +1,177 @@
+<div class="background-container">
+  <a routerLink="/registro" class="enlace-volver"> ← Volver</a>
+  <div class="registro-container scrollable-form">
+    <h1 class="fade-in title">Registro de paciente</h1>
+    <p class="subtexto">Completa con tus datos para poder iniciar sesión</p>
+
+    <form [formGroup]="form" (ngSubmit)="registrar()" class="login-form">
+      <div class="form-columns">
+        <div class="columna">
+          <h3 class="seccion-titulo">Datos personales:</h3>
+
+          <label for="nombre">Ingrese su nombre:</label>
+          <input
+            id="nombre"
+            formControlName="nombre"
+            class="input-inicio"
+            [class.input-error]="form.get('nombre')?.touched && form.get('nombre')?.invalid"
+            placeholder="Ingresa tu nombre"
+          />
+          @if (form.get('nombre')?.touched && form.get('nombre')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('nombre') }}</small>
+          }
+
+          <label for="apellido">Ingrese su apellido:</label>
+          <input
+            id="apellido"
+            formControlName="apellido"
+            class="input-inicio"
+            [class.input-error]="form.get('apellido')?.touched && form.get('apellido')?.invalid"
+            placeholder="Ingresa tu apellido"
+          />
+          @if (form.get('apellido')?.touched && form.get('apellido')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('apellido') }}</small>
+          }
+          <label for="edad">Ingrese su edad:</label>
+          <input
+            id="edad"
+            formControlName="edad"
+            class="input-inicio"
+             [class.input-error]="form.get('edad')?.touched && form.get('edad')?.invalid"
+            placeholder="Ingresa tu edad"
+          />
+          @if (getError('edad')) {
+          <small class="text-danger fade-in textito">{{ getError('edad') }}</small>
+          }
+          <label for="dni">Ingrese su DNI:</label>
+          <input
+            id="dni"
+            formControlName="dni"
+            class="input-inicio"
+            [class.input-error]="form.get('dni')?.touched && form.get('dni')?.invalid"
+            placeholder="Ingresa tu dni"
+          />
+          @if (form.get('dni')?.touched && form.get('dni')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('dni') }}</small>
+          }
+
+          <label for="obraSocial">Ingrese su obra social:</label>
+          <input
+            id="obraSocial"
+            formControlName="obraSocial"
+            class="input-inicio"
+            [class.input-error]="form.get('obraSocial')?.touched && form.get('obraSocial')?.invalid"
+            placeholder="Ingresa tu obra social"
+          />
+          @if (form.get('obraSocial')?.touched && form.get('obraSocial')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('obraSocial') }}</small>
+          }
+        </div>
+
+        <div class="columna">
+          <h3 class="seccion-titulo">Datos cuenta:</h3>
+
+          <label for="email">Ingrese su email:</label>
+          <input
+            id="email"
+            formControlName="email"
+            class="input-inicio"
+            [class.input-error]="form.get('email')?.touched && form.get('email')?.invalid"
+            placeholder="Ingresa tu email"
+          />
+          @if (form.get('email')?.touched && form.get('email')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('email') }}</small>
+          }
+
+          <label for="clave">Ingrese una contraseña:</label>
+          <div class="clave-container">
+            <input
+              id="clave"
+              [type]="verClave ? 'text' : 'password'"
+              formControlName="clave"
+              class="input-inicio"
+              [class.input-error]="form.get('clave')?.touched && form.get('clave')?.invalid"
+              placeholder="Ingresa tu contraseña"
+            />
+            <i
+              (click)="toggleVerClave()"
+              class="iconito fas"
+              [class.fa-eye]="!verClave"
+              [class.fa-eye-slash]="verClave"
+            ></i>
+          </div>
+          @if (form.get('clave')?.touched && form.get('clave')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('clave') }}</small>
+          }
+
+          <label for="repiteClave">Repetir contraseña:</label>
+          <div class="clave-container">
+            <input
+              id="repiteClave"
+              [type]="verClaveR ? 'text' : 'password'"
+              formControlName="repiteClave"
+              class="input-inicio"
+              [class.input-error]="
+                form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid
+              "
+              placeholder="Ingresa nuevamente la contraseña"
+            />
+            <i
+              (click)="toggleVerClaveR()"
+              class="iconito fas"
+              [class.fa-eye]="!verClaveR"
+              [class.fa-eye-slash]="verClaveR"
+            ></i>
+          </div>
+          @if (form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid) {
+          <small class="text-danger fade-in textito">{{ getError('repiteClave') }}</small>
+          }
+
+          <div class="files-container">
+            <div class="file-group">
+              <label>Imagen de Perfil</label>
+              <div class="custom-file-upload" (click)="fileInput1.click()">
+                <i class="fas fa-upload"></i> Subir imagen
+              </div>
+              <input #fileInput1 type="file" hidden (change)="onFileSelect($event, 'imagen1')" />
+              @if (fileName1) {
+              <p class="file-name">{{ fileName1 }}</p>
+              }
+            </div>
+
+            <div class="file-group">
+              <label>Otra imagen de Perfil</label>
+              <div class="custom-file-upload" (click)="fileInput2.click()">
+                <i class="fas fa-upload"></i> Subir imagen
+              </div>
+              <input #fileInput2 type="file" hidden (change)="onFileSelect($event, 'imagen2')" />
+              @if (fileName2) {
+              <p class="file-name">{{ fileName2 }}</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="captcha-container">
+        <app-captcha></app-captcha>
+      </div>
+
+      <a routerLink="/login" class="fade-in enlace-cuenta">¿Ya tenés cuenta? Iniciá sesión</a>
+      <button type="submit" class="submit-button">
+        @if (cargando) { Registrando... } @else { INICIAR SESIÓN }
+      </button>
+    </form>
+  </div>
+</div>
+
+@if (mensaje) {
+<app-mensaje
+  [titulo]="mensaje.titulo"
+  [mensaje]="mensaje.texto"
+  [tipo]="mensaje.tipo"
+  (cerrar)="mensaje = null"
+/>
+} @if (cargando) {
+<app-spinner />
+}

@@ -100,4 +100,20 @@ mostrarSweetAlert() {
 
     return result.isConfirmed;
   }
+
+  static show({ titulo, mensaje, tipo }: {titulo: string, mensaje: string, tipo: any}) {
+  Swal.fire({
+    title: `<span class="text">${titulo}</span>`,
+    html: `<span class="text">${mensaje}</span>`,
+    icon: tipo,
+    confirmButtonText: 'Aceptar',
+    customClass: {
+      popup: 'alert-sala',
+      icon: 'alert-icono',
+      confirmButton: 'text boton-sala',
+    }
+  });
 }
+
+}
+

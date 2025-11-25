@@ -1,0 +1,13 @@
+<div class="filtro-container">
+  <input
+    type="text"
+    [(ngModel)]="textoFiltro"
+    (input)="onInputChange($event)"
+    [placeholder]="placeholder"
+    class="filtro-input"
+  />
+
+  <button *ngIf="textoFiltro" class="btn-limpiar" (click)="limpiarFiltro()">
+    ✖
+  </button>
+</div>

@@ -1,0 +1,110 @@
+<div class="horarios-container">
+  <h2>Mis horarios</h2>
+
+  <!-- Mensaje de error -->
+  @if (error) {
+    <div class="error-message">{{ error }}</div>
+  }
+
+  <!-- Selector de especialidad -->
+  <div class="form-group">
+    <label for="especialidad">Especialidad:</label>
+    <select 
+      id="especialidad"
+      [(ngModel)]="especialidadSeleccionada" 
+      class="form-control"
+      [disabled]="especialidades.length === 0 || cargando">
+      <option [value]="null" disabled>Selecciona una especialidad</option>
+      <option 
+        *ngFor="let esp of especialidades" 
+        [value]="esp.id">
+        {{ esp.nombre }}
+      </option>
+    </select>
+    @if (especialidades.length === 0) {
+      <small class="text-warning">
+        No tienes especialidades asignadas. Contacta a un administrador.
+      </small>
+    }
+  </div>
+
+  <div class="form-nuevo-horario">
+   <label>Día:</label>
+<select [(ngModel)]="nuevoHorario.dia_semana" (change)="onDiaChange()">
+  <option *ngFor="let d of dias" [value]="d.id">{{ d.nombre }}</option>
+</select>
+
+<label>Hora inicio:</label>
+<select [(ngModel)]="nuevoHorario.hora_inicio">
+  <option *ngFor="let h of horasPosibles" [value]="h">{{ h }}</option>
+</select>
+
+<label>Hora fin:</label>
+<select [(ngModel)]="nuevoHorario.hora_fin">
+  <option *ngFor="let h of horasPosibles" [value]="h">{{ h }}</option>
+</select>
+
+    <label>Duración (min):</label>
+    <input
+      type="number"
+      [(ngModel)]="nuevoHorario.duracion_consulta"
+      min="30"
+      step="15"
+      [disabled]="cargando"
+    />
+
+    <button (click)="agregarHorario()" [disabled]="!especialidadSeleccionada || cargando">
+      @if (cargando) {
+        <span class="spinner"></span> Agregando...
+      } @else {
+        Agregar
+      }
+    </button>
+  </div>
+
+  <hr />
+
+  <!-- Loading state -->
+  @if (cargando && horarios.length === 0) {
+    <div class="loading">Cargando horarios...</div>
+  }
+
+  @if (horarios.length === 0 && !cargando) {
+    <div class="no-horarios">
+      No hay horarios registrados.
+    </div>
+  }
+
+  @if (horarios.length > 0) {
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Especialidad</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Duración</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let h of horarios">
+          <td>{{ getDiaNombre(h.dia_semana) }}</td>
+          <td>{{ getEspecialidadNombre(h.especialidad_id) }}</td>
+          <td>{{ h.hora_inicio.substring(0, 5) }}</td>
+          <td>{{ h.hora_fin.substring(0, 5) }}</td>
+          <td>{{ h.duracion_consulta }} min</td>
+          <td>
+            <button 
+              (click)="eliminarHorario(h.id)" 
+              [disabled]="cargando"
+              class="btn-eliminar">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+</div>

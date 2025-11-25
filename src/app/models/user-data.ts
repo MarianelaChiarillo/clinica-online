@@ -1,30 +1,47 @@
-// interfaces/user.interface.ts
+export interface Usuario {
+  id?: number;
+  auth_id: string;
+  email: string;
+  tipo_usuario: 'paciente' | 'especialista' | 'administrador';
+  estado: 'pendiente' | 'activo' | 'inactivo';
+  fecha_creacion?: Date;
+  fecha_verificacion?: Date;
+  ultimo_ingreso?: Date;
+  imagen_perfil?: string;
+   nombre?: string;
+  apellido?: string;
+}
 
-export interface UserBase {
-  id?: string;
+export interface Paciente extends Usuario {
   nombre: string;
   apellido: string;
   edad: number;
   dni: string;
-  email: string;
-  pass: string;
-  imagenPerfil: string;
-  authId?: string;
-  created_at?: string;
-  rol: 'paciente' | 'especialista' | 'admin';
+  tipo_usuario: 'paciente';
+  obra_social?: string;
+  segunda_imagen?: string;
 }
 
-export interface Paciente extends UserBase {
-  obraSocial: string;
-  imagenPerfil2: string; // Segunda imagen requerida para pacientes
-  rol: 'paciente';
+export interface Especialista extends Usuario {
+  nombre: string;
+  apellido: string;
+  edad: number;
+  dni: string;
+  tipo_usuario: 'especialista';
+  aprobado: boolean;
+  especialidades?: Especialidad[];
 }
 
-export interface Especialista extends UserBase {
-  especialidad: string;
-  especialidades?: string[]; // Para múltiples especialidades
-  aprobado: boolean; // Para aprobación administrativa
-  rol: 'especialista';
+export interface Administrador extends Usuario {
+   nombre: string;
+  apellido: string;
+  edad: number;
+  dni: string;
+  tipo_usuario: 'administrador';
 }
 
-export type Usuario = Paciente | Especialista;
+export interface Especialidad {
+  id: number;
+  nombre: string;
+  activo: boolean;
+}

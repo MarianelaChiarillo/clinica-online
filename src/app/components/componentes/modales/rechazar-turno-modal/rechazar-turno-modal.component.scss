@@ -1,0 +1,9 @@
+/* reuse same style as cancelar modal */
+.modal-backdrop { position: fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.4); z-index:1000; }
+.modal { width:420px; background:#fff; padding:16px; border-radius:8px; }
+textarea { width:100%; margin:8px 0; }
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+.btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+.btn.ghost { background:#eee; }
+.btn.warn { background:#ff9800; color:#111; }
+.error { color:#b00020; margin-top:6px; }

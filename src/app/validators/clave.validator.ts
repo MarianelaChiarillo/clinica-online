@@ -1,16 +1,38 @@
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 
-export function claveSeguraValidator(control: AbstractControl): ValidationErrors | null {
-  const valor = control.value;
-  if (!valor) return null;
+export function claveSeguraValidator(control: AbstractControl) {
+  const valor = control.value || '';
+  const errores: any = {};
 
-  const esValida = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/.test(valor);
-
-  if (!esValida) {
-    return {
-      claveInsegura: 'La contraseña debe tener al menos 6 caracteres, una letra y un número.',
-    };
+  if (!valor) {
+    errores.requerido = 'La contraseña es obligatoria';
+    return errores;
   }
 
-  return null;
+  if (valor.length < 6) {
+    errores.largoMin = 'Debe tener al menos 6 caracteres';
+  }
+
+  if (!/(?=.*[A-Za-z])(?=.*\d)/.test(valor)) {
+    errores.letraNumero = 'Debe contener al menos una letra y un número';
+  }
+
+  return Object.keys(errores).length ? errores : null;
+}
+
+export function confirmarClaveValidator(): ValidatorFn {
+  return (formGroup: AbstractControl): ValidationErrors | null => {
+    const clave = formGroup.get('clave');
+    const repiteClave = formGroup.get('repiteClave');
+
+    if (!clave || !repiteClave) {
+      return null;
+    }
+
+    if (clave.value && repiteClave.value && clave.value !== repiteClave.value) {
+      return { clavesNoCoinciden: 'Las claves no coinciden.' };
+    }
+
+    return null;
+  };
 }

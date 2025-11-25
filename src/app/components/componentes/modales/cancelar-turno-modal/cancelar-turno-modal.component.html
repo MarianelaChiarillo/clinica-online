@@ -1,0 +1,18 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <h3>Cancelar turno</h3>
+
+    <p>Vas a cancelar el turno. Por favor contanos el motivo:</p>
+
+    <textarea [(ngModel)]="motivo" rows="4" placeholder="Motivo de cancelación"></textarea>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+
+    <div class="actions">
+      <button class="btn ghost" (click)="cerrarModal()" [disabled]="saving">Cerrar</button>
+      <button class="btn danger" (click)="confirmarCancelar()" [disabled]="saving">
+        {{ saving ? 'Guardando...' : 'Confirmar cancelación' }}
+      </button>
+    </div>
+  </div>
+</div>

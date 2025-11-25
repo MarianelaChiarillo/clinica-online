@@ -1,30 +1,101 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MensajeComponent } from '../mensaje/mensaje.component';
 import { SpinnerComponent } from '../spinner/spinner.component';
+import { AuthService } from '../../../services/auth.service';
+import { Subscription } from 'rxjs';
+import Swal from 'sweetalert2'; 
+import { Usuario } from '../../../models/user-data';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [MensajeComponent, SpinnerComponent, CommonModule],
+  imports: [SpinnerComponent, CommonModule, RouterLink],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss',
 })
-export class MenuComponent {
-  cargando = false;
-  logueado = false;
-  mensaje: { titulo: string; texto: string; tipo: 'error' | 'success' | 'info' | 'confirm' } | null = null;
+export class MenuComponent implements OnInit, OnDestroy {
+  cargando: boolean = false;
+  logueado: boolean = false;
+  rolUsuario: 'paciente' | 'especialista' | 'administrador' | null = null;
+  
+  private suscripcionAuth!: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private servicioAuth: AuthService
+  ) {}
 
+  ngOnInit() {
+    this.suscripcionAuth = this.servicioAuth.usuarioActual$.subscribe(
+      (usuario) => {
+        this.logueado = !!usuario;
+        this.obtenerRol();
+        console.log('Estado de autenticación:', this.logueado);
+      }
+    );
+    this.obtenerRol();
+  }
 
-  cerrarSesion() {
-    this.mensaje = {
-      titulo: '¿Querés cerrar sesión?',
-      texto: 'Vas a salir y volver al inicio',
-      tipo: 'confirm',
-    };
+  ngOnDestroy() {
+    if (this.suscripcionAuth) {
+      this.suscripcionAuth.unsubscribe();
+    }
+  }
+
+  private obtenerRol(): void {
+    const usuarioJson = localStorage.getItem('usuario');
+    
+    if (this.logueado && usuarioJson) {
+      try {
+        const usuario: Usuario = JSON.parse(usuarioJson);
+        this.rolUsuario = usuario.tipo_usuario as 'paciente' | 'especialista' | 'administrador';
+      } catch (e) {
+        console.error('Error al parsear datos de usuario desde localStorage', e);
+        this.rolUsuario = null;
+      }
+    } else {
+      this.rolUsuario = null;
+    }
+    console.log('Rol de usuario:', this.rolUsuario);
+  }
+
+  async cerrarSesion() {
+    const resultado = await Swal.fire({
+      title: '<span class="text">¿Querés cerrar sesión?</span>',
+      html: '<span class="text">Vas a salir y volver al inicio</span>',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, salir',
+      confirmButtonColor: 'rgba(51, 130, 221, 1)',
+      cancelButtonText: 'Cancelar',
+      cancelButtonColor: '#d33',
+      customClass: {
+        confirmButton: 'text',
+        cancelButton: 'text',
+      },
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown',
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp',
+      },
+    });
+
+    if (resultado.isConfirmed) {
+      this.cargando = true;
+      try {
+        await this.servicioAuth.cerrarSesion();
+        this.rolUsuario = null; 
+        localStorage.removeItem('usuario'); 
+        this.router.navigate(['/login']);
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        Swal.fire('Error', 'No se pudo cerrar sesión', 'error');
+      } finally {
+        this.cargando = false;
+      }
+    }
   }
 
   navegarALogin() {
@@ -35,4 +106,3 @@ export class MenuComponent {
     this.router.navigate(['/registro']);
   }
 }
-

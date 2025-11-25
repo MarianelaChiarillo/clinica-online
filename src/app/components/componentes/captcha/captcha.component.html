@@ -1,0 +1,15 @@
+<div class="captcha-container">
+
+  
+  <div id="recaptcha-container-{{uniqueId}}" class="recaptcha-wrapper"></div>
+  
+  @if (error) {
+    <p class="text-danger fade-in">{{ error }}</p>
+  }
+  
+  @if (captchaCargado && !captchaResuelto) {
+    <button type="button" (click)="recargarCaptcha()" class="btn-recargar">
+      🔄 Recargar Verificación
+    </button>
+  }
+</div>

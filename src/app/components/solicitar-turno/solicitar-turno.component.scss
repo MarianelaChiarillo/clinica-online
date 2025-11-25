@@ -1,0 +1,200 @@
+/* solicitar-turno.component.scss */
+.solicitar-turno {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.paso {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.opciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.opcion, .fecha-opcion, .hora-opcion {
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.opcion:hover, .fecha-opcion:hover, .hora-opcion:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+}
+
+.opcion.selected, .fecha-opcion.selected, .hora-opcion.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+/* ESTILOS PARA HORARIOS OCUPADOS (ROJO) */
+.hora-opcion.ocupado {
+  background-color: #f8d7da !important;
+  border-color: #f5c6cb !important;
+  color: #721c24 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.hora-opcion.ocupado:hover {
+  background-color: #f8d7da !important;
+  border-color: #f5c6cb !important;
+}
+
+.hora-opcion.disabled {
+  pointer-events: none;
+}
+
+.ocupado-badge {
+  margin-right: 5px;
+  font-size: 14px;
+}
+
+.texto-ocupado {
+  display: block;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+.fechas, .horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.fecha-opcion {
+  text-align: center;
+}
+
+.dia {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.fecha-numero {
+  font-size: 18px;
+  margin-top: 5px;
+}
+
+.sin-horarios {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.resumen {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  border-left: 4px solid #28a745;
+}
+
+.alerta-ocupado {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.btn-confirmar {
+  background-color: #28a745;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.btn-confirmar:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-confirmar:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+button:hover {
+  background: #5a6268;
+}
+
+.seccion-horarios {
+  margin-bottom: 20px;
+}
+
+.seccion-horarios h4 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.hora-opcion.disponible {
+  background-color: #ffffff;
+  border: 2px solid #e0e0e0;
+  color: #333;
+  cursor: pointer;
+}
+
+.hora-opcion.disponible:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+}
+
+.hora-opcion.disponible.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.hora-opcion.ocupado {
+  background-color: #f8d7da;
+  border: 2px solid #f5c6cb;
+  color: #721c24;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.texto-ocupado {
+  display: block;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 5px;
+}

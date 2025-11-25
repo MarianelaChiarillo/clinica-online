@@ -1,0 +1,106 @@
+<app-layout [titulo]="'Registrar Administrador'" tamano="registro">
+  <h1 class="fade-in title">Registrar nuevo administrador</h1>
+
+  <div class="login-container register fade-in scrollable-form">
+    <form
+      [formGroup]="form"
+      (ngSubmit)="registrar()"
+      class="pequeno formulario login-form"
+    >
+      <label for="nombre">Nombre</label>
+      <input
+        id="nombre"
+        formControlName="nombre"
+        class="input-bordered small-input"
+      />
+
+      <label for="apellido">Apellido</label>
+      <input
+        id="apellido"
+        formControlName="apellido"
+        class="input-bordered small-input"
+      />
+
+      <label for="email">Email</label>
+      <input
+        id="email"
+        formControlName="email"
+        class="input-bordered small-input"
+      />
+
+      <label for="dni">DNI</label>
+      <input
+        id="dni"
+        formControlName="dni"
+        class="input-bordered small-input"
+      />
+
+      <label for="edad">Edad</label>
+      <input
+        id="edad"
+        type="number"
+        formControlName="edad"
+        class="input-bordered small-input"
+      />
+
+      <label for="clave">Contraseña</label>
+      <div class="clave-container">
+        <input
+          id="clave"
+          [type]="verClave ? 'text' : 'password'"
+          formControlName="clave"
+          class="input-bordered small-input"
+        />
+        <span (click)="toggleVerClave()" class="iconito">
+          @if (verClave) { 🫣 } @else { 👁️ }
+        </span>
+      </div>
+
+      <label for="repiteClave">Repetir contraseña</label>
+      <div class="clave-container">
+        <input
+          id="repiteClave"
+          [type]="verClaveR ? 'text' : 'password'"
+          formControlName="repiteClave"
+          class="input-bordered small-input"
+        />
+        <span (click)="toggleVerClaveR()" class="iconito">
+          @if (verClaveR) { 🫣 } @else { 👁️ }
+        </span>
+      </div>
+
+      <label for="imagen">Imagen de perfil</label>
+      <input
+        id="imagen"
+        type="file"
+        (change)="onFileChange($event)"
+        class="input-bordered small-input"
+      />
+
+      <div *ngIf="nombreArchivo" class="archivo-info">
+        <span>{{ nombreArchivo }}</span>
+        <button type="button" class="btn-quitar" (click)="quitarArchivo()">
+          Quitar
+        </button>
+      </div>
+
+      <app-captcha
+        (resolved)="onCaptchaResolved($event)"
+        (error)="onCaptchaError()"
+        (expired)="onCaptchaExpired()"
+      ></app-captcha>
+
+      <button type="submit" class="submit-button">
+        @if (cargando) { Registrando... } @else { Registrar administrador }
+      </button>
+    </form>
+  </div>
+
+  <app-mensaje
+    *ngIf="mensaje"
+    [titulo]="mensaje.titulo"
+    [mensaje]="mensaje.texto"
+    [tipo]="mensaje.tipo"
+  />
+  <app-spinner *ngIf="cargando" />
+</app-layout>

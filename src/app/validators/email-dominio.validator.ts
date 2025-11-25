@@ -1,47 +1,25 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export function emailDominioValidator(control: AbstractControl): ValidationErrors | null {
-  const valor = control.value;
+  const email = control.value?.trim();
+  const errores: any = {};
 
-  if (valor === null || valor === undefined || valor === '' || typeof valor !== 'string') {
-    return null;
+  if (!email) {
+    errores.requerido = 'El correo es obligatorio';
+    return errores;
   }
 
-  const dominiosPermitidos: string[] = ['@gmail.com', '@yahoo.com', '@outlook.com'];
-  
-  let tieneDominioValido: boolean = false;
-  
-  for (let i: number = 0; i < dominiosPermitidos.length; i++) {
-    const dominioActual: string = dominiosPermitidos[i];
-    let contieneDominio: boolean = false;
-    
-    for (let j: number = 0; j <= valor.length - dominioActual.length; j++) {
-      let coincide: boolean = true;
-      
-      for (let k: number = 0; k < dominioActual.length; k++) {
-        if (valor[j + k] !== dominioActual[k]) {
-          coincide = false;
-          break;
-        }
-      }
-      
-      if (coincide === true) {
-        contieneDominio = true;
-        break;
-      }
-    }
-    
-    if (contieneDominio === true) {
-      tieneDominioValido = true;
-      break;
-    }
+  const formatoCorrecto = /^\S+@\S+\.\S+$/.test(email);
+  if (!formatoCorrecto) {
+    return { emailInvalido: 'Formato de email inválido' };
   }
 
-  if (tieneDominioValido === false) {
-    return { 
-      dominioInvalido: 'El email debe ser de un dominio válido como @gmail.com o @yahoo.com.' 
-    };
+  const dominio = email.split('@')[1]?.toLowerCase();
+  const dominiosPermitidos = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com'];
+
+  if (dominio && !dominiosPermitidos.includes(dominio)) {
+    errores['dominioInvalido'] = `Usá un dominio válido: ${dominiosPermitidos.join(', ')}`;
   }
 
-  return null;
+  return Object.keys(errores).length ? errores : null;
 }

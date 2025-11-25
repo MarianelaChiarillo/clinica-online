@@ -1,91 +1,97 @@
-<div class="container-verde">
-  <app-menu></app-menu>
+<div class="background-container">
+  <a routerLink="/home" class="enlace-volver"> ← Volver</a>
 
-  <app-layout titulo="Iniciar Sesión" tamano="mediano">
-    <a routerLink="/home" class="text"> ← Volver</a>
+  <div class="contenedor-principal">
+    <div class="inicio-container">
+      <h1 class="titulo-principal">Iniciar Sesión</h1>
+      <p class="subtexto">Accede a tu cuenta para continuar</p>
 
-    <div class="contenedor-principal">
-      <div class="accesos-rapidos-container">
-        <h3 class="titulo-accesos">Accesos Rápidos</h3>
-        <div class="lista-accesos">
-          @for (user of accesos; track user.alt) {
-          <button
-            class="boton-acceso-rapido {{ user.rol?.toLowerCase() }}"
-            [title]="user.alt + ' - ' + user.rol"
-            (click)="completarYAcceder(user.email, user.pass)"
-          >
-            <img [src]="user.src" [alt]="user.alt" class="imagen-acceso" />
-            <span class="rol-usuario">{{ user.rol }}</span>
-          </button>
-          }
-        </div>
-      </div>
-
-      <div class="inicio-container">
-        <h1 class="titulo-principal">Iniciar Sesión</h1>
-        <form [formGroup]="form" class="inicio-form" (ngSubmit)="iniciarSesion()">
-          <div class="campo-formulario">
-            <label class="label-inicio"for="usuario">Usuario: </label>
+      <form [formGroup]="form" class="inicio-form" (ngSubmit)="iniciarSesion()">
+        <div class="campo-formulario">
+          <label class="label-inicio" for="usuario">Ingrese su correo electrónico: </label>
+          <div class="input-con-icono">
             <input
               type="email"
               id="usuario"
               class="input-inicio"
               placeholder="Ingresa tu email"
               formControlName="usuario"
+              [class.input-error]="usuario?.touched && usuario?.invalid"
             />
-            @if (usuario?.hasError('required') && usuario?.touched) {
-            <small class="texto-error">El email es obligatorio.</small>
-            }
+            <i class="fas fa-envelope icono-input"></i>
           </div>
-
-          <div class="campo-formulario">
-            <label class="label-inicio" for="clave">Contraseña: </label>
-            <div class="contenedor-password">
-              <input
-                [type]="verClave ? 'text' : 'password'"
-                id="clave"
-                class="input-password input-inicio"
-                placeholder="Ingresa tu contraseña"
-                formControlName="clave"
-              />
-              <button
-                type="button"
-                class="boton-ver-clave"
-                (click)="verClave = !verClave"
-                title="Mostrar/Ocultar contraseña"
-              >
-                @if (verClave) { Ocultar } @else { Ver }
-              </button>
+          @if (usuario?.touched && usuario?.invalid) {
+            <div class="contenedor-errores">
+              <small class="texto-error">{{ erroresUsuario }}</small>
             </div>
-            @if (clave?.hasError('required') && clave?.touched) {
-            <small class="texto-error">La contraseña es obligatoria.</small>
-            }
+          }
+        </div>
+
+        <div class="campo-formulario">
+          <label class="label-inicio" for="clave">Ingrese su contraseña: </label>
+          <div class="contenedor-password input-con-icono">
+            <input
+              [type]="verClave ? 'text' : 'password'"
+              id="clave"
+              class="input-password input-inicio"
+              placeholder="Ingresa tu contraseña"
+              formControlName="clave"
+              [class.input-error]="clave?.touched && clave?.invalid"
+            />
+            <i class="fas fa-lock icono-input"></i>
+            <button
+              type="button"
+              class="boton-ver-clave"
+              (click)="verClave = !verClave"
+              title="Mostrar/Ocultar contraseña"
+            >
+              <i class="fas" [class.fa-eye]="!verClave" [class.fa-eye-slash]="verClave"></i>
+            </button>
           </div>
+          @if (clave?.touched && clave?.invalid) {
+            <div class="contenedor-errores">
+              <small class="texto-error">{{ erroresClave }}</small>
+            </div>
+          }
+        </div>
 
-          <a routerLink="/registro" class="enlace-registro">
-            ¿No tenés cuenta? ¡Registrate!
-          </a>
+        <a routerLink="/registro" class="enlace-registro"> ¿No tenés cuenta? ¡Registrate! </a>
 
-          <button
-            type="submit"
-            class="boton-principal"
-            [disabled]="form.invalid || cargando"
-          >
-            {{ cargando ? 'INGRESANDO...' : 'INGRESAR' }}
-          </button>
-        </form>
+        <button type="submit" class="boton-principal">
+          @if (cargando) { INGRESANDO... } @else { INGRESAR }
+        </button>
+      </form>
+    </div>
+
+    <div class="accesos-rapidos-container">
+      <h3 class="titulo-accesos">Accesos Rápidos</h3>
+      <div class="lista-accesos">
+        @for (user of accesos; track user.alt) {
+          <div class="item-acceso">
+            <button
+              class="boton-acceso-rapido {{ user.rol?.toLowerCase() }}"
+              [title]="user.alt + ' - ' + user.rol"
+              (click)="completarYAcceder(user.email, user.pass)"
+            >
+              <img [src]="user.src" [alt]="user.alt" class="imagen-acceso" />
+            </button>
+            <span class="rol-usuario">{{ user.rol }}</span>
+          </div>
+        }
       </div>
     </div>
-  </app-layout>
-</div>
+  </div>
 
-@if (mensaje) {
-<app-mensaje
-  [titulo]="mensaje.titulo"
-  [mensaje]="mensaje.texto"
-  [tipo]="mensaje.tipo"
-  (cerrar)="mensaje = null"
-/>
-} @if (cargando) {
-<app-spinner />
-}
+  @if (mensaje) {
+    <app-mensaje
+      [titulo]="mensaje.titulo"
+      [mensaje]="mensaje.texto"
+      [tipo]="mensaje.tipo"
+      (cerrar)="mensaje = null"
+    />
+  }
+
+  @if (cargando) {
+    <app-spinner />
+  }
+</div>

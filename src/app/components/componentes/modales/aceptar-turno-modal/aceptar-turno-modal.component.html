@@ -1,0 +1,25 @@
+<div
+  class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+  *ngIf="isOpen"
+>
+  <div class="bg-white rounded-xl p-6 shadow-xl w-full max-w-md">
+
+    <h2 class="text-xl font-semibold mb-4">Aceptar turno</h2>
+
+    <p class="mb-4">
+      ¿Confirmás que deseas <strong>aceptar</strong> el turno del paciente
+      <strong>{{ turno?.pacientes?.nombre }} {{ turno?.pacientes?.apellido }}</strong>?
+    </p>
+
+    <div class="flex justify-end gap-3">
+      <button class="px-4 py-2 rounded bg-gray-300" (click)="cerrarModal()">
+        Cancelar
+      </button>
+
+      <button class="px-4 py-2 rounded bg-green-600 text-white" (click)="confirmarAceptar()">
+        Aceptar
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,56 @@
+
+h1{
+  margin-top: 200px;
+}.container {
+  padding: 1rem;
+  margin-top: 200px;
+}
+
+.turno-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+}
+
+.turno-card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.turno-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.estado {
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.estado.solicitado { background: #007bff; }
+.estado.aceptado { background: #28a745; }
+.estado.cancelado { background: #dc3545; }
+.estado.realizado { background: #6c757d; }
+
+.acciones {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn.cancelar { background: #dc3545; color: white; }
+.btn.info { background: #17a2b8; color: white; }
+.btn.calificar { background: #ffc107; color: black; }
