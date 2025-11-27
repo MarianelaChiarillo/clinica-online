@@ -22,4 +22,5 @@ export class RegistroComponent {
       rutaActual.includes('/registro/admin')
     );
   }
+  
 }

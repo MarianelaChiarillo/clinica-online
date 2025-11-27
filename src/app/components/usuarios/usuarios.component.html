@@ -1,0 +1,467 @@
+<div class="admin-container">
+  <h2>Gestión de Usuarios</h2>
+
+  <!-- ACCIONES SUPERIORES -->
+  <div class="acciones-superiores">
+    <button type="button" class="btn-nuevo-admin" (click)="abrirModalAdmin()">
+      ➕ Crear Nuevo Administrador
+    </button>
+    
+    <button type="button" class="btn-excel" (click)="descargarExcelGeneral()" 
+            [disabled]="usuariosFiltrados.length === 0">
+      📊 Descargar Excel General
+    </button>
+  </div>
+
+  <!-- FILTRO ÚNICO DE TEXTO -->
+  <div class="filtro-busqueda-container">
+    <app-filtro-general
+      placeholder="Buscar por nombre, apellido, tipo de usuario, email..."
+      (filtroChange)="onFiltroChange($event)">
+    </app-filtro-general>
+    
+    <!-- CONTADOR Y EJEMPLOS -->
+    <div class="filtro-info">
+      <div class="contador-resultados">
+        <span class="resultados-texto">
+          Mostrando <strong>{{ usuariosFiltrados.length }}</strong> 
+          de <strong>{{ usuarios.length }}</strong> usuarios
+        </span>
+        <span *ngIf="textoFiltro" class="filtro-activo">
+          (Buscando: "<strong>{{ textoFiltro }}</strong>")
+        </span>
+      </div>
+      
+      <div class="ejemplos-busqueda">
+        <small>
+          <strong>Ejemplos:</strong> 
+          "maría", "paciente", "especialista", "admin", "gómez", "12345678"
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA DE CARDS PARA SELECCIÓN -->
+  <div *ngIf="!mostrarDetalleUsuario">
+    <!-- Grid de usuarios tipo card -->
+    <div class="usuarios-grid" *ngIf="!cargando && usuariosFiltrados.length > 0">
+      <div *ngFor="let user of usuariosFiltrados" 
+           class="usuario-card"
+           (click)="seleccionarUsuario(user)">
+        
+        <div class="usuario-header">
+          <img [src]="user.imagen_perfil || './assets/user-default.png'" 
+               class="usuario-imagen"
+               [alt]="user.nombre">
+          <div class="usuario-info">
+            <h3>{{ user.nombre }} {{ user.apellido }}</h3>
+            <p class="dni">{{ user.dni }}</p>
+            <div class="badges-container">
+              <span class="badge-tipo" [class]="user.tipo_usuario">
+                {{ user.tipo_usuario }}
+              </span>
+              <span class="badge-estado" [class]="user.estado">
+                {{ user.estado }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="usuario-stats">
+          <div class="stat">
+            <strong>Turnos Totales:</strong> {{ getTotalTurnos(user) }}
+          </div>
+          <div class="stat">
+            <strong>Realizados:</strong> {{ getTurnosRealizados(user) }}
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button *ngIf="user.tipo_usuario === 'especialista'"
+                  (click)="$event.stopPropagation(); toggleEstado(user)"
+                  [disabled]="cargando"
+                  class="btn-toggle">
+            {{ user.estado === 'activo' ? 'Inhabilitar' : 'Habilitar' }}
+          </button>
+          
+          <!-- 👇 BOTÓN SOLO PARA PACIENTES -->
+          <button *ngIf="user.tipo_usuario === 'paciente'"
+                  class="btn-descargar-excel"
+                  (click)="$event.stopPropagation(); descargarExcelUsuario(user)">
+            📥 Descargar Turnos
+          </button>
+
+          <!-- 👇 BOTÓN PARA VER HISTORIA CLÍNICA (solo pacientes) -->
+          <button *ngIf="user.tipo_usuario === 'paciente'"
+                  class="btn-ver-historia"
+                  (click)="$event.stopPropagation(); verHistoriaClinica(user)">
+            📋 Historia Clínica
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay resultados -->
+    <div *ngIf="!cargando && usuariosFiltrados.length === 0 && textoFiltro" class="sin-resultados">
+      <div class="sin-resultados-content">
+        <h3>No se encontraron usuarios</h3>
+        <p>No hay resultados para "<strong>{{ textoFiltro }}</strong>"</p>
+        <button class="btn-limpiar-busqueda" (click)="onFiltroChange('')">
+          Mostrar todos los usuarios
+        </button>
+      </div>
+    </div>
+
+    <p *ngIf="!cargando && usuariosFiltrados.length === 0 && !textoFiltro">
+      No hay usuarios registrados.
+    </p>
+  </div>
+
+  <!-- DETALLE DE USUARIO (se muestra al seleccionar) -->
+  <div *ngIf="mostrarDetalleUsuario && usuarioSeleccionado" class="detalle-usuario">
+    <button class="btn-volver" (click)="volverALista()">← Volver a la lista</button>
+    
+    <div class="usuario-detalle-header">
+      <img [src]="usuarioSeleccionado.imagen_perfil || './assets/user-default.png'" 
+           class="imagen-grande">
+      <div class="usuario-detalle-info">
+        <h2>{{ usuarioSeleccionado.nombre }} {{ usuarioSeleccionado.apellido }}</h2>
+        <p><strong>DNI:</strong> {{ usuarioSeleccionado.dni }}</p>
+        <p><strong>Email:</strong> {{ usuarioSeleccionado.email }}</p>
+        <p><strong>Tipo:</strong> {{ usuarioSeleccionado.tipo_usuario }}</p>
+        <p><strong>Estado:</strong> {{ usuarioSeleccionado.estado }}</p>
+        <p *ngIf="usuarioSeleccionado.obra_social">
+          <strong>Obra Social:</strong> {{ usuarioSeleccionado.obra_social }}
+        </p>
+        <p *ngIf="usuarioSeleccionado.especialidades?.length">
+          <strong>Especialidades:</strong> {{ usuarioSeleccionado.especialidades.join(', ') }}
+        </p>
+      </div>
+    </div>
+
+    <!-- 👇 NUEVA SECCIÓN: HISTORIA CLÍNICA (solo para pacientes) -->
+    <div *ngIf="usuarioSeleccionado.tipo_usuario === 'paciente'" class="historia-clinica-section">
+      <div class="section-header">
+        <h3>📋 Historia Clínica</h3>
+        <button class="btn-descargar-pdf" (click)="descargarHistoriaClinicaPDF(usuarioSeleccionado)">
+          📄 Descargar PDF
+        </button>
+      </div>
+
+      <div *ngIf="usuarioSeleccionado.historiasClinicas?.length; else sinHistoriaClinica">
+        <div *ngFor="let historia of usuarioSeleccionado.historiasClinicas" class="historia-card">
+          <div class="historia-header">
+            <h4>Consulta del {{ historia.fecha_creacion | date:'dd/MM/yyyy' }}</h4>
+            <span class="especialista-info">
+              Dr. {{ historia.turno?.especialista?.nombre }} {{ historia.turno?.especialista?.apellido }} - {{ historia.turno?.especialidad?.nombre }}
+            </span>
+          </div>
+          
+          <div class="datos-fijos">
+            <h5>Datos Fijos:</h5>
+            <div class="datos-grid">
+              <div class="dato-item">
+                <strong>Altura:</strong> {{ historia.altura }} cm
+              </div>
+              <div class="dato-item">
+                <strong>Peso:</strong> {{ historia.peso }} kg
+              </div>
+              <div class="dato-item">
+                <strong>Temperatura:</strong> {{ historia.temperatura }} °C
+              </div>
+              <div class="dato-item">
+                <strong>Presión:</strong> {{ historia.presion }}
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="historia.datos_dinamicos?.length" class="datos-dinamicos">
+            <h5>Datos Adicionales:</h5>
+            <div class="datos-grid">
+              <div *ngFor="let dato of historia.datos_dinamicos" class="dato-item">
+                <strong>{{ dato.clave }}:</strong> {{ dato.valor }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #sinHistoriaClinica>
+        <div class="sin-historia">
+          <p>No hay historia clínica registrada para este paciente.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- SECCIÓN DE TURNOS CLICKEABLES -->
+    <div class="turnos-section">
+      <h3>Turnos ({{ getTotalTurnos(usuarioSeleccionado) }})</h3>
+      
+      <div *ngFor="let turno of usuarioSeleccionado.turnos" 
+           class="turno-card"
+           [class.turno-con-historia]="tieneHistoriaClinica(turno)"
+           (click)="verHistoriaClinicaDelTurno(turno)">
+        
+        <div class="turno-header">
+          <p><strong>Fecha:</strong> {{ turno.fecha_turno | date:'dd/MM/yyyy' }}</p>
+          <p><strong>Hora:</strong> {{ turno.hora_inicio }} - {{ turno.hora_fin }}</p>
+        </div>
+        
+        <div class="turno-info">
+          <p><strong>Especialidad:</strong> {{ turno.especialidades?.nombre }}</p>
+          <p><strong>Estado:</strong> 
+            <span class="estado-turno" [class]="turno.estado">
+              {{ turno.estado }}
+            </span>
+          </p>
+          <p *ngIf="turno.especialistas">
+            <strong>Especialista:</strong> 
+            {{ turno.especialistas.nombre }} {{ turno.especialistas.apellido }}
+          </p>
+        </div>
+
+        <!-- Indicador de historia clínica -->
+        <div *ngIf="tieneHistoriaClinica(turno)" class="historia-indicator">
+          <span class="badge-historia">📋 Tiene historia clínica</span>
+          <small>(Click para ver)</small>
+        </div>
+
+        <div *ngIf="!tieneHistoriaClinica(turno)" class="sin-historia-indicator">
+          <span class="badge-sin-historia">📝 Sin historia clínica</span>
+        </div>
+      </div>
+      
+      <div *ngIf="!usuarioSeleccionado.turnos?.length" class="sin-turnos">
+        <p>No hay turnos registrados</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE REGISTRO ADMIN -->
+<div class="modal-backdrop" *ngIf="mostrarModalAdmin">
+  <div class="modal-registro-admin">
+    <div class="background-container">
+      <button class="enlace-volver" (click)="cerrarModalAdmin()">← Volver</button>
+      <div class="registro-container scrollable-form">
+        <h1 class="fade-in title">Registro de Administrador</h1>
+        <p class="subtexto">Completa con los datos del nuevo administrador</p>
+
+        <form [formGroup]="formAdmin" (ngSubmit)="registrarAdmin()" class="login-form">
+          <div class="form-columns">
+            <div class="columna">
+              <h3 class="seccion-titulo">Datos personales:</h3>
+
+              <label for="nombre">Ingrese su nombre:</label>
+              <input
+                id="nombre"
+                formControlName="nombre"
+                class="input-inicio"
+                [class.input-error]="formAdmin.get('nombre')?.touched && formAdmin.get('nombre')?.invalid"
+                placeholder="Ingresa tu nombre"
+              />
+              @if (formAdmin.get('nombre')?.touched && formAdmin.get('nombre')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('nombre') }}</small>
+              }
+
+              <label for="apellido">Ingrese su apellido:</label>
+              <input
+                id="apellido"
+                formControlName="apellido"
+                class="input-inicio"
+                [class.input-error]="formAdmin.get('apellido')?.touched && formAdmin.get('apellido')?.invalid"
+                placeholder="Ingresa tu apellido"
+              />
+              @if (formAdmin.get('apellido')?.touched && formAdmin.get('apellido')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('apellido') }}</small>
+              }
+
+              <label for="edad">Ingrese su edad:</label>
+              <input
+                id="edad"
+                formControlName="edad"
+                type="number"
+                class="input-inicio"
+                [class.input-error]="formAdmin.get('edad')?.touched && formAdmin.get('edad')?.invalid"
+                placeholder="Ingresa tu edad"
+              />
+              @if (formAdmin.get('edad')?.touched && formAdmin.get('edad')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('edad') }}</small>
+              }
+
+              <label for="dni">Ingrese su DNI:</label>
+              <input
+                id="dni"
+                formControlName="dni"
+                class="input-inicio"
+                [class.input-error]="formAdmin.get('dni')?.touched && formAdmin.get('dni')?.invalid"
+                placeholder="Ingresa tu dni"
+              />
+              @if (formAdmin.get('dni')?.touched && formAdmin.get('dni')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('dni') }}</small>
+              }
+            </div>
+
+            <div class="columna">
+              <h3 class="seccion-titulo">Datos cuenta:</h3>
+
+              <label for="email">Ingrese su email:</label>
+              <input
+                id="email"
+                formControlName="email"
+                class="input-inicio"
+                [class.input-error]="formAdmin.get('email')?.touched && formAdmin.get('email')?.invalid"
+                placeholder="Ingresa tu email"
+              />
+              @if (formAdmin.get('email')?.touched && formAdmin.get('email')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('email') }}</small>
+              }
+
+              <label for="clave">Ingrese una contraseña:</label>
+              <div class="clave-container">
+                <input
+                  id="clave"
+                  [type]="verClave ? 'text' : 'password'"
+                  formControlName="clave"
+                  class="input-inicio"
+                  [class.input-error]="formAdmin.get('clave')?.touched && formAdmin.get('clave')?.invalid"
+                  placeholder="Ingresa tu contraseña"
+                />
+                <i
+                  (click)="toggleVerClave()"
+                  class="iconito fas"
+                  [class.fa-eye]="!verClave"
+                  [class.fa-eye-slash]="verClave"
+                ></i>
+              </div>
+              @if (formAdmin.get('clave')?.touched && formAdmin.get('clave')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('clave') }}</small>
+              }
+
+              <label for="repiteClave">Repetir contraseña:</label>
+              <div class="clave-container">
+                <input
+                  id="repiteClave"
+                  [type]="verClaveR ? 'text' : 'password'"
+                  formControlName="repiteClave"
+                  class="input-inicio"
+                  [class.input-error]="formAdmin.get('repiteClave')?.touched && formAdmin.get('repiteClave')?.invalid"
+                  placeholder="Ingresa nuevamente la contraseña"
+                />
+                <i
+                  (click)="toggleVerClaveR()"
+                  class="iconito fas"
+                  [class.fa-eye]="!verClaveR"
+                  [class.fa-eye-slash]="verClaveR"
+                ></i>
+              </div>
+              @if (formAdmin.get('repiteClave')?.touched && formAdmin.get('repiteClave')?.invalid) {
+              <small class="text-danger fade-in textito">{{ getErrorAdmin('repiteClave') }}</small>
+              }
+
+              <div class="files-container">
+                <div class="file-group">
+                  <label>Imagen de Perfil</label>
+                  <div class="custom-file-upload" (click)="fileInput.click()">
+                    <i class="fas fa-upload"></i> Subir imagen
+                  </div>
+                  <input #fileInput type="file" hidden (change)="onFileSelect($event)" />
+                  @if (nombreArchivo) {
+                  <p class="file-name">{{ nombreArchivo }}</p>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="captcha-container">
+            <!-- Aquí iría el captcha si lo necesitas -->
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancelar" (click)="cerrarModalAdmin()">
+              Cancelar
+            </button>
+            <button type="submit" class="submit-button" [disabled]="cargandoAdmin">
+              {{ cargandoAdmin ? 'Registrando...' : 'CREAR ADMINISTRADOR' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARA VER HISTORIA CLÍNICA DEL TURNO -->
+<div class="modal-backdrop" *ngIf="mostrarHistoriaTurno && historiaTurnoSeleccionada">
+  <div class="modal-historia-turno">
+    <div class="modal-header">
+      <h2>📋 Historia Clínica</h2>
+      <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">✖</button>
+    </div>
+    
+    <div class="modal-content">
+      <div class="historia-header">
+        <h3>Consulta del {{ historiaTurnoSeleccionada.turno?.fecha_turno | date:'dd/MM/yyyy' }}</h3>
+        <p class="especialista-info">
+          <strong>Especialista:</strong> 
+          {{ historiaTurnoSeleccionada.turno?.especialista?.nombre }} 
+          {{ historiaTurnoSeleccionada.turno?.especialista?.apellido }}
+        </p>
+        <p class="especialidad-info">
+          <strong>Especialidad:</strong> 
+          {{ historiaTurnoSeleccionada.turno?.especialidad?.nombre }}
+        </p>
+      </div>
+
+      <div class="datos-fijos">
+        <h4>Datos Fijos:</h4>
+        <div class="datos-grid">
+          <div class="dato-item">
+            <strong>Altura:</strong> {{ historiaTurnoSeleccionada.altura }} cm
+          </div>
+          <div class="dato-item">
+            <strong>Peso:</strong> {{ historiaTurnoSeleccionada.peso }} kg
+          </div>
+          <div class="dato-item">
+            <strong>Temperatura:</strong> {{ historiaTurnoSeleccionada.temperatura }} °C
+          </div>
+          <div class="dato-item">
+            <strong>Presión:</strong> {{ historiaTurnoSeleccionada.presion }}
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="historiaTurnoSeleccionada.datos_dinamicos?.length" class="datos-dinamicos">
+        <h4>Datos Adicionales:</h4>
+        <div class="datos-grid">
+          <div *ngFor="let dato of historiaTurnoSeleccionada.datos_dinamicos" class="dato-item">
+            <strong>{{ dato.clave }}:</strong> {{ dato.valor }}
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!historiaTurnoSeleccionada.datos_dinamicos?.length" class="sin-datos-adicionales">
+        <p>No hay datos adicionales registrados para esta consulta.</p>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+  
+      <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+@if (mensaje) {
+  <app-mensaje
+    [titulo]="mensaje.titulo"
+    [mensaje]="mensaje.texto"
+    [tipo]="mensaje.tipo"
+    (cerrar)="mensaje = null"
+  />
+}
+
+@if (cargando) {
+  <app-spinner />
+}

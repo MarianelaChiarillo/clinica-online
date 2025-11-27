@@ -62,8 +62,49 @@
   </table>
 </div>
 
-<app-cancelar-turno-modal
-  *ngIf="modalCancelar"
-  [turno]="turnoSeleccionado"
-  (cerrar)="cerrarModal($event)">
-</app-cancelar-turno-modal>
+<!-- MODAL CANCELAR TURNO -->
+<div class="modal-backdrop" *ngIf="modalCancelar" (click)="cerrarModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Cancelar Turno</h3>
+      <button class="close-btn" (click)="cerrarModal()" [disabled]="guardando">×</button>
+    </div>
+
+    <div class="modal-content">
+      <p><strong>Paciente:</strong> {{ turnoSeleccionado?.pacientes?.nombre }} {{ turnoSeleccionado?.pacientes?.apellido }}</p>
+      <p><strong>Especialista:</strong> {{ turnoSeleccionado?.especialistas?.nombre }} {{ turnoSeleccionado?.especialistas?.apellido }}</p>
+      <p><strong>Especialidad:</strong> {{ turnoSeleccionado?.especialidades?.nombre }}</p>
+      <p><strong>Fecha:</strong> {{ turnoSeleccionado?.fecha_turno | date:'dd/MM/yyyy' }} {{ turnoSeleccionado?.hora_inicio }}</p>
+
+      <div class="form-group">
+        <label>Motivo de cancelación:</label>
+        <textarea 
+          [(ngModel)]="comentarioCancelacion" 
+          rows="4" 
+          placeholder="Ingresá el motivo de la cancelación..."
+          class="input-textarea"
+          [disabled]="guardando"
+        ></textarea>
+      </div>
+
+      <div class="error" *ngIf="error">{{ error }}</div>
+    </div>
+
+    <div class="modal-actions">
+      <button 
+        class="btn btn-cancelar" 
+        (click)="cerrarModal()" 
+        [disabled]="guardando"
+      >
+        Cancelar
+      </button>
+      <button 
+        class="btn btn-confirmar" 
+        (click)="confirmarCancelacion()" 
+        [disabled]="guardando || !comentarioCancelacion.trim()"
+      >
+        {{ guardando ? 'Cancelando...' : 'Confirmar Cancelación' }}
+      </button>
+    </div>
+  </div>
+</div>

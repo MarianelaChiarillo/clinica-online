@@ -1,184 +1,174 @@
-import { Component, OnInit } from '@angular/core';
-import supabase from '../../../services/supabase.client';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
-import { CancelarTurnoModalComponent } from '../../componentes/modales/cancelar-turno-modal/cancelar-turno-modal.component';
-import { ComentarioTurnoModalComponent } from '../../componentes/modales/comentario-turno-modal/comentario-turno-modal.component';
-import { CalificarTurnoModalComponent } from '../../componentes/modales/calificar-turno-modal/calificar-turno-modal.component';
+import { ModalContainerComponent } from '../../componentes/modales/modal-container/modal-container.component';
+import { EncuestaModalComponent } from '../../encuesta/encuesta.component';
+import { ModalService } from '../../../services/modal.service';
+import { TurnosService } from '../../../services/turnos.service';
+import supabase from '../../../services/supabase.client';
+
 @Component({
   selector: 'app-turnos-paciente',
-imports:[
-  CommonModule,
-  FiltroGeneralComponent,
-  CancelarTurnoModalComponent,
-  ComentarioTurnoModalComponent,
-  CalificarTurnoModalComponent
-],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FiltroGeneralComponent,
+    ModalContainerComponent,
+    EncuestaModalComponent
+  ],
   templateUrl: './turnos-paciente.component.html',
   styleUrls: ['./turnos-paciente.component.scss'],
 })
-export class PacienteMisTurnosComponent implements OnInit {
+export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
 
   cargando = false;
   turnos: any[] = [];
   turnosFiltrados: any[] = [];
-  pacienteId!: number;
-modalCancelar = false;
-modalComentario = false;
-modalCalificar = false;
 
-turnoSeleccionado: any = null;
+  // Variables para controlar el modal de encuesta
+  mostrarEncuestaModal = false;
+  turnoSeleccionado: any = null;
 
-async ngOnInit() {
-  this.cargando = true;
+  private canalRealtime: any;
 
-  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  constructor(
+    private modalService: ModalService,
+    private turnosService: TurnosService
+  ) {}
 
-  // 1️⃣ obtener el paciente.id usando usuario.id
-  const { data: paciente, error } = await supabase
-    .from('pacientes')
-    .select('id')
-    .eq('usuario_id', usuario.id)
-    .single();
-
-  if (error || !paciente) {
-    console.error("No se encontró paciente", error);
-    this.cargando = false;
-    return;
-  }
-
-  this.pacienteId = paciente.id;
-  console.log("Paciente ID:", this.pacienteId);
-
-  // 2️⃣ recién acá pedís los turnos
-  await this.obtenerTurnos();
-
-  this.cargando = false;
-
-    this.suscribirRealtime();
-
-}
-
-  suscribirRealtime() {
-  supabase
-    .channel('turnos_changes')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'turnos'
-      },
-      async (payload) => {
-        console.log('Cambio detectado en turnos → ', payload);
-
-        // Recargar lista automáticamente
-        await this.obtenerTurnos();
-      }
-    )
-    .subscribe();
-}
-
-  async obtenerTurnos() {
+  async ngOnInit() {
     this.cargando = true;
-
-    const { data, error } = await supabase
-      .from('turnos')
-      .select(`
-        id,
-        paciente_id,
-        especialista_id,
-        especialidad_id,
-        fecha_turno,
-        hora_inicio,
-        hora_fin,
-        estado,
-        comentario_cancelacion,
-        comentario_rechazo,
-        calificacion_atencion,
-        comentario_calificacion,
-        fecha_solicitud,
-        id_encuesta,
-        especialistas ( nombre, apellido ),
-        especialidades ( nombre )
-      `)
-      .eq('paciente_id', this.pacienteId)
-      .order('fecha_turno', { ascending: true });
-
-    if (!error && data) {
-      this.turnos = data;
-      this.turnosFiltrados = data;
-    }
-
+    await this.obtenerTurnos();
+    this.escucharRealtime();
     this.cargando = false;
   }
 
-  // 🔵 FILTRO ÚNICO
-  filtrar(valor: string) {
-    const filtro = valor.toLowerCase();
+  ngOnDestroy() {
+    if (this.canalRealtime) this.canalRealtime.unsubscribe();
+  }
 
+  escucharRealtime() {
+    this.canalRealtime = supabase
+      .channel('turnos-paciente')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'turnos'
+        },
+        async payload => {
+          await this.obtenerTurnos();
+        }
+      )
+      .subscribe();
+  }
+
+
+
+  filtrar(valor: string) {
+    const f = valor.toLowerCase();
     this.turnosFiltrados = this.turnos.filter(t =>
-      t.especialidades?.nombre.toLowerCase().includes(filtro) ||
-      `${t.especialistas?.nombre} ${t.especialistas?.apellido}`
-        .toLowerCase()
-        .includes(filtro)
+      t.especialidades?.nombre.toLowerCase().includes(f) ||
+      `${t.especialistas?.nombre} ${t.especialistas?.apellido}`.toLowerCase().includes(f)
     );
   }
 
-  // 🟣 LÓGICA DE ACCIONES
-  acciones(t: any): string[] {
-    const acciones = [];
+acciones(t: any): string[] {
+  const acciones = [];
 
-    // cancelar → solo si no fue realizado
-    if (t.estado !== 'realizado') acciones.push('cancelar');
-
-    // ver reseña → si tiene comentario del especialista o calificación
-    if (t.comentario_calificacion || t.calificacion_atencion) {
-      acciones.push('ver_resena');
-    }
-
-    // completar encuesta → si el especialista marcó como realizado
-    if (t.estado === 'realizado' && !t.id_encuesta) {
+  if (t.estado !== 'realizado') {
+    acciones.push('cancelar');
+  } else {
+    // Solo para turnos realizados
+    
+    // ENCUESTA: disponible si el array de encuestas está VACÍO
+    if (Array.isArray(t.encuestas) && t.encuestas.length === 0) {
       acciones.push('completar_encuesta');
     }
-
-    // calificar → si está realizado y no calificó
-    if (t.estado === 'realizado' && !t.calificacion_atencion) {
+    
+    // CALIFICACIÓN: disponible si no tiene calificación
+    if (!t.calificacion_atencion) {
       acciones.push('calificar');
     }
 
-    return acciones;
+    // RESEÑA: disponible si hay comentario del especialista
+    if (t.comentario_especialista?.trim()) {
+      acciones.push('ver_resena');
+    }
   }
 
-  cancelar(t: any) {
-  this.turnoSeleccionado = t;
-  this.modalCancelar = true;
+  console.log('Turno', t.id, '- Acciones:', acciones, '- Encuestas:', t.encuestas);
+  return acciones;
 }
 
-verComentario(t: any) {
-  this.turnoSeleccionado = t;
-  this.modalComentario = true;
-}
+  async ejecutarAccion(accion: string, turno: any) {
+    let prom: any;
 
-calificar(t: any) {
-  this.turnoSeleccionado = t;
-  this.modalCalificar = true;
-}
+    switch (accion) {
+      case 'cancelar':
+        prom = this.modalService.abrirCancelarTurno(turno);
+        break;
+      case 'ver_resena':
+        this.modalService.abrirComentarioTurno(turno);
+        return;
+      case 'calificar':
+        prom = this.modalService.abrirCalificarTurno(turno);
+        break;
+      case 'completar_encuesta':
+        this.abrirEncuestaModal(turno);
+        return;
+    }
 
-onModalClose(refrescar: boolean) {
-  this.modalCancelar = false;
-  this.modalComentario = false;
-  this.modalCalificar = false;
-
-  this.turnoSeleccionado = null;
-
-  if (refrescar) {
-    this.obtenerTurnos();   // 🔄 Actualiza turnos en pantalla
+    const res = await prom;
+    if (res) await this.obtenerTurnos();
   }
-}
-completarEncuesta(t: any) {
-  console.log("Abrir encuesta para el turno:", t.id);
-  // acá después podríamos abrir un modal si lo deseas
+
+  // Método para abrir el modal de encuesta
+  abrirEncuestaModal(turno: any) {
+    this.turnoSeleccionado = turno;
+    this.mostrarEncuestaModal = true;
+  }
+  async obtenerTurnos() {
+  this.cargando = true;
+  this.turnos = await this.turnosService.obtenerTurnosDelPacienteActual();
+  
+  // DEBUG: Ver qué datos llegan
+  console.log('Turnos obtenidos:', this.turnos);
+  this.turnos.forEach((turno, index) => {
+    console.log(`Turno ${index}:`, {
+      id: turno.id,
+      estado: turno.estado,
+      tieneEncuesta: !!turno.encuestas,
+      encuestas: turno.encuestas,
+      calificacion_atencion: turno.calificacion_atencion,
+      comentario_especialista: turno.comentario_especialista
+    });
+  });
+  
+  this.turnosFiltrados = [...this.turnos];
+  this.cargando = false;
 }
 
+  // Método para cerrar el modal de encuesta
+  cerrarEncuestaModal(encuestaCompletada: boolean) {
+    this.mostrarEncuestaModal = false;
+    this.turnoSeleccionado = null;
+    
+    // Si se completó la encuesta, refrescar los turnos
+    if (encuestaCompletada) {
+      this.obtenerTurnos();
+    }
+  }
+
+  // Método opcional para mejor visualización de los botones
+  getTextoAccion(accion: string): string {
+    const textos: any = {
+      'cancelar': '❌ Cancelar',
+      'completar_encuesta': '📊 Completar Encuesta',
+      'calificar': '⭐ Calificar',
+      'ver_resena': '📝 Ver Reseña'
+    };
+    return textos[accion] || accion;
+  }
 }

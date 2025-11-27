@@ -2,99 +2,55 @@
 
 <div class="container">
 
-  <!-- 🔵 UN SOLO FILTRO -->
   <app-filtro-general
     placeholder="Buscar por especialista o especialidad..."
     (filtroChange)="filtrar($event)">
   </app-filtro-general>
 
-  <!-- 🗂️ LISTA DE TURNOS -->
-  <div class="turno-list">
-
-    <div class="turno-card" *ngFor="let t of turnosFiltrados">
-
-      <div class="turno-header">
-        <strong>{{ t.fecha_turno }} - {{ t.hora_inicio }}</strong>
-        <span class="estado {{ t.estado | lowercase }}">
-          {{ t.estado }}
-        </span>
-      </div>
-
-      <div><b>Especialidad:</b> {{ t.especialidades?.nombre }}</div>
-
-      <div>
-        <b>Especialista:</b>
-        {{ t.especialistas?.nombre }} {{ t.especialistas?.apellido }}
-      </div>
-
-      <!-- Mostrar calificación si existe -->
-      <div *ngIf="t.calificacion_atencion">
-        <b>Calificación:</b> {{ t.calificacion_atencion }} ⭐
-      </div>
-<div class="acciones">
-
-  <!-- CANCELAR -->
-  <button
-    *ngIf="acciones(t).includes('cancelar')"
-    (click)="cancelar(t)"
-    class="btn cancelar">
-    Cancelar
-  </button>
-
-  <!-- COMPLETAR ENCUESTA -->
-  <button
-    *ngIf="acciones(t).includes('completar_encuesta')"
-    (click)="completarEncuesta(t)"
-    class="btn info">
-    Completar Encuesta
-  </button>
-
-  <!-- CALIFICAR -->
-  <button
-    *ngIf="acciones(t).includes('calificar')"
-    (click)="calificar(t)"
-    class="btn calificar">
-    Calificar
-  </button>
-
-  <!-- VER RESEÑA -->
-  <button
-    *ngIf="acciones(t).includes('ver_resena')"
-    (click)="verComentario(t)"
-    class="btn info">
-    Ver Reseña
-  </button>
-
-</div>
-
-
-    </div>
-
+  <!-- Loading -->
+  <div *ngIf="cargando" class="loading">
+    Cargando turnos...
   </div>
 
-  <!-- ============================= -->
-  <!--           MODALES             -->
-  <!-- ============================= -->
+  <!-- Lista de turnos -->
+  <div *ngIf="!cargando" class="turnos-list">
+    <div *ngFor="let turno of turnosFiltrados" class="turno-card">
+      <div class="turno-header">
+        <h3>{{ turno.especialidades?.nombre }}</h3>
+        <span class="estado" [class]="turno.estado">{{ turno.estado }}</span>
+      </div>
+      
+      <div class="turno-info">
+        <p><strong>Especialista:</strong> {{ turno.especialistas?.nombre }} {{ turno.especialistas?.apellido }}</p>
+        <p><strong>Fecha:</strong> {{ turno.fecha_turno | date:'dd/MM/yyyy' }}</p>
+        <p><strong>Horario:</strong> {{ turno.hora_inicio }} - {{ turno.hora_fin }}</p>
+      </div>
 
-  <!-- MODAL CANCELAR -->
-  <app-cancelar-turno-modal
-    *ngIf="modalCancelar"
+      <!-- Acciones -->
+      <div class="acciones">
+        <button 
+          *ngFor="let accion of acciones(turno)" 
+          (click)="ejecutarAccion(accion, turno)"
+          [class]="'btn btn-' + accion"
+        >
+          {{ getTextoAccion(accion) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay turnos -->
+    <div *ngIf="turnosFiltrados.length === 0" class="no-turnos">
+      No se encontraron turnos
+    </div>
+  </div>
+
+  <!-- Modal de encuesta -->
+  <app-encuesta-modal
+    *ngIf="mostrarEncuestaModal"
     [turno]="turnoSeleccionado"
-    (cerrar)="onModalClose($event)">
-  </app-cancelar-turno-modal>
+    (onClose)="cerrarEncuestaModal($event)"
+  ></app-encuesta-modal>
 
-  <!-- MODAL VER COMENTARIO -->
-  <app-comentario-turno-modal
-    *ngIf="modalComentario"
-    [turno]="turnoSeleccionado"
-    (cerrar)="onModalClose($event)">
-  </app-comentario-turno-modal>
-
-  <!-- MODAL CALIFICAR -->
-  <app-calificar-turno-modal
-    *ngIf="modalCalificar"
-    [turno]="turnoSeleccionado"
-    (cerrar)="onModalClose($event)">
-  </app-calificar-turno-modal>
-
+  <!-- Modal container para otros modales -->
+  <app-modal-container></app-modal-container>
 </div>

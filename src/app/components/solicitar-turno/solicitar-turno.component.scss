@@ -1,200 +1,574 @@
-/* solicitar-turno.component.scss */
-.solicitar-turno {
-  max-width: 800px;
+.contenedor-turno {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .paso {
   background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+/* ========================================================
+   GRID ESPECIALIDADES - COMPACTO
+======================================================== */
+.grid-especialidades {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
   margin-bottom: 20px;
 }
 
-.opciones {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.opcion, .fecha-opcion, .hora-opcion {
-  padding: 15px;
+.boton-especialidad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 10px;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 10px;
+  background: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-height: 130px;
+  justify-content: center;
+  text-decoration: none;
+
+  &:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+}
+
+.imagen-especialidad {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.nombre-especialidad {
+  font-weight: 500;
+  color: #333;
   text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
-.opcion:hover, .fecha-opcion:hover, .hora-opcion:hover {
-  background-color: #f8f9fa;
-  border-color: #007bff;
+/* ========================================================
+   GRID ESPECIALISTAS - COMPACTO
+======================================================== */
+.grid-especialistas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
-.opcion.selected, .fecha-opcion.selected, .hora-opcion.selected {
-  background-color: #007bff;
-  color: white;
-  border-color: #0056b3;
+.boton-especialista {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 160px;
+  justify-content: center;
+  text-decoration: none;
+
+  &:hover:not(.inactivo) {
+    border-color: #28a745;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40,167,69,0.2);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &.inactivo {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    .imagen-especialista {
+      filter: grayscale(100%);
+    }
+    
+    .nombre-especialista {
+      color: #6c757d;
+    }
+  }
 }
 
-/* ESTILOS PARA HORARIOS OCUPADOS (ROJO) */
-.hora-opcion.ocupado {
-  background-color: #f8d7da !important;
-  border-color: #f5c6cb !important;
-  color: #721c24 !important;
-  cursor: not-allowed !important;
-  opacity: 0.7;
+.imagen-especialista {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  border: 2px solid #f8f9fa;
 }
 
-.hora-opcion.ocupado:hover {
-  background-color: #f8d7da !important;
-  border-color: #f5c6cb !important;
+.nombre-especialista {
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  margin-bottom: 5px;
 }
 
-.hora-opcion.disabled {
-  pointer-events: none;
+.estado-especialista {
+  font-size: 0.75rem;
+  color: #dc3545;
+  font-weight: 500;
 }
 
-.ocupado-badge {
-  margin-right: 5px;
-  font-size: 14px;
+/* ========================================================
+   GRID FECHAS - COMPACTO
+======================================================== */
+.grid-fechas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.boton-fecha {
+  padding: 15px 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  text-align: center;
+
+  &:hover {
+    border-color: #ffc107;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255,193,7,0.2);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+/* ========================================================
+   GRID HORARIOS - COMPACTO
+======================================================== */
+.grid-horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.boton-horario {
+  padding: 12px 8px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  position: relative;
+
+  &:hover:not(.ocupado):not(:disabled) {
+    border-color: #17a2b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23,162,184,0.2);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &.ocupado {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 }
 
 .texto-ocupado {
   display: block;
-  font-size: 12px;
+  font-size: 0.7rem;
   color: #dc3545;
-  margin-top: 5px;
+  margin-top: 4px;
   font-weight: bold;
 }
 
-.fechas, .horarios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-  margin-top: 15px;
+/* ========================================================
+   BOTONES DE ACCIÓN
+======================================================== */
+.acciones {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 25px;
+  flex-wrap: wrap;
 }
 
-.fecha-opcion {
-  text-align: center;
-}
-
-.dia {
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.fecha-numero {
-  font-size: 18px;
-  margin-top: 5px;
-}
-
-.sin-horarios {
-  text-align: center;
-  padding: 20px;
-  color: #6c757d;
-  font-style: italic;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.resumen {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  margin-top: 20px;
-  border-left: 4px solid #28a745;
-}
-
-.alerta-ocupado {
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  color: #856404;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 20px;
-  text-align: center;
-  font-weight: bold;
-}
-
-.btn-confirmar {
-  background-color: #28a745;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-top: 15px;
-  width: 100%;
-  transition: background-color 0.3s;
-}
-
-.btn-confirmar:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.btn-confirmar:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-button {
+.btn-atras {
   background: #6c757d;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 15px;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+  min-width: 100px;
+
+  &:hover {
+    background: #5a6268;
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 
-button:hover {
-  background: #5a6268;
+.btn-confirmar {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+  min-width: 140px;
+
+  &:hover:not(:disabled) {
+    background: #218838;
+  }
+
+  &:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 
-.seccion-horarios {
+/* ========================================================
+   ESTILOS PARA PACIENTES (ADMIN)
+======================================================== */
+.lista-pacientes {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
   margin-bottom: 20px;
 }
 
-.seccion-horarios h4 {
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.hora-opcion.disponible {
-  background-color: #ffffff;
-  border: 2px solid #e0e0e0;
-  color: #333;
+.opcion-paciente {
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 6px;
   cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+
+  &:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-.hora-opcion.disponible:hover {
-  background-color: #f8f9fa;
-  border-color: #007bff;
+.paciente-seleccionado {
+  background: #e7f3ff;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #007bff;
+  font-size: 0.9rem;
 }
 
-.hora-opcion.disponible.selected {
-  background-color: #007bff;
-  color: white;
-  border-color: #0056b3;
+/* ========================================================
+   ESTADOS Y MENSAJES
+======================================================== */
+.sin-resultados {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 30px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
 }
 
-.hora-opcion.ocupado {
-  background-color: #f8d7da;
-  border: 2px solid #f5c6cb;
-  color: #721c24;
-  cursor: not-allowed;
-  opacity: 0.7;
+.cargando {
+  text-align: center;
+  padding: 30px 20px;
+  color: #6c757d;
 }
 
-.texto-ocupado {
-  display: block;
-  font-size: 12px;
-  color: #dc3545;
-  margin-top: 5px;
+/* ========================================================
+   RESPONSIVE - MÓVIL
+======================================================== */
+@media (max-width: 768px) {
+  .contenedor-turno {
+    padding: 10px;
+  }
+
+  .paso {
+    padding: 20px 15px;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  /* Grids más compactos en móvil */
+  .grid-especialidades {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+  }
+
+  .grid-especialistas {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  .grid-fechas {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+  }
+
+  .grid-horarios {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 8px;
+  }
+
+  /* Botones más pequeños */
+  .boton-especialidad,
+  .boton-especialista {
+    padding: 12px 8px;
+    min-height: 120px;
+  }
+
+  .imagen-especialidad {
+    width: 50px;
+    height: 50px;
+  }
+
+  .imagen-especialista {
+    width: 60px;
+    height: 60px;
+  }
+
+  .nombre-especialidad,
+  .nombre-especialista {
+    font-size: 0.8rem;
+  }
+
+  /* Acciones en columna */
+  .acciones {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-atras,
+  .btn-confirmar {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-especialidades {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-especialistas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-fechas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-horarios {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ========================================================
+   MEJORAS VISUALES
+======================================================== */
+.boton-especialidad,
+.boton-especialista,
+.boton-fecha,
+.boton-horario {
+  transition: all 0.2s ease;
+  
+  &:active:not(:disabled):not(.inactivo) {
+    transform: scale(0.98);
+  }
+}
+
+// Estados de carga para imágenes
+.imagen-especialidad,
+.imagen-especialista {
+  background: #f8f9fa;
+  
+  &[src*="default"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &::before {
+      content: "IMG";
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+  }
+}
+
+// Scroll suave
+.lista-pacientes {
+  scroll-behavior: smooth;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+// Versión SUPER COMPACTA (agregar si necesitas)
+.grid-especialidades-compact {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.boton-compact {
+  padding: 10px 6px;
+  min-height: 100px;
+  
+  .imagen-especialidad {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .nombre-especialidad {
+    font-size: 0.8rem;
+  }
+}
+
+
+.info-dias {
+  text-align: center;
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.boton-fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #ffc107;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255,193,7,0.2);
+  }
+
+  .dia-semana {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  
+  .fecha-numero {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+  }
+}
+
+.sin-resultados {
+  text-align: center;
+  padding: 30px 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  margin: 20px 0;
+  
+  h3 {
+    color: #dc3545;
+    margin-bottom: 10px;
+  }
+  
+  p {
+    color: #666;
+    margin-bottom: 8px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }

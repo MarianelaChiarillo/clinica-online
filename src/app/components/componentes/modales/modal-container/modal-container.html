@@ -1,83 +1,168 @@
-<!-- modal-container.component.html -->
 <div class="modal-backdrop" *ngIf="isOpen">
   <div class="modal" [class]="modalData?.tipo">
     
+    <button class="close-btn" (click)="cerrarModal()" [disabled]="saving">
+      &times;
+    </button>
+
     <h3>{{ modalData?.titulo }}</h3>
 
-    <p *ngIf="modalData?.mensaje" [innerHTML]="modalData.mensaje"></p>
+    <p *ngIf="modalData?.mensaje" [innerHTML]="modalData?.mensaje || ''"></p>
 
-    <!-- CALIFICACIÓN -->
-    <div *ngIf="modalData?.requiereCalificacion" class="form-group">
-      <label>Calificación (1-5)</label>
-      <div class="rating">
-        <button 
-          *ngFor="let n of [1,2,3,4,5]" 
-          (click)="calificacion = n" 
-          [class.active]="calificacion === n"
-          class="rating-btn"
-        >
-          {{ n }}
-        </button>
-      </div>
-    </div>
-
-    <!-- COMENTARIO -->
-    <div *ngIf="modalData?.requiereComentario" class="form-group">
-      <label>
-        {{ 
-          modalData?.tipo === 'finalizar' ? 'Reseña / Comentario del especialista (opcional)' :
-          modalData?.tipo === 'calificar' ? 'Comentario (opcional)' :
-          'Motivo' 
-        }}
-      </label>
-      <textarea 
-        [(ngModel)]="comentario" 
-        rows="4" 
-        [placeholder]="
-          modalData?.tipo === 'finalizar' ? 'Diagnóstico, observaciones...' :
-          modalData?.tipo === 'calificar' ? 'Contanos cómo fue la atención' :
-          'Ingresá el motivo'
-        "
-      ></textarea>
-    </div>
-
-    <!-- ENCUESTA -->
-    <div *ngIf="modalData?.mostrarEncuesta" class="form-group">
-      <label class="checkbox">
-        <input type="checkbox" [(ngModel)]="crearEncuesta" /> 
-        Crear encuesta para el paciente
-      </label>
+    <ng-container [ngSwitch]="modalData?.tipo">
       
-      <div *ngIf="crearEncuesta" class="encuesta">
-        <label>Pregunta 1</label>
-        <input [(ngModel)]="encuestaRespuestas.p1" placeholder="Pregunta para el paciente" />
-        <label>Pregunta 2</label>
-        <input [(ngModel)]="encuestaRespuestas.p2" placeholder="Pregunta para el paciente" />
-        <label>Pregunta 3</label>
-        <input [(ngModel)]="encuestaRespuestas.p3" placeholder="Pregunta para el paciente" />
-        <label>Observaciones</label>
-        <textarea [(ngModel)]="encuestaRespuestas.observaciones" placeholder="Observaciones adicionales"></textarea>
-      </div>
-    </div>
+      <!-- HISTORIA CLÍNICA -->
+      <ng-container *ngSwitchCase="'historia-clinica'">
+        <app-historia-clinica-form
+          *ngIf="modalData?.turno"
+          [turnoId]="modalData!.turno.id"
+          [pacienteId]="modalData!.turno.paciente_id"
+          [especialistaId]="modalData!.turno.especialista_id"
+          [especialidadId]="modalData!.turno.especialidad_id"
+          (guardado)="onHistoriaClinicaGuardada($event)">
+        </app-historia-clinica-form>
+        
+        <!-- Mensaje si no hay turno -->
+        <div *ngIf="!modalData?.turno" class="error">
+          Error: No se encontraron datos del turno
+        </div>
 
-    <!-- RESEÑAS EXISTENTES -->
-    <div *ngIf="modalData?.tipo === 'comentario'" class="resenias">
-      <div *ngIf="modalData.turno.resenia_del_especialista" class="resenia-item">
-        <h4>Reseña del especialista</h4>
-        <p>{{ modalData.turno.resenia_del_especialista }}</p>
-      </div>
+        <!-- Mensaje de guardando -->
+        <div *ngIf="saving" class="cargando">
+          <p>💾 Guardando historia clínica y finalizando turno...</p>
+        </div>
+      </ng-container>
 
-      <div *ngIf="modalData.turno.comentario_calificacion" class="resenia-item">
-        <h4>Reseña del paciente</h4>
-        <p>{{ modalData.turno.comentario_calificacion }}</p>
-      </div>
+      <!-- CALIFICAR -->
+      <ng-container *ngSwitchCase="'calificar'">
+        <div class="form-group">
+          <label>Calificación (1-5)</label>
+          <div class="rating">
+            <button 
+              *ngFor="let n of [1,2,3,4,5]" 
+              (click)="calificacion = n" 
+              [class.active]="calificacion === n"
+              class="rating-btn"
+            >
+              {{ n }}
+            </button>
+          </div>
+        </div>
 
-      <div *ngIf="!modalData.turno.resenia_del_especialista && !modalData.turno.comentario_calificacion">
-        <p>No hay reseñas disponibles.</p>
-      </div>
-    </div>
+        <div class="form-group">
+          <label>Comentario (opcional)</label>
+          <textarea 
+            [(ngModel)]="comentario" 
+            rows="4" 
+            placeholder="Contanos cómo fue la atención"
+          ></textarea>
+        </div>
+      </ng-container>
 
-    <!-- ERROR -->
+      <!-- FINALIZAR (viejo - por si acaso se usa en algún lugar) -->
+      <ng-container *ngSwitchCase="'finalizar'">
+        <div class="form-group">
+          <label>Reseña / Comentario del especialista (opcional)</label>
+          <textarea 
+            [(ngModel)]="comentario" 
+            rows="4" 
+            placeholder="Diagnóstico, observaciones..."
+          ></textarea>
+        </div>
+
+        <div class="form-group" *ngIf="modalData?.mostrarEncuesta">
+          <label class="checkbox">
+            <input type="checkbox" [(ngModel)]="crearEncuesta" /> 
+            Crear encuesta para el paciente
+          </label>
+          
+          <div *ngIf="crearEncuesta" class="encuesta">
+            <label>Pregunta 1</label>
+            <input [(ngModel)]="encuestaRespuestas.p1" placeholder="Pregunta para el paciente" />
+            <label>Pregunta 2</label>
+            <input [(ngModel)]="encuestaRespuestas.p2" placeholder="Pregunta para el paciente" />
+            <label>Pregunta 3</label>
+            <input [(ngModel)]="encuestaRespuestas.p3" placeholder="Pregunta para el paciente" />
+            <label>Observaciones</label>
+            <textarea [(ngModel)]="encuestaRespuestas.observaciones" placeholder="Observaciones adicionales"></textarea>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- CANCELAR -->
+      <ng-container *ngSwitchCase="'cancelar'">
+        <div class="form-group">
+          <label>Motivo</label>
+          <textarea 
+            [(ngModel)]="comentario" 
+            rows="4" 
+            placeholder="Ingresá el motivo"
+          ></textarea>
+        </div>
+      </ng-container>
+
+      <!-- RECHAZAR -->
+      <ng-container *ngSwitchCase="'rechazar'">
+        <div class="form-group">
+          <label>Motivo</label>
+          <textarea 
+            [(ngModel)]="comentario" 
+            rows="4" 
+            placeholder="Ingresá el motivo"
+          ></textarea>
+        </div>
+      </ng-container>
+
+      <!-- COMENTARIO (para ver reseñas) -->
+      <ng-container *ngSwitchCase="'comentario'">
+        <div class="resenias">
+          <!-- Reseña del ESPECIALISTA -->
+          <div *ngIf="modalData?.turno?.comentario_especialista" class="resenia-item">
+            <h4>📝 Reseña del especialista</h4>
+            <p class="resenia-texto">{{ modalData!.turno.comentario_especialista }}</p>
+            <small class="resenia-fecha">
+              Fecha: {{ modalData!.turno.fecha_turno | date:'dd/MM/yyyy' }}
+            </small>
+          </div>
+
+          <!-- Reseña del PACIENTE (calificación) -->
+          <div *ngIf="modalData?.turno?.comentario_calificacion" class="resenia-item">
+            <h4>⭐ Calificación del paciente</h4>
+            <div class="calificacion" *ngIf="modalData!.turno.calificacion_atencion">
+              <span class="estrellas">
+                {{ '★'.repeat(modalData!.turno.calificacion_atencion) }}{{ '☆'.repeat(5 - modalData!.turno.calificacion_atencion) }}
+              </span>
+              <span class="puntuacion">({{ modalData!.turno.calificacion_atencion }}/5)</span>
+            </div>
+            <p class="resenia-texto">{{ modalData!.turno.comentario_calificacion }}</p>
+          </div>
+
+          <!-- Mensaje si no hay reseñas -->
+          <div *ngIf="!modalData?.turno?.comentario_especialista && !modalData?.turno?.comentario_calificacion" class="sin-resenias">
+            <p>📝 No hay reseñas disponibles para este turno.</p>
+            <small>Las reseñas aparecerán después de que el especialista finalice la atención.</small>
+          </div>
+
+          <!-- Información sobre Historia Clínica -->
+          <div *ngIf="modalData?.turno?.comentario_especialista === 'Consulta completada - Historia clínica registrada'" 
+               class="info-historia-clinica">
+            <div class="aviso">
+              <strong>📋 Información:</strong>
+              <p>Este turno tiene historia clínica completa disponible.</p>
+              <small>La reseña general fue reemplazada por datos médicos estructurados.</small>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ACEPTAR -->
+      <ng-container *ngSwitchCase="'aceptar'">
+        <!-- Solo muestra el mensaje -->
+      </ng-container>
+
+    </ng-container>
+
+    <!-- ERROR GENERAL -->
     <div class="error" *ngIf="error">{{ error }}</div>
 
     <!-- ACCIONES -->
@@ -90,15 +175,16 @@
         {{ modalData?.tipo === 'comentario' ? 'Cerrar' : 'Cancelar' }}
       </button>
 
-      <button 
-        *ngIf="modalData?.tipo !== 'comentario'"
-        class="btn" 
-        [class]="getButtonClass()"
-        (click)="confirmarAccion()" 
-        [disabled]="saving || !validarBoton()"
-      >
-        {{ saving ? 'Guardando...' : getButtonText() }}
-      </button>
+    <!-- Línea 179 - VERSIÓN CORREGIDA -->
+<button 
+  *ngIf="modalData?.tipo !== 'comentario' && modalData?.tipo !== 'historia-clinica'"
+  class="btn" 
+  [class]="getButtonClass()"
+  (click)="confirmarAccion()" 
+  [disabled]="saving || !validarBoton()"
+>
+  {{ saving ? 'Guardando...' : getButtonText() }}
+</button>
     </div>
 
   </div>

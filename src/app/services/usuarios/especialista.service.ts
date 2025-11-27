@@ -16,9 +16,7 @@ export class EspecialistaService {
       imagen_perfil: especialista.imagen_perfil,
     });
 
-    if (usuario.error || !usuario.data) {
-      throw usuario.error;
-    }
+    if (usuario.error || !usuario.data) throw usuario.error;
 
     const especialistaInsert = await supabase
       .from('especialistas')
@@ -32,9 +30,7 @@ export class EspecialistaService {
       .select()
       .single();
 
-    if (especialistaInsert.error || !especialistaInsert.data) {
-      throw especialistaInsert.error;
-    }
+    if (especialistaInsert.error || !especialistaInsert.data) throw especialistaInsert.error;
 
     if (especialidadesIds?.length > 0) {
       const relaciones = especialidadesIds.map(id => ({
@@ -50,6 +46,15 @@ export class EspecialistaService {
     }
 
     return { usuario: usuario.data, especialista: especialistaInsert.data };
+  }
+
+  async actualizarDatos(usuarioId: number, datos: any) {
+    const { error } = await supabase
+      .from('especialistas')
+      .update(datos)
+      .eq('usuario_id', usuarioId);
+
+    if (error) throw error;
   }
 
   async obtenerPorId(especialistaId: number): Promise<Especialista | null> {
@@ -110,19 +115,13 @@ export class EspecialistaService {
     if (relaciones.error || !relaciones.data?.length) return [];
 
     const ids = relaciones.data.map(rel => rel.especialidad_id);
-    
     const especialidades = await supabase
       .from('especialidades')
       .select('id, nombre')
       .in('id', ids);
 
     if (especialidades.error) return [];
-
-    return especialidades.data.map(esp => ({
-      id: esp.id,
-      nombre: esp.nombre,
-      activo: true
-    }));
+    return especialidades.data.map(esp => ({ id: esp.id, nombre: esp.nombre, activo: true }));
   }
 
   async obtenerTodos(): Promise<any[]> {
@@ -166,9 +165,7 @@ export class EspecialistaService {
       .eq('auth_id', authId)
       .single();
 
-    if (usuario.error || !usuario.data) {
-      throw usuario.error;
-    }
+    if (usuario.error || !usuario.data) throw usuario.error;
 
     const updateUser = await supabase
       .from('usuarios')
@@ -193,53 +190,38 @@ export class EspecialistaService {
     if (updateEsp.error) throw updateEsp.error;
   }
 
-async obtenerPorEspecialidad(especialidadId: number): Promise<any[]> {
-  // 1) Buscar relaciones en la tabla puente
-  const { data: relaciones, error: relError } = await supabase
-    .from('especialista_especialidad')
-    .select('especialista_id')
-    .eq('especialidad_id', especialidadId)
-    .eq('activo', true);
+  async obtenerPorEspecialidad(especialidadId: number): Promise<any[]> {
+    const { data: relaciones, error: relError } = await supabase
+      .from('especialista_especialidad')
+      .select('especialista_id')
+      .eq('especialidad_id', especialidadId)
+      .eq('activo', true);
 
-  if (relError) {
-    console.error('❌ Error obteniendo relaciones especialista-especialidad', relError);
-    return [];
+    if (relError) return [];
+    if (!relaciones?.length) return [];
+
+    const ids = relaciones.map(r => r.especialista_id);
+    const { data: especialistas, error: espError } = await supabase
+      .from('especialistas')
+      .select(`
+        id,
+        nombre,
+        apellido,
+        usuario:usuario_id ( email, estado )
+      `)
+      .in('id', ids);
+
+    if (espError) return [];
+
+    return especialistas.map(e => {
+      const usuario = Array.isArray(e.usuario) ? e.usuario[0] : e.usuario;
+      return {
+        id: e.id,
+        nombre: e.nombre,
+        apellido: e.apellido,
+        email: usuario?.email || '',
+        estado: usuario?.estado || 'pendiente',
+      };
+    });
   }
-
-  if (!relaciones?.length) return [];
-
-  const ids = relaciones.map(r => r.especialista_id);
-
-  // 2) Obtener especialistas
-  const { data: especialistas, error: espError } = await supabase
-    .from('especialistas')
-    .select(`
-      id,
-      nombre,
-      apellido,
-      usuario:usuario_id ( email, estado )
-    `)
-    .in('id', ids);
-
-  if (espError) {
-    console.error('❌ Error obteniendo especialistas:', espError);
-    return [];
-  }
-
-  // 3) Normalizar usuario[] => usuario
-  return especialistas.map(e => {
-    const usuario = Array.isArray(e.usuario) ? e.usuario[0] : e.usuario;
-
-    return {
-      id: e.id,
-      nombre: e.nombre,
-      apellido: e.apellido,
-      email: usuario?.email || '',
-      estado: usuario?.estado || 'pendiente',
-    };
-  });
-}
-
-
-
 }

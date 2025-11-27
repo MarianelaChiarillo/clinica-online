@@ -1,9 +1,0 @@
-.modal-backdrop { position: fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.4); z-index:1000; }
-.modal { width:520px; background:#fff; padding:16px; border-radius:8px; }
-textarea, input { width:100%; margin:6px 0; }
-.encuesta { border:1px dashed #ddd; padding:8px; border-radius:6px; margin-top:8px; }
-.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
-.btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
-.btn.ghost { background:#eee; }
-.btn.primary { background:#28a745; color:white; }
-.error { color:#b00020; margin-top:6px; }

@@ -1,173 +1,95 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ModalService, ModalData } from '../../../../services/modal.service';
 import { TurnosService } from '../../../../services/turnos.service';
-import supabase from '../../../../services/supabase.client';
-import { ModalService } from '../../../../services/modal.service';
+import { HistoriaClinicaFormComponent } from '../../../historia-clinica/historia-clinica.component';
+
 @Component({
   selector: 'app-modal-container',
-  standalone: true,  // ← Asegúrate de que esto esté en true
-  imports: [CommonModule, FormsModule],  // ← Solo imports de Angular
+  standalone: true,
+  imports: [CommonModule, FormsModule, HistoriaClinicaFormComponent],
   templateUrl: './modal-container.html',
+  styleUrls: ['./modal-container.scss']
 })
 export class ModalContainerComponent implements OnInit {
-  modalData: any = null;
   isOpen = false;
-
-  // Datos del formulario
-  comentario: string = '';
-  calificacion: number | null = null;
-  crearEncuesta = false;
-  encuestaRespuestas = { p1: '', p2: '', p3: '', observaciones: '' };
-  
+  modalData: ModalData | null = null;
   saving = false;
-  error: string | null = null;
+  error = '';
+  
+  // Campos del formulario
+  comentario = '';
+  calificacion = 0;
+  crearEncuesta = false;
+  encuestaRespuestas = {
+    p1: '',
+    p2: '',
+    p3: '',
+    observaciones: ''
+  };
 
   constructor(
     private modalService: ModalService,
-    private turnosService: TurnosService,
-
+    private turnosService: TurnosService
   ) {}
 
   ngOnInit() {
     this.modalService.modal$.subscribe(data => {
-      this.modalData = data;
       this.isOpen = !!data;
+      this.modalData = data;
       this.resetForm();
     });
   }
 
   private resetForm() {
     this.comentario = '';
-    this.calificacion = null;
+    this.calificacion = 0;
     this.crearEncuesta = false;
     this.encuestaRespuestas = { p1: '', p2: '', p3: '', observaciones: '' };
+    this.error = '';
     this.saving = false;
-    this.error = null;
   }
 
-  cerrarModal() {
-    this.modalService.cerrarModal();
+  // MÉTODO CORREGIDO - GUARDAR HISTORIA CLÍNICA + RESEÑA
+async onHistoriaClinicaGuardada(resultado: any) {
+  console.log('🔵 onHistoriaClinicaGuardada llamado con:', resultado);
+
+  if (!resultado.success) {
+    this.error = resultado.error;
+    return;
   }
 
-  async confirmarAccion() {
-    if (!this.modalData) return;
+  this.saving = true;
+  this.error = '';
 
-    try {
-      this.saving = true;
-      this.error = null;
+  try {
+    const comentario = resultado.comentario || 'Consulta completada';
 
-      switch (this.modalData.tipo) {
-        case 'aceptar':
-          await this.turnosService.aceptarTurno(this.modalData.turno.id);
-          break;
-        case 'cancelar':
-          if (!this.validarComentario()) return;
-          await this.turnosService.cancelarTurno(this.modalData.turno.id, this.comentario);
-          break;
-        case 'rechazar':
-          if (!this.validarComentario()) return;
-          await this.turnosService.rechazarTurno(this.modalData.turno.id, this.comentario);
-          break;
-        case 'finalizar':
-          await this.finalizarTurno();
-          break;
-        case 'calificar':
-          if (!this.validarCalificacion()) return;
-          await this.turnosService.calificarAtencion(this.modalData.turno.id, this.calificacion!, this.comentario);
-          break;
-      }
+    await this.turnosService.finalizarTurno(
+      this.modalData!.turno.id,
+      comentario
+    );
 
-      this.cerrarModal();
-      
-    } catch (error: any) {
-      this.error = error.message || 'Error inesperado';
-    } finally {
-      this.saving = false;
-    }
+    this.modalService.cerrarModal({
+      success: true,
+      historiaData: resultado.historia,
+      tipo: 'historia-clinica',
+      message: 'Turno finalizado e historia clínica guardada correctamente'
+    });
+
+  } catch (err: any) {
+    console.error(err);
+    this.error = 'Error guardando comentario del especialista: ' + err.message;
+  } finally {
+    this.saving = false;
   }
+}
 
-  private async finalizarTurno() {
-    if (!this.validarFinalizacion()) return;
-    
-    // Si hay encuesta, crearla primero
-    if (this.crearEncuesta) {
-      const { data: encData, error: encErr } = await supabase
-        .from('encuestas')
-        .insert([{
-          turno_id: this.modalData.turno.id,
-          pregunta_1: this.encuestaRespuestas.p1,
-          pregunta_2: this.encuestaRespuestas.p2,
-          pregunta_3: this.encuestaRespuestas.p3,
-          observaciones: this.encuestaRespuestas.observaciones
-        }])
-        .select()
-        .single();
-
-      if (encErr) throw new Error(encErr.message);
-      
-      // Actualizar turno con ID de encuesta
-      await this.turnosService.finalizarTurnoConEncuesta(
-        this.modalData.turno.id, 
-        this.comentario,
-        encData.id
-      );
-    } else {
-      // Finalizar sin encuesta
-      await this.turnosService.finalizarTurno(this.modalData.turno.id, this.comentario);
-    }
-  }
-
-  private validarComentario(): boolean {
-    if (!this.comentario.trim()) {
-      this.error = 'Por favor ingresá el motivo.';
-      return false;
-    }
-    return true;
-  }
-
-  private validarCalificacion(): boolean {
-    if (!this.calificacion || this.calificacion < 1 || this.calificacion > 5) {
-      this.error = 'Ingresá una calificación entre 1 y 5.';
-      return false;
-    }
-    return true;
-  }
-
-  private validarFinalizacion(): boolean {
-    if (!this.comentario.trim() && !this.crearEncuesta) {
-      this.error = 'Agregá una reseña o marcá que crearás encuesta.';
-      return false;
-    }
-    return true;
-  }
-
-  // Métodos para el template
-  getButtonClass(): string {
-    const classes: any = {
-      'aceptar': 'primary',
-      'cancelar': 'danger', 
-      'rechazar': 'warn',
-      'finalizar': 'primary',
-      'calificar': 'primary'
-    };
-    return classes[this.modalData?.tipo] || 'primary';
-  }
-
-  getButtonText(): string {
-    const textos: any = {
-      'aceptar': 'Aceptar',
-      'cancelar': 'Confirmar cancelación',
-      'rechazar': 'Rechazar turno',
-      'finalizar': 'Finalizar turno',
-      'calificar': 'Enviar calificación'
-    };
-    return textos[this.modalData?.tipo] || 'Confirmar';
-  }
 
   validarBoton(): boolean {
     if (!this.modalData) return false;
-    
+
     switch (this.modalData.tipo) {
       case 'cancelar':
       case 'rechazar':
@@ -176,8 +98,76 @@ export class ModalContainerComponent implements OnInit {
         return !!this.calificacion;
       case 'finalizar':
         return !!this.comentario.trim() || this.crearEncuesta;
+      
       default:
         return true;
     }
+  }
+
+  getButtonText(): string {
+    if (!this.modalData) return 'Confirmar';
+    
+    switch (this.modalData.tipo) {
+      case 'aceptar': return 'Aceptar';
+      case 'cancelar': return 'Cancelar';
+      case 'rechazar': return 'Rechazar';
+      case 'finalizar': return 'Finalizar';
+      case 'calificar': return 'Calificar';
+      default: return 'Confirmar';
+    }
+  }
+
+  getButtonClass(): string {
+    if (!this.modalData) return 'primary';
+    
+    switch (this.modalData.tipo) {
+      case 'aceptar': return 'success';
+      case 'cancelar': 
+      case 'rechazar': return 'danger';
+      case 'finalizar': return 'warning';
+      case 'calificar': return 'info';
+      default: return 'primary';
+    }
+  }
+
+  async confirmarAccion() {
+    if (!this.modalData) return;
+
+    this.saving = true;
+    this.error = '';
+
+    try {
+      let resultado;
+
+      switch (this.modalData.tipo) {
+        case 'aceptar':
+          resultado = await this.turnosService.aceptarTurno(this.modalData.turno.id);
+          break;
+        case 'cancelar':
+          resultado = await this.turnosService.cancelarTurno(this.modalData.turno.id, this.comentario);
+          break;
+        case 'rechazar':
+          resultado = await this.turnosService.rechazarTurno(this.modalData.turno.id, this.comentario);
+          break;
+        case 'finalizar':
+          // Este caso ya no se usa porque lo reemplazamos por historia-clínica
+          resultado = await this.turnosService.finalizarTurno(this.modalData.turno.id, this.comentario);
+          break;
+        case 'calificar':
+          resultado = await this.turnosService.calificarAtencion(this.modalData.turno.id, this.calificacion, this.comentario);
+          break;
+      }
+
+      this.modalService.cerrarModal({ success: true, data: resultado });
+      
+    } catch (err: any) {
+      this.error = err.message || 'Error al procesar la acción';
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  cerrarModal() {
+    this.modalService.cerrarModal();
   }
 }

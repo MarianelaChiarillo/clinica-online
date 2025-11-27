@@ -157,4 +157,6 @@ const horasOcupadas = turnos.map((t: any) =>
     const horarios = await this.obtenerHorariosPorEspecialista(especialistaId);
     return horarios.some(h => h.dia_semana === diaSemana && h.activo);
   }
+
+  
 }

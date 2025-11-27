@@ -81,13 +81,15 @@ export class TurnosService {
     return data as Turno[];
   }
 
-  async obtenerTurnosPorPaciente(pacienteId: number): Promise<Turno[]> {
+  async obtenerTurnosPorPaciente(pacienteId: number): Promise<any[]> {
     const { data, error } = await supabase
       .from('turnos')
       .select(`
         *,
-        especialistas(id, nombre, apellido),
-        especialidades(id, nombre)
+        pacientes(*),
+        especialistas(*),
+        especialidades(*),
+        encuestas!left(*)
       `)
       .eq('paciente_id', pacienteId)
       .order('fecha_turno', { ascending: true });
@@ -97,9 +99,11 @@ export class TurnosService {
       return [];
     }
 
-    return data as Turno[];
+    console.log('TURNOS CON ENCUESTAS →', data);
+    return data;
   }
 
+  
   // ==================== GESTIÓN DE TURNOS ====================
 
   async crearTurno(turnoData: {
@@ -219,54 +223,193 @@ export class TurnosService {
 
   // ==================== CALIFICACIONES Y ENCUESTAS ====================
 
+  async calificarAtencion(turnoId: number, calificacion: number, comentario?: string) {
+    const updateData: any = { 
+      calificacion_atencion: calificacion 
+    };
 
+    if (comentario) {
+      updateData.comentario_calificacion = comentario;
+    }
 
-  async completarEncuesta(turnoId: number, comentario: string) {
     const { error } = await supabase
       .from('turnos')
-      .update({ reseña_paciente: comentario })
+      .update(updateData)
       .eq('id', turnoId);
 
     if (error) throw error;
   }
-// En tu turnos.service.ts - agregar estos métodos
-async finalizarTurnoConEncuesta(turnoId: number, resena: string, encuestaId: number) {
-  const updateData: any = { 
-    estado: 'realizado'
-  };
 
-  if (resena.trim()) {
-    updateData.comentario_especialista = resena;
+  // ==================== MÉTODOS PARA ENCUESTAS ====================
+// Y en completarEncuesta, quita la llamada a marcarTurnoConEncuesta:
+async completarEncuesta(turnoId: number, encuestaData: {
+  instalaciones: number;
+  atencion: number;
+  tiempo_espera: number;
+  general: number;
+  comentarios?: string;
+}) {
+  const { data, error } = await supabase
+    .from('encuestas')
+    .insert([{
+      turno_id: turnoId,
+      instalaciones: encuestaData.instalaciones,
+      atencion: encuestaData.atencion,
+      tiempo_espera: encuestaData.tiempo_espera,
+      general: encuestaData.general,
+      comentarios: encuestaData.comentarios
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error completando encuesta:', error);
+    throw error;
   }
 
-  if (encuestaId) {
-    updateData.id_encuesta = encuestaId;
+  // NO marcar el turno con encuesta - la relación encuestas!left ya lo maneja
+  return data;
+}
+
+  async obtenerEncuestaPorTurno(turnoId: number) {
+    const { data, error } = await supabase
+      .from('encuestas')
+      .select('*')
+      .eq('turno_id', turnoId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error obteniendo encuesta:', error);
+      throw error;
+    }
+    return data;
   }
 
+  // En tu turnos.service.ts - AGREGAR ESTOS MÉTODOS
+
+// ==================== MÉTODOS PARA CUALQUIER USUARIO ====================
+
+/**
+ * Obtener turnos por ID de paciente (para administradores)
+ */
+
+/**
+ * Obtener turnos por ID de especialista (para administradores)
+ */
+
+
+// En turnos.service.ts - AGREGAR ESTE MÉTODO DE DEBUG
+async debugEstructuraTurnos(): Promise<void> {
+  console.log('🔍 === DEBUG ESTRUCTURA DE TURNOS ===');
+  
+  // Ver algunos turnos existentes
+  const { data: turnos, error } = await supabase
+    .from('turnos')
+    .select('*')
+    .limit(5);
+
+  if (error) {
+    console.error('Error obteniendo turnos:', error);
+    return;
+  }
+
+  console.log('📋 TURNOS EXISTENTES:', turnos);
+  
+  // Ver estructura de pacientes
+  const { data: pacientes } = await supabase
+    .from('pacientes')
+    .select('id, nombre, usuario_id')
+    .limit(5);
+
+  console.log('👤 PACIENTES EXISTENTES:', pacientes);
+  
+  // Ver estructura de especialistas  
+  const { data: especialistas } = await supabase
+    .from('especialistas')
+    .select('id, nombre, usuario_id')
+    .limit(5);
+
+  console.log('🩺 ESPECIALISTAS EXISTENTES:', especialistas);
+}
+// En turnos.service.ts - REEMPLAZAR los métodos problemáticos
+
+async obtenerTurnosPorPacienteId(usuarioId: number): Promise<any[]> {
+  console.log('🔍 Buscando turnos para usuario ID:', usuarioId);
+  
+  // PRIMERO: Obtener el ID del paciente desde la tabla pacientes
+  const { data: paciente, error: errorPaciente } = await supabase
+    .from('pacientes')
+    .select('id')
+    .eq('usuario_id', usuarioId)
+    .single();
+
+  if (errorPaciente || !paciente) {
+    console.error('❌ No se encontró paciente para usuario ID:', usuarioId, errorPaciente);
+    return [];
+  }
+
+  console.log('✅ Paciente encontrado - ID real:', paciente.id, 'para usuario:', usuarioId);
+
+  // SEGUNDO: Buscar turnos usando el ID real del paciente
   const { data, error } = await supabase
     .from('turnos')
-    .update(updateData)
-    .eq('id', turnoId)
-    .select();
+    .select(`
+      *,
+      pacientes(*),
+      especialistas(*),
+      especialidades(*),
+      encuestas!left(*)
+    `)
+    .eq('paciente_id', paciente.id)
+    .order('fecha_turno', { ascending: true });
 
-  if (error) throw error;
-  return data?.[0];
-}
-
-async calificarAtencion(turnoId: number, calificacion: number, comentario?: string) {
-  const updateData: any = { 
-    calificacion_atencion: calificacion 
-  };
-
-  if (comentario) {
-    updateData.comentario_calificacion = comentario;
+  if (error) {
+    console.error('❌ Error obteniendo turnos:', error);
+    return [];
   }
 
-  const { error } = await supabase
-    .from('turnos')
-    .update(updateData)
-    .eq('id', turnoId);
+  console.log('✅ Turnos encontrados para paciente', paciente.id, ':', data.length, 'turnos');
+  return data;
+}
 
-  if (error) throw error;
+async obtenerTurnosPorEspecialistaId(usuarioId: number): Promise<any[]> {
+  console.log('🔍 Buscando turnos para especialista usuario ID:', usuarioId);
+  
+  // PRIMERO: Obtener el ID del especialista desde la tabla especialistas
+  const { data: especialista, error: errorEspecialista } = await supabase
+    .from('especialistas')
+    .select('id')
+    .eq('usuario_id', usuarioId)
+    .single();
+
+  if (errorEspecialista || !especialista) {
+    console.error('❌ No se encontró especialista para usuario ID:', usuarioId, errorEspecialista);
+    return [];
+  }
+
+  console.log('✅ Especialista encontrado - ID real:', especialista.id, 'para usuario:', usuarioId);
+
+  // SEGUNDO: Buscar turnos usando el ID real del especialista
+  const { data, error } = await supabase
+    .from('turnos')
+    .select(`
+      *,
+      pacientes(*),
+      especialistas(*),
+      especialidades(*),
+      encuestas!left(*)
+    `)
+    .eq('especialista_id', especialista.id)
+    .order('fecha_turno', { ascending: true });
+
+  if (error) {
+    console.error('❌ Error obteniendo turnos:', error);
+    return [];
+  }
+
+  console.log('✅ Turnos encontrados para especialista', especialista.id, ':', data.length, 'turnos');
+  return data;
 }
 }
+
+

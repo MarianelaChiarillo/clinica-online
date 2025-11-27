@@ -2,12 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import supabase from '../../../services/supabase.client';
-import { CancelarTurnoModalComponent } from '../../componentes/modales/cancelar-turno-modal/cancelar-turno-modal.component';
 
 @Component({
   selector: 'app-turnos-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, CancelarTurnoModalComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './turnos-admin.component.html',
   styleUrls: ['./turnos-admin.component.scss'],
 })
@@ -19,12 +18,14 @@ export class TurnosAdminComponent implements OnInit {
 
   turnoSeleccionado: any = null;
   modalCancelar = false;
+  comentarioCancelacion: string = '';
+  guardando = false;
+  error: string | null = null;
 
   async ngOnInit() {
     await this.cargarTurnos();
   }
 
-  // Cargar todos los turnos
   async cargarTurnos() {
     const { data, error } = await supabase
       .from('turnos')
@@ -42,7 +43,6 @@ export class TurnosAdminComponent implements OnInit {
     }
   }
 
-  // Filtro único (por especialista y especialidad)
   aplicarFiltro() {
     const f = this.filtro.toLowerCase();
 
@@ -52,33 +52,61 @@ export class TurnosAdminComponent implements OnInit {
     );
   }
 
-  // Mostrar botón cancelar según estado
-puedeCancelar(t: any): boolean {
+ puedeCancelar(t: any): boolean {
   const estado = t.estado?.toLowerCase().trim();
-
-  return (
-    estado !== 'aceptado' &&
-    estado !== 'realizado' &&
-    estado !== 'rechazado'
-  );
+  const puede = estado !== 'aceptado' &&
+                estado !== 'realizado' &&
+                estado !== 'rechazado' &&
+                estado !== 'cancelado';
+  
+  console.log(`Turno ${t.id} - Estado: ${estado} - Puede cancelar: ${puede}`);
+  return puede;
 }
-
   abrirCancelar(turno: any) {
     this.turnoSeleccionado = turno;
     this.modalCancelar = true;
+    this.comentarioCancelacion = '';
+    this.error = null;
   }
 
-async cerrarModal(event?: boolean) {
-  this.modalCancelar = false;
-  this.turnoSeleccionado = null;
+  async confirmarCancelacion() {
+    if (!this.comentarioCancelacion.trim()) {
+      this.error = 'Por favor ingresá el motivo de la cancelación.';
+      return;
+    }
 
-  if (event === true) {
-    await this.cargarTurnos();  // 🔥 Estado actualizado
-    this.aplicarFiltro();       // 🔥 Filtro actualizado
+    this.guardando = true;
+    this.error = null;
+
+    try {
+      const { error } = await supabase
+        .from('turnos')
+        .update({
+          estado: 'cancelado',
+          comentario_cancelacion: this.comentarioCancelacion
+        })
+        .eq('id', this.turnoSeleccionado.id);
+
+      if (error) throw error;
+
+      this.cerrarModal(true);
+      
+    } catch (error: any) {
+      this.error = error.message || 'Error al cancelar el turno';
+    } finally {
+      this.guardando = false;
+    }
+  }
+
+  cerrarModal(recargar: boolean = false) {
+    this.modalCancelar = false;
+    this.turnoSeleccionado = null;
+    this.comentarioCancelacion = '';
+    this.error = null;
+
+    if (recargar) {
+      this.cargarTurnos();
+      this.aplicarFiltro();
+    }
   }
 }
-
-
-}
-
-

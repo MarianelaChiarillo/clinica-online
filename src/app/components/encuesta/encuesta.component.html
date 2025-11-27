@@ -1,0 +1,45 @@
+<div class="modal-backdrop" (click)="cerrar()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>📊 Encuesta de Satisfacción</h3>
+    
+    <div class="pregunta" *ngFor="let pregunta of preguntas">
+      <label>{{ pregunta.texto }}</label>
+      <div class="rating">
+        <button 
+          *ngFor="let n of [1,2,3,4,5]" 
+          (click)="respuestas[pregunta.campo] = n" 
+          [class.active]="respuestas[pregunta.campo] === n"
+          class="rating-btn"
+          type="button"
+        >
+          {{ n }}
+        </button>
+      </div>
+      <small class="hint">{{ pregunta.hint }}</small>
+    </div>
+
+    <div class="form-group">
+      <label>Comentarios adicionales (opcional)</label>
+      <textarea 
+        [(ngModel)]="respuestas.comentarios" 
+        rows="3" 
+        placeholder="¿Algún comentario o sugerencia para mejorar nuestro servicio?"
+      ></textarea>
+    </div>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+
+    <div class="actions">
+      <button class="btn ghost" (click)="cerrar()" [disabled]="enviando">
+        Cancelar
+      </button>
+      <button 
+        class="btn primary" 
+        (click)="enviarEncuesta()" 
+        [disabled]="!encuestaCompleta() || enviando"
+      >
+        {{ enviando ? 'Enviando...' : 'Enviar Encuesta' }}
+      </button>
+    </div>
+  </div>
+</div>

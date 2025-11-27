@@ -8,7 +8,6 @@ export class PacienteService {
   constructor(private usuarioSrv: UsuarioService) {}
 
   async guardar(paciente: Paciente) {
-    // 1️⃣ Crear usuario base
     const { data: usuarioData, error: usuarioError } = await this.usuarioSrv.crear({
       auth_id: paciente.auth_id,
       email: paciente.email,
@@ -19,7 +18,6 @@ export class PacienteService {
 
     if (usuarioError || !usuarioData) throw usuarioError;
 
-    // 2️⃣ Crear perfil paciente
     const { data: pacienteData, error: pacienteError } = await supabase
       .from('pacientes')
       .insert([{
@@ -37,5 +35,24 @@ export class PacienteService {
     if (pacienteError) throw pacienteError;
 
     return pacienteData;
+  }
+
+  async actualizarDatos(usuarioId: number, datos: any) {
+    const { error } = await supabase
+      .from('pacientes')
+      .update(datos)
+      .eq('usuario_id', usuarioId);
+
+    if (error) throw error;
+  }
+
+  async obtenerPorUsuarioId(usuarioId: number) {
+    const { data, error } = await supabase
+      .from('pacientes')
+      .select('*')
+      .eq('usuario_id', usuarioId)
+      .single();
+
+    return { data, error };
   }
 }
