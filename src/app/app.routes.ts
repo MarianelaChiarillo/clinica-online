@@ -110,5 +110,13 @@ export const routes: Routes = [
         (m) => m.PacientesAtendidosComponent
       ),
   },
+   {
+        path: 'estadisticas-admin',
+        canActivate: [AuthGuard, RoleGuard],
+        data: { rol: 'administrador' },
+        loadComponent: () =>
+          import('../app/components/estadisticas-admin/estadisticas-admin.component').then((m) => m.EstadisticasAdminComponent),
+      },
   { path: '**', redirectTo: 'home' },
+
 ];

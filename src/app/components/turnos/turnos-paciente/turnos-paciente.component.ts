@@ -7,6 +7,9 @@ import { ModalService } from '../../../services/modal.service';
 import { TurnosService } from '../../../services/turnos.service';
 import supabase from '../../../services/supabase.client';
 import { MenuComponent } from '../../componentes/menu/menu.component';
+import { HistoriaClinicaService } from '../../../services/usuarios/historia-clinica.service';
+import { TurnoExtendido } from '../../../models/turno';
+import { FiltroService } from '../../../services/usuarios/filtro.service';
 
 @Component({
   selector: 'app-turnos-paciente',
@@ -22,10 +25,9 @@ import { MenuComponent } from '../../componentes/menu/menu.component';
   styleUrls: ['./turnos-paciente.component.scss'],
 })
 export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
-
   cargando = false;
-  turnos: any[] = [];
-  turnosFiltrados: any[] = [];
+  turnos: TurnoExtendido[] = [];
+  turnosFiltrados: TurnoExtendido[] = [];
 
   // Variables para controlar el modal de encuesta
   mostrarEncuestaModal = false;
@@ -35,7 +37,9 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: ModalService,
-    private turnosService: TurnosService
+    private turnosService: TurnosService,
+    private historiaClinicaService: HistoriaClinicaService,
+    private filtroService: FiltroService
   ) {}
 
   async ngOnInit() {
@@ -66,45 +70,78 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
       .subscribe();
   }
 
-
-
-  filtrar(valor: string) {
-    const f = valor.toLowerCase();
-    this.turnosFiltrados = this.turnos.filter(t =>
-      t.especialidades?.nombre.toLowerCase().includes(f) ||
-      `${t.especialistas?.nombre} ${t.especialistas?.apellido}`.toLowerCase().includes(f)
-    );
+  async obtenerTurnos() {
+    this.cargando = true;
+    const turnosBase = await this.turnosService.obtenerTurnosDelPacienteActual();
+    
+    // Inicializar turnos con estructura extendida
+    this.turnos = turnosBase.map(turno => ({
+      ...turno,
+      historia_clinica: undefined,
+      coincidencias: []
+    })) as TurnoExtendido[];
+    
+    // Cargar historias clínicas para los turnos realizados
+    await this.cargarHistoriasClinicas();
+    
+    this.turnosFiltrados = [...this.turnos];
+    this.cargando = false;
   }
 
-acciones(t: any): string[] {
-  const acciones = [];
-
-  if (t.estado !== 'realizado') {
-    acciones.push('cancelar');
-  } else {
-    // Solo para turnos realizados
+  private async cargarHistoriasClinicas(): Promise<void> {
+    const turnosRealizados = this.turnos.filter(t => t.estado === 'realizado');
     
-    // ENCUESTA: disponible si el array de encuestas está VACÍO
-    if (Array.isArray(t.encuestas) && t.encuestas.length === 0) {
-      acciones.push('completar_encuesta');
-    }
-    
-    // CALIFICACIÓN: disponible si no tiene calificación
-    if (!t.calificacion_atencion) {
-      acciones.push('calificar');
-    }
+    const promesas = turnosRealizados.map(async (turno) => {
+      try {
+        const historia = await this.historiaClinicaService.obtenerHistoriaClinicaPorTurno(turno.id);
+        turno.historia_clinica = historia;
+      } catch (error) {
+        console.error(`Error cargando historia clínica para turno ${turno.id}:`, error);
+        turno.historia_clinica = null;
+      }
+    });
 
-    // RESEÑA: disponible si hay comentario del especialista
-    if (t.comentario_especialista?.trim()) {
-      acciones.push('ver_resena');
-    }
+    await Promise.all(promesas);
   }
 
-  console.log('Turno', t.id, '- Acciones:', acciones, '- Encuestas:', t.encuestas);
-  return acciones;
-}
+  // Método llamado cuando el filtro general emite turnos filtrados
+  onTurnosFiltradosChange(turnosFiltrados: TurnoExtendido[]) {
+    this.turnosFiltrados = turnosFiltrados;
+  }
 
-  async ejecutarAccion(accion: string, turno: any) {
+  // Método opcional si necesitas el texto del filtro
+  onFiltroChange(filtroTexto: string) {
+    // Puedes usar esto para mostrar info del filtro si lo necesitas
+    console.log('Filtro aplicado:', filtroTexto);
+  }
+
+  acciones(t: TurnoExtendido): string[] {
+    const acciones = [];
+
+    if (t.estado !== 'realizado') {
+      acciones.push('cancelar');
+    } else {
+      // ENCUESTA: disponible si el array de encuestas está VACÍO
+      if (Array.isArray(t.encuestas) && t.encuestas.length === 0) {
+        acciones.push('completar_encuesta');
+      }
+      
+      // CALIFICACIÓN: disponible si no tiene calificación
+      if (!t.calificacion_atencion) {
+        acciones.push('calificar');
+      }
+
+      // RESEÑA: disponible si hay comentario del especialista
+      if (t.comentario_especialista?.trim()) {
+        acciones.push('ver_resena');
+      }
+    }
+
+    console.log('Turno', t.id, '- Acciones:', acciones, '- Encuestas:', t.encuestas);
+    return acciones;
+  }
+
+  async ejecutarAccion(accion: string, turno: TurnoExtendido) {
     let prom: any;
 
     switch (accion) {
@@ -127,30 +164,10 @@ acciones(t: any): string[] {
   }
 
   // Método para abrir el modal de encuesta
-  abrirEncuestaModal(turno: any) {
+  abrirEncuestaModal(turno: TurnoExtendido) {
     this.turnoSeleccionado = turno;
     this.mostrarEncuestaModal = true;
   }
-  async obtenerTurnos() {
-  this.cargando = true;
-  this.turnos = await this.turnosService.obtenerTurnosDelPacienteActual();
-  
-  // DEBUG: Ver qué datos llegan
-  console.log('Turnos obtenidos:', this.turnos);
-  this.turnos.forEach((turno, index) => {
-    console.log(`Turno ${index}:`, {
-      id: turno.id,
-      estado: turno.estado,
-      tieneEncuesta: !!turno.encuestas,
-      encuestas: turno.encuestas,
-      calificacion_atencion: turno.calificacion_atencion,
-      comentario_especialista: turno.comentario_especialista
-    });
-  });
-  
-  this.turnosFiltrados = [...this.turnos];
-  this.cargando = false;
-}
 
   // Método para cerrar el modal de encuesta
   cerrarEncuestaModal(encuestaCompletada: boolean) {
@@ -163,7 +180,7 @@ acciones(t: any): string[] {
     }
   }
 
-  // Método opcional para mejor visualización de los botones
+  // Método para mejor visualización de los botones
   getTextoAccion(accion: string): string {
     const textos: any = {
       'cancelar': '❌ Cancelar',
@@ -172,5 +189,18 @@ acciones(t: any): string[] {
       'ver_resena': '📝 Ver Reseña'
     };
     return textos[accion] || accion;
+  }
+
+  // Métodos públicos para el template
+  formatearEstado(estado: string): string {
+    return this.filtroService.formatearEstado(estado);
+  }
+
+  formatearFecha(fecha: string): string {
+    return this.filtroService.formatearFecha(fecha);
+  }
+
+  formatearHora(hora: string): string {
+    return this.filtroService.formatearHora(hora);
   }
 }

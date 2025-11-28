@@ -14,7 +14,38 @@
 .btn-primary:hover {
   background-color: #1d4ed8;
 }
+// turnos-especialista.component.scss
+.coincidencias-container {
+  max-width: 200px;
+}
 
+.coincidencia-badge {
+  background-color: #e8f5e8;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  small {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+}
+
+// Asegurar que la tabla sea responsive
+.table-responsive {
+  overflow-x: auto;
+}
+
+// Mejorar el aspecto de los badges de estado
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
 .btn-danger {
   padding: 6px 12px;
   border-radius: 8px;

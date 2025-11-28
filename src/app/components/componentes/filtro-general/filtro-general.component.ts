@@ -1,6 +1,9 @@
+// componentes/filtro-general/filtro-general.component.ts
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FiltroService } from '../../../services/usuarios/filtro.service';
+import { TurnoExtendido } from '../../../models/turno';
 
 @Component({
   selector: 'app-filtro-general',
@@ -10,18 +13,45 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./filtro-general.component.scss'],
 })
 export class FiltroGeneralComponent {
-  @Input() placeholder: string = 'Buscar...'; // 👈 propiedad esperada en el HTML
-  @Output() filtroChange = new EventEmitter<string>(); // 👈 emite texto, no evento
-
+  @Input() placeholder: string = 'Buscar...';
+  @Input() tipoUsuario: 'paciente' | 'especialista' = 'paciente'; 
+  @Input() turnos: TurnoExtendido[] = []; 
+  
+  @Output() filtroChange = new EventEmitter<string>();
+  @Output() turnosFiltradosChange = new EventEmitter<TurnoExtendido[]>(); 
   textoFiltro: string = '';
 
+  constructor(private filtroService: FiltroService) {} 
+
   onInputChange(event: Event) {
-    const valor = (event.target as HTMLInputElement).value; // convertir Event → string
-    this.filtroChange.emit(valor); // emite el texto, no el evento entero
+    const valor = (event.target as HTMLInputElement).value;
+    this.textoFiltro = valor;
+    
+
+    if (this.turnos && this.turnos.length > 0) {
+      const turnosFiltrados = this.filtroService.aplicarFiltro(
+        [...this.turnos], 
+        valor, 
+        this.tipoUsuario
+      );
+      this.turnosFiltradosChange.emit(turnosFiltrados);
+    }
+    
+    this.filtroChange.emit(valor);
   }
 
   limpiarFiltro() {
     this.textoFiltro = '';
-    this.filtroChange.emit(''); // limpia el filtro
+    
+    if (this.turnos && this.turnos.length > 0) {
+      const turnosSinFiltro = this.filtroService.aplicarFiltro(
+        [...this.turnos], 
+        '', 
+        this.tipoUsuario
+      );
+      this.turnosFiltradosChange.emit(turnosSinFiltro);
+    }
+    
+    this.filtroChange.emit('');
   }
 }

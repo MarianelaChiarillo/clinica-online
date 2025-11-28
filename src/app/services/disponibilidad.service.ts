@@ -158,5 +158,58 @@ const horasOcupadas = turnos.map((t: any) =>
     return horarios.some(h => h.dia_semana === diaSemana && h.activo);
   }
 
-  
+   async obtenerUsuarioActual(): Promise<any> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Error obteniendo usuario:', error);
+        return null;
+      }
+      
+      console.log('👤 Usuario de Auth:', user);
+      return user;
+      
+    } catch (err) {
+      console.error('Error en obtenerUsuarioActual:', err);
+      return null;
+    }
+  }
+
+  async obtenerPerfilCompleto(): Promise<any> {
+    try {
+      const user = await this.obtenerUsuarioActual();
+      if (!user) return null;
+
+      // Buscar en la tabla de especialistas
+      const { data: especialista, error } = await supabase
+        .from('especialistas')
+        .select('*')
+        .eq('usuario_id', user.id)
+        .single();
+
+      if (!error && especialista) {
+        return { ...user, rol: 'especialista', perfil: especialista };
+      }
+
+      // Buscar en la tabla de pacientes
+      const { data: paciente, error: errorPaciente } = await supabase
+        .from('pacientes')
+        .select('*')
+        .eq('usuario_id', user.id)
+        .single();
+
+      if (!errorPaciente && paciente) {
+        return { ...user, rol: 'paciente', perfil: paciente };
+      }
+
+      console.log('ℹ️ Usuario no encontrado en especialistas ni pacientes');
+      return user;
+
+    } catch (err) {
+      console.error('Error obteniendo perfil completo:', err);
+      return null;
+    }
+  }
+
 }

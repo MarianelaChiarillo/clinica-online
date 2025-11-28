@@ -20,4 +20,16 @@ export interface Turno {
   especialistas?: any;
   especialidades?: any;
   pacientes?: any;
+  encuestas?: any[];
+}
+
+export interface Coincidencia {
+  tipo: 'paciente' | 'especialista' | 'especialidad' | 'estado' | 'fecha' | 'hora' | 'historia_clinica_fija' | 'historia_clinica_dinamica';
+  campo: string;
+  valor: string;
+}
+
+export interface TurnoExtendido extends Turno {
+  historia_clinica?: any;
+  coincidencias?: Coincidencia[];
 }

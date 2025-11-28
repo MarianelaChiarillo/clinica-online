@@ -45,3 +45,47 @@ export interface Especialidad {
   nombre: string;
   activo: boolean;
 }
+
+
+// models/user-data.ts
+export interface LogIngreso {
+  id: number;
+  usuario_email: string;
+  fecha_ingreso: string;
+  ip_address?: string;
+}
+
+// Interfaces para datos crudos de Supabase (con relaciones como arrays)
+export interface TurnoRaw {
+  id: number;
+  estado: string;
+  fecha_turno: string;
+  especialidad_id?: number;
+  especialista_id?: number;
+  especialidades?: { nombre: string }[] | null; // Array, no objeto simple
+  especialistas?: { nombre: string; apellido: string }[] | null; // Array, no objeto simple
+}
+
+// Interface para datos procesados (opcional, si necesitas transformarlos)
+export interface TurnoProcesado {
+  id: number;
+  estado: string;
+  fecha_turno: string;
+  especialidad?: string;
+  medico?: string;
+}
+
+export interface EstadisticaEspecialidad {
+  especialidad: string;
+  cantidad: number;
+}
+
+export interface EstadisticaDia {
+  fecha: string;
+  cantidad: number;
+}
+
+export interface EstadisticaMedico {
+  medico: string;
+  cantidad: number;
+}

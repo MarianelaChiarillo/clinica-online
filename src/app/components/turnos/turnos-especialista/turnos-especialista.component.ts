@@ -3,21 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TurnosService } from '../../../services/turnos.service';
 import { ModalService } from '../../../services/modal.service';
-import { Turno } from '../../../models/turno';
+import { TurnoExtendido } from '../../../models/turno';
 import { ModalContainerComponent } from '../../componentes/modales/modal-container/modal-container.component';
 import supabase from '../../../services/supabase.client';
+import { HistoriaClinicaService } from '../../../services/usuarios/historia-clinica.service';
+import { AuthService } from '../../../services/auth.service';
+import { FiltroService } from '../../../services/usuarios/filtro.service';
+import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
 
 @Component({
   selector: 'app-turnos-especialista',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalContainerComponent],
+  imports: [CommonModule, FormsModule, ModalContainerComponent, FiltroGeneralComponent],
   templateUrl: './turnos-especialista.component.html',
   styleUrls: ['./turnos-especialista.component.scss'],
 })
 export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
-  turnos: Turno[] = [];
-  turnosFiltrados: Turno[] = [];
-  filtro = '';
+  turnos: TurnoExtendido[] = [];
+  turnosFiltrados: TurnoExtendido[] = [];
 
   loading = false;
   error: string | null = null;
@@ -26,7 +29,10 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
 
   constructor(
     private turnosService: TurnosService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private historiaClinicaService: HistoriaClinicaService,
+    private authService: AuthService,
+    private filtroService: FiltroService
   ) {}
 
   async ngOnInit() {
@@ -49,7 +55,7 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
           table: 'turnos'
         },
         async () => {
-          await this.cargarTurnos(); // ← refresca en tiempo real
+          await this.cargarTurnos();
         }
       )
       .subscribe();
@@ -60,37 +66,93 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     this.error = null;
 
     try {
-      this.turnos = await this.turnosService.obtenerTurnosDelEspecialistaActual();
+      console.log('🔄 Cargando turnos del especialista...');
+      const turnosBase = await this.turnosService.obtenerTurnosDelEspecialistaActual();
+      
+      // Inicializar turnos con estructura extendida
+      this.turnos = turnosBase.map(turno => ({
+        ...turno,
+        historia_clinica: undefined,
+        coincidencias: []
+      })) as TurnoExtendido[];
+      
+      console.log('📦 TODOS LOS TURNOS OBTENIDOS DEL SERVICIO:');
+      this.turnos.forEach((turno, index) => {
+        console.log(`Turno ${index}:`, {
+          id: turno.id,
+          estado: turno.estado,
+          paciente: `${turno.pacientes?.nombre} ${turno.pacientes?.apellido}`,
+          fecha: turno.fecha_turno,
+          especialidad: turno.especialidades?.nombre
+        });
+      });
+
+      await this.cargarHistoriasClinicas();
+      
       this.turnosFiltrados = [...this.turnos];
+      
     } catch (err) {
+      console.error('❌ Error cargando turnos:', err);
       this.error = 'Error al cargar los turnos';
     } finally {
       this.loading = false;
     }
   }
 
-  aplicarFiltro() {
-    const f = this.filtro.toLowerCase().trim();
-    if (!f) {
-      this.turnosFiltrados = [...this.turnos];
-      return;
-    }
-
-    this.turnosFiltrados = this.turnos.filter(t =>
-      t.pacientes?.nombre?.toLowerCase().includes(f) ||
-      t.pacientes?.apellido?.toLowerCase().includes(f) ||
-      t.especialidades?.nombre?.toLowerCase().includes(f) ||
-      `${t.pacientes?.nombre} ${t.pacientes?.apellido}`.toLowerCase().includes(f) ||
-      t.estado?.toLowerCase().includes(f)
+  private async cargarHistoriasClinicas(): Promise<void> {
+    const turnosRealizados = this.turnos.filter(t => t.estado === 'realizado');
+    
+    console.log('🔍 TURNOS REALIZADOS QUE DEBERÍAN TENER HC:', 
+      turnosRealizados.map(t => ({ 
+        id: t.id, 
+        paciente: `${t.pacientes?.nombre} ${t.pacientes?.apellido}`,
+        fecha: t.fecha_turno 
+      }))
     );
+    
+    const promesas = turnosRealizados.map(async (turno) => {
+      try {
+        console.log(`🔍 [TURNO ${turno.id}] Cargando historia clínica...`);
+        const historia = await this.historiaClinicaService.obtenerHistoriaClinicaPorTurno(turno.id);
+        
+        if (historia) {
+          console.log(`✅ [TURNO ${turno.id}] HC ENCONTRADA:`, {
+            hcId: historia.id,
+            turnoId: historia.turno_id,
+            datosDinamicosCount: historia.datos_dinamicos?.length || 0
+          });
+        } else {
+          console.log(`❌ [TURNO ${turno.id}] NO SE ENCONTRÓ HC EN LA BD`);
+        }
+        
+        turno.historia_clinica = historia;
+        
+      } catch (error) {
+        console.error(`💥 [TURNO ${turno.id}] ERROR:`, error);
+        turno.historia_clinica = null;
+      }
+    });
+
+    await Promise.all(promesas);
+    
+    console.log('📊 RESUMEN FINAL DE CARGA HC:');
+    turnosRealizados.forEach(t => {
+      console.log(`- Turno ${t.id} (${t.pacientes?.nombre} ${t.pacientes?.apellido}): ${t.historia_clinica ? '✅ CON HC' : '❌ SIN HC'}`);
+    });
   }
 
-  limpiarFiltro() {
-    this.filtro = '';
-    this.turnosFiltrados = [...this.turnos];
+  // Método llamado cuando el filtro general emite turnos filtrados
+  onTurnosFiltradosChange(turnosFiltrados: TurnoExtendido[]) {
+    this.turnosFiltrados = turnosFiltrados;
   }
 
-  accionesEspecialista(t: Turno): string[] {
+  // Método opcional si necesitas el texto del filtro
+  onFiltroChange(filtroTexto: string) {
+    // Puedes usar esto para mostrar info del filtro si lo necesitas
+    console.log('Filtro aplicado:', filtroTexto);
+  }
+
+  accionesEspecialista(t: TurnoExtendido): string[] {
     const estado = t.estado?.toLowerCase().trim();
     const acciones: string[] = [];
 
@@ -101,13 +163,13 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
       acciones.push('finalizar');
     }
 
-      if (t.comentario_especialista) {
-    acciones.push('ver_resena');
-  }
+    if (t.comentario_especialista) {
+      acciones.push('ver_resena');
+    }
     return acciones;
   }
 
-  async ejecutarAccion(accion: string, turno: Turno) {
+  async ejecutarAccion(accion: string, turno: TurnoExtendido) {
     let prom: any;
 
     switch (accion) {
@@ -132,7 +194,7 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     if (turnoActualizado) this.actualizarLocal(turnoActualizado);
   }
 
-  private actualizarLocal(t: Turno) {
+  private actualizarLocal(t: TurnoExtendido) {
     const index = this.turnos.findIndex(x => x.id === t.id);
     if (index !== -1) {
       this.turnos[index] = t;
@@ -140,12 +202,13 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatearFecha(fecha: string) {
-    return fecha ? new Date(fecha).toLocaleDateString('es-AR') : '';
+  // Métodos públicos para el template
+  formatearFecha(fecha: string): string {
+    return this.filtroService.formatearFecha(fecha);
   }
 
-  formatearHora(hora: string) {
-    return hora ? hora.substring(0, 5) : '';
+  formatearHora(hora: string): string {
+    return this.filtroService.formatearHora(hora);
   }
 
   obtenerColorEstado(estado: string) {
@@ -160,21 +223,21 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   }
 
   obtenerTextoEstado(estado: string) {
-    const map: any = {
-      solicitado: 'Solicitado',
-      aceptado: 'Aceptado',
-      realizado: 'Realizado',
-      cancelado: 'Cancelado',
-      rechazado: 'Rechazado'
-    };
-    return map[estado?.toLowerCase()] || estado;
+    return this.filtroService.formatearEstado(estado);
   }
 
   limpiarError() {
     this.error = null;
   }
+
+  getTextoAccion(accion: string): string {
+    const textos: any = {
+      'aceptar': '✅ Aceptar',
+      'rechazar': '❌ Rechazar', 
+      'cancelar': '🗑️ Cancelar',
+      'finalizar': '🏁 Finalizar',
+      'ver_resena': '📝 Ver Reseña'
+    };
+    return textos[accion] || accion;
+  }
 }
-
-
-
-  
