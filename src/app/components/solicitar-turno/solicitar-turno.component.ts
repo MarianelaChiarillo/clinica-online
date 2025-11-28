@@ -11,6 +11,7 @@ import { TurnosService } from '../../services/turnos.service';
 import { FechaFormatoPipe } from '../../pipes/fecha-formato.pipe';
 import { HoraFormatoPipe } from '../../pipes/hora-formato.pipe';
 import supabase from '../../services/supabase.client';
+import { MenuComponent } from './../componentes/menu/menu.component';
 
 @Component({
   selector: 'app-solicitar-turno',
@@ -22,7 +23,8 @@ import supabase from '../../services/supabase.client';
     FormsModule, 
     FiltroGeneralComponent,
     FechaFormatoPipe,
-    HoraFormatoPipe
+    HoraFormatoPipe,
+    MenuComponent
   ]
 })
 export class SolicitarTurnoComponent implements OnInit {

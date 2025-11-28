@@ -1,75 +1,43 @@
-<!-- mi-perfil.component.html -->
+<app-menu/>
 <div class="perfil-container">
-  <div class="perfil-header">
-    <h1>Mi Perfil</h1>
-    <button 
-      *ngIf="!editando && perfil" 
-      class="btn-editar" 
-      (click)="iniciarEdicion()"
-    >
-      ✏️ Editar Perfil
-    </button>
-  </div>
 
   <div *ngIf="cargando" class="cargando">
     <p>Cargando perfil...</p>
   </div>
 
   <div *ngIf="!cargando && perfil" class="perfil-content">
-    
+
     <!-- ========================= -->
-    <!-- IMÁGENES -->
+    <!-- IMÁGENES DEL PERFIL -->
     <!-- ========================= -->
     <div class="seccion-imagenes">
 
       <!-- Imagen principal -->
       <div class="imagen-container">
         <h4>Imagen Principal</h4>
+
         <img 
-          [src]="previewImagen || perfil.imagen_perfil" 
+          [src]="perfil.imagen_perfil"
           alt="Imagen de perfil"
           class="imagen-perfil"
         >
-        <div *ngIf="editando" class="cambiar-imagen">
-          <input 
-            type="file" 
-            id="imagenPrincipal" 
-            (change)="onFileSelected($event, 'principal')"
-            accept="image/*"
-            style="display: none;"
-          >
-          <label for="imagenPrincipal" class="btn-cambiar-imagen">
-            📷 Cambiar imagen principal
-          </label>
-        </div>
       </div>
 
       <!-- Segunda imagen (solo pacientes) -->
       <div class="imagen-container" *ngIf="esPaciente()">
         <h4>Segunda Imagen</h4>
+
         <img 
-          [src]="previewSegundaImagen || perfil.segunda_imagen" 
+          [src]="perfil.segunda_imagen"
           alt="Segunda imagen"
           class="imagen-perfil"
         >
-        <div *ngIf="editando" class="cambiar-imagen">
-          <input 
-            type="file" 
-            id="segundaImagen" 
-            (change)="onFileSelected($event, 'segunda')"
-            accept="image/*"
-            style="display: none;"
-          >
-          <label for="segundaImagen" class="btn-cambiar-imagen">
-            📷 Cambiar segunda imagen
-          </label>
-        </div>
       </div>
 
     </div>
 
     <!-- ========================= -->
-    <!-- INFO DEL PERFIL -->
+    <!-- INFO DEL USUARIO -->
     <!-- ========================= -->
     <div class="seccion-info">
       
@@ -77,13 +45,14 @@
         <span class="badge tipo-usuario" [class]="perfil.tipo_usuario">
           {{ getTipoUsuarioTexto() }}
         </span>
+
         <span class="badge estado" [class]="perfil.estado">
           {{ getEstadoTexto() }}
         </span>
       </div>
 
       <div class="campos">
-        
+
         <div class="campo">
           <label>Email</label>
           <p class="valor">{{ perfil.email }}</p>
@@ -91,56 +60,29 @@
 
         <div class="campo">
           <label>Nombre</label>
-          <div *ngIf="!editando" class="valor">{{ perfil.nombre || 'No especificado' }}</div>
-          <input 
-            *ngIf="editando" 
-            [(ngModel)]="datosEditados.nombre" 
-            class="input-editable"
-          >
+          <p class="valor">{{ perfil.nombre }}</p>
         </div>
 
         <div class="campo">
           <label>Apellido</label>
-          <div *ngIf="!editando" class="valor">{{ perfil.apellido || 'No especificado' }}</div>
-          <input 
-            *ngIf="editando" 
-            [(ngModel)]="datosEditados.apellido" 
-            class="input-editable"
-          >
+          <p class="valor">{{ perfil.apellido }}</p>
         </div>
 
         <div class="campo">
           <label>Edad</label>
-          <div *ngIf="!editando" class="valor">{{ perfil.edad || 'No especificada' }}</div>
-          <input 
-            *ngIf="editando" 
-            type="number" 
-            [(ngModel)]="datosEditados.edad" 
-            class="input-editable"
-          >
+          <p class="valor">{{ perfil.edad }}</p>
         </div>
 
         <div class="campo">
           <label>DNI</label>
-          <div *ngIf="!editando" class="valor">{{ perfil.dni || 'No especificado' }}</div>
-          <input 
-            *ngIf="editando" 
-            [(ngModel)]="datosEditados.dni" 
-            class="input-editable"
-          >
+          <p class="valor">{{ perfil.dni }}</p>
         </div>
 
         <div class="campo" *ngIf="esPaciente()">
           <label>Obra Social</label>
-          <div *ngIf="!editando" class="valor">{{ perfil.obra_social || 'No especificada' }}</div>
-          <input 
-            *ngIf="editando" 
-            [(ngModel)]="datosEditados.obra_social" 
-            class="input-editable"
-          >
+          <p class="valor">{{ perfil.obra_social }}</p>
         </div>
 
-        <!-- Especialista: listado de especialidades -->
         <div class="campo" *ngIf="perfil.tipo_usuario === 'especialista'">
           <label>Especialidades</label>
           <div class="valor">
@@ -152,41 +94,74 @@
         </div>
 
       </div>
-
-      <div *ngIf="editando" class="acciones-edicion">
-        <button class="btn btn-cancelar" (click)="cancelarEdicion()">Cancelar</button>
-        <button class="btn btn-guardar" (click)="guardarCambios()">💾 Guardar Cambios</button>
-      </div>
-
     </div>
   </div>
 
+
   <!-- ========================= -->
-  <!-- HISTORIA CLÍNICA PACIENTE -->
+  <!-- HISTORIA CLÍNICA DEL PACIENTE -->
   <!-- ========================= -->
   <div *ngIf="esPaciente()" class="historia-clinica-section">
 
     <h2>Historia Clínica</h2>
 
-    <!-- DEBUG INFO -->
-    <div class="debug-info" *ngIf="historiaClinica.length > 0">
-      <small>
-        Encontradas {{ historiaClinica.length }} atenciones | 
-        Filtradas: {{ historiaFiltrada.length }} |
-        Especialistas: {{ especialistasAtendidos.length }}
-      </small>
+    <!-- DEBUG INFO MEJORADA -->
+    <div class="debug-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+      <h4 style="margin-top: 0; color: #007bff;">🔍 Información de Debug</h4>
+      <div style="font-size: 14px;">
+        <strong>Total historias:</strong> {{ historiaClinica.length }} | 
+        <strong>Filtradas:</strong> {{ historiaFiltrada.length }} |
+        <strong>Especialistas únicos:</strong> {{ especialistasAtendidos.length }}
+      </div>
+      
+      <!-- Mostrar especialistas encontrados -->
+      <div *ngIf="especialistasAtendidos.length > 0" style="margin-top: 10px;">
+        <strong>Especialistas detectados:</strong>
+        <div *ngFor="let esp of especialistasAtendidos" style="font-size: 13px; margin-left: 10px;">
+          • {{ esp.nombre }} {{ esp.apellido }} (ID: {{ esp.id }})
+        </div>
+      </div>
+
+      <div *ngIf="especialistasAtendidos.length === 0 && historiaClinica.length > 0" style="margin-top: 10px; color: #856404;">
+        ⚠️ Se encontraron historias pero no se pudieron extraer los especialistas
+      </div>
+
+      <!-- Mostrar estructura de una historia de ejemplo -->
+      <div *ngIf="historiaClinica.length > 0" style="margin-top: 15px;">
+        <details>
+          <summary style="cursor: pointer; font-weight: bold;">Ver estructura de datos de ejemplo</summary>
+          <pre style="font-size: 11px; background: white; padding: 10px; border: 1px solid #ddd; border-radius: 4px; overflow: auto; max-height: 200px;">
+{{ historiaClinica[0] | json }}
+          </pre>
+        </details>
+      </div>
     </div>
 
-    <!-- FILTRO POR ESPECIALISTA -->
-    <div class="filtro-container" *ngIf="especialistasAtendidos.length > 0">
-      <label>Filtrar por especialista:</label>
-      <select [(ngModel)]="especialistaSeleccionado" (change)="filtrarPorEspecialista()">
-        <option value="todos">Todos los especialistas ({{ historiaClinica.length }})</option>
-        <option *ngFor="let esp of especialistasAtendidos" [value]="esp.id">
+    <!-- FILTRO MEJORADO -->
+    <div class="filtro-container" style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: bold;">Filtrar por especialista:</label>
+      <select 
+        [(ngModel)]="especialistaSeleccionado" 
+        (change)="filtrarPorEspecialista()" 
+        class="form-select"
+        style="width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;"
+      >
+        <option value="todos">
+          Todos los especialistas ({{ historiaClinica.length }} atenciones)
+        </option>
+        <option 
+          *ngFor="let esp of especialistasAtendidos" 
+          [value]="esp.id"
+        >
           {{ esp.nombre }} {{ esp.apellido }} 
-          ({{ contarHistoriasPorEspecialista(esp.id) }})
+          ({{ contarHistoriasPorEspecialista(esp.id) }} atenciones)
         </option>
       </select>
+      
+      <!-- Mensaje si no hay especialistas -->
+      <div *ngIf="especialistasAtendidos.length === 0 && historiaClinica.length > 0" class="alert alert-warning mt-2" style="padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+        ⚠️ Se encontraron historias clínicas pero no se pudieron cargar los especialistas. Revisa la estructura de datos en la consola.
+      </div>
     </div>
 
     <!-- BOTÓN PDF -->
@@ -194,58 +169,62 @@
       class="btn-descargar"
       (click)="descargarPDF()"
       *ngIf="historiaFiltrada.length > 0"
+      style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-bottom: 20px;"
     >
       📄 Descargar PDF ({{ historiaFiltrada.length }} atenciones)
     </button>
 
-    <!-- MENSAJES DE ESTADO -->
-    <div *ngIf="historiaClinica.length === 0" class="empty-state">
+    <!-- SIN HISTORIAS -->
+    <div *ngIf="historiaClinica.length === 0" class="empty-state" style="text-align: center; padding: 40px; color: #6c757d;">
       <p>No hay historias clínicas registradas aún.</p>
     </div>
 
-    <div *ngIf="historiaClinica.length > 0 && historiaFiltrada.length === 0" class="empty-state">
+    <div 
+      *ngIf="historiaClinica.length > 0 && historiaFiltrada.length === 0" 
+      class="empty-state" 
+      style="text-align: center; padding: 40px; color: #6c757d;"
+    >
       <p>No hay atenciones con el especialista seleccionado.</p>
+      <button 
+        (click)="especialistaSeleccionado = 'todos'; filtrarPorEspecialista()"
+        style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;"
+      >
+        Ver todas las atenciones
+      </button>
     </div>
 
-    <!-- TARJETAS DE HISTORIA CLÍNICA -->
-    <div *ngFor="let h of historiaFiltrada" class="hc-card">
+    <!-- TARJETAS -->
+    <div *ngFor="let h of historiaFiltrada" class="hc-card" style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 
-      <h3>
+      <h3 style="margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
         {{ h.turno?.fecha_turno | date:'dd/MM/yyyy' }} — 
         {{ h.turno?.especialidad?.nombre || 'Sin especialidad' }}
       </h3>
 
-      <p><strong>Especialista:</strong> 
-        {{ h.turno?.especialista?.nombre || 'N/A' }} 
-        {{ h.turno?.especialista?.apellido || '' }}
+      <p style="margin: 10px 0;"><strong>Especialista:</strong>
+        {{ h.turno?.especialista?.nombre }} {{ h.turno?.especialista?.apellido }}
       </p>
 
-      <div class="datos-fijos">
-        <p><strong>Altura:</strong> {{ h.altura || 'N/A' }} cm</p>
-        <p><strong>Peso:</strong> {{ h.peso || 'N/A' }} kg</p>
-        <p><strong>Temperatura:</strong> {{ h.temperatura || 'N/A' }} °C</p>
-        <p><strong>Presión:</strong> {{ h.presion || 'N/A' }}</p>
+      <div class="datos-fijos" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 15px 0;">
+        <p><strong>Altura:</strong> {{ h.altura }} cm</p>
+        <p><strong>Peso:</strong> {{ h.peso }} kg</p>
+        <p><strong>Temperatura:</strong> {{ h.temperatura }} °C</p>
+        <p><strong>Presión:</strong> {{ h.presion }}</p>
       </div>
 
-      <div class="datos-dinamicos" *ngIf="h.datos_dinamicos?.length > 0">
-        <h4>Datos adicionales</h4>
-        <ul>
-          <li *ngFor="let d of h.datos_dinamicos">
+      <div class="datos-dinamicos" *ngIf="h.datos_dinamicos?.length" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+        <h4 style="margin-top: 0;">Datos adicionales</h4>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li *ngFor="let d of h.datos_dinamicos" style="margin-bottom: 5px;">
             <strong>{{ d.clave }}:</strong> {{ d.valor }}
           </li>
         </ul>
       </div>
 
-      <div class="datos-dinamicos" *ngIf="!h.datos_dinamicos?.length">
-        <p><em>No hay datos adicionales registrados</em></p>
-      </div>
+      <p style="margin: 15px 0 0 0;"><strong>Reseña:</strong> {{ h.comentario || 'No registrada' }}</p>
 
-      <p><strong>Reseña:</strong> {{ h.comentario || 'No registrada' }}</p>
     </div>
-   
+
   </div>
 
-  <div *ngIf="!cargando && !perfil" class="error">
-    <p>No se pudo cargar el perfil. Intenta recargar la página.</p>
-  </div>
 </div>

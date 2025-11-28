@@ -410,6 +410,8 @@ async obtenerTurnosPorEspecialistaId(usuarioId: number): Promise<any[]> {
   console.log('✅ Turnos encontrados para especialista', especialista.id, ':', data.length, 'turnos');
   return data;
 }
+
+
 }
 
 

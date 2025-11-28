@@ -6,6 +6,7 @@ import { EncuestaModalComponent } from '../../encuesta/encuesta.component';
 import { ModalService } from '../../../services/modal.service';
 import { TurnosService } from '../../../services/turnos.service';
 import supabase from '../../../services/supabase.client';
+import { MenuComponent } from '../../componentes/menu/menu.component';
 
 @Component({
   selector: 'app-turnos-paciente',
@@ -14,7 +15,8 @@ import supabase from '../../../services/supabase.client';
     CommonModule,
     FiltroGeneralComponent,
     ModalContainerComponent,
-    EncuestaModalComponent
+    EncuestaModalComponent,
+    MenuComponent
   ],
   templateUrl: './turnos-paciente.component.html',
   styleUrls: ['./turnos-paciente.component.scss'],

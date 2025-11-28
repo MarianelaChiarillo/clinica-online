@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { utils, writeFile } from 'xlsx';
-
+import { ExcelService } from '../../services/excel.service'; // ← Nueva importación
 import { MenuComponent } from './../componentes/menu/menu.component';
 import { LayoutComponent } from './../componentes/layout/layout.component';
 import { SpinnerComponent } from './../componentes/spinner/spinner.component';
@@ -71,7 +71,9 @@ turno: any = null;
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-        private pdfService: PdfService // 👈 AGREGAR
+        private pdfService: PdfService,
+          private excelService: ExcelService,
+
 
   ) {}
 
@@ -97,33 +99,42 @@ turno: any = null;
   }
 
   // MÉTODO: Cargar datos completos para Excel
-  async cargarDatosCompletosUsuarios(): Promise<void> {
-    for (let usuario of this.usuarios) {
-      try {
-        // Cargar turnos para cada usuario usando los métodos específicos por ID
-        if (usuario.tipo_usuario === 'paciente') {
-          usuario.turnos = await this.turnosService.obtenerTurnosPorPacienteId(usuario.id);
-          // Cargar historia clínica para pacientes
-          usuario.historiasClinicas = await this.historiaClinicaService.obtenerPorPaciente(usuario.id);
-        } else if (usuario.tipo_usuario === 'especialista') {
-          usuario.turnos = await this.turnosService.obtenerTurnosPorEspecialistaId(usuario.id);
-        } else {
-          usuario.turnos = []; // Para administradores
-        }
+// En el método cargarDatosCompletosUsuarios - CORREGIR
+async cargarDatosCompletosUsuarios(): Promise<void> {
+  for (let usuario of this.usuarios) {
+    try {
+      console.log(`🔄 Cargando datos para usuario: ${usuario.nombre} (${usuario.tipo_usuario})`);
+      
+      if (usuario.tipo_usuario === 'paciente') {
+        // IMPORTANTE: Usar el ID correcto del paciente
+        const pacienteId = usuario.id || usuario.paciente_id;
+        usuario.turnos = await this.turnosService.obtenerTurnosPorPacienteId(pacienteId);
         
-        console.log(`Usuario ${usuario.nombre} (${usuario.tipo_usuario}):`, {
-          turnos: usuario.turnos?.length || 0,
-          historiasClinicas: usuario.historiasClinicas?.length || 0
-        });
+        // Cargar historia clínica usando el usuario_id
+        usuario.historiasClinicas = await this.historiaClinicaService.obtenerHistoriaClinicaDePaciente(usuario.id);
         
-      } catch (error) {
-        console.error(`Error cargando datos para usuario ${usuario.id}:`, error);
+      } else if (usuario.tipo_usuario === 'especialista') {
+        const especialistaId = usuario.id || usuario.especialista_id;
+        usuario.turnos = await this.turnosService.obtenerTurnosPorEspecialistaId(especialistaId);
+        usuario.historiasClinicas = []; // Especialistas no tienen historia clínica
+      } else {
         usuario.turnos = [];
         usuario.historiasClinicas = [];
       }
+      
+      console.log(`✅ Usuario ${usuario.nombre}:`, {
+        turnos: usuario.turnos?.length || 0,
+        historias: usuario.historiasClinicas?.length || 0,
+        tipo: usuario.tipo_usuario
+      });
+      
+    } catch (error) {
+      console.error(`❌ Error cargando datos para usuario ${usuario.id}:`, error);
+      usuario.turnos = [];
+      usuario.historiasClinicas = [];
     }
   }
-
+}
   async toggleEstado(usuario: any): Promise<void> {
     if (usuario.tipo_usuario !== 'especialista') return;
 
@@ -221,20 +232,8 @@ turno: any = null;
 
   // ========== MÉTODOS PARA TURNOS EN CARDS ==========
 
-  getTotalTurnos(user: any): number {
-    if (!user || !user.turnos || !Array.isArray(user.turnos)) {
-      return 0;
-    }
-    return user.turnos.length;
-  }
 
-  getTurnosRealizados(user: any): number {
-    if (!user || !user.turnos || !Array.isArray(user.turnos)) {
-      return 0;
-    }
-    return user.turnos.filter((t: any) => t.estado === 'realizado').length;
-  }
-
+ 
   // ========== MÉTODOS PARA HISTORIA CLÍNICA DE TURNOS ==========
 
   // 👇 MÉTODO QUE FALTABA - VERIFICAR SI UN TURNO TIENE HISTORIA CLÍNICA
@@ -295,72 +294,8 @@ turno: any = null;
   }
 
  
-   
-  // ========== MÉTODOS PARA EXCEL ==========
 
-  descargarExcelGeneral() {
-    try {
-      const data = this.usuariosFiltrados.map(usuario => this.formatearUsuarioParaExcel(usuario));
-      this.generarExcel(data, 'usuarios_general');
-      this.mostrarMensaje('Éxito', 'Excel general descargado correctamente', 'success');
-    } catch (error) {
-      console.error('Error generando Excel general:', error);
-      this.mostrarMensaje('Error', 'No se pudo generar el Excel', 'error');
-    }
-  }
 
-  seleccionarUsuario(usuario: any) {
-    this.usuarioSeleccionado = usuario;
-    this.mostrarDetalleUsuario = true;
-  }
-
-  descargarExcelUsuario(usuario: any) {
-    // 👇 SOLO descargar si es paciente
-    if (usuario.tipo_usuario !== 'paciente') {
-      this.mostrarMensaje('Info', 'Solo se pueden descargar detalles de turnos para pacientes', 'info');
-      return;
-    }
-
-    try {
-      const data = [this.formatearUsuarioParaExcel(usuario)];
-      this.generarExcel(data, `historial_turnos_${usuario.dni}`);
-      this.mostrarMensaje('Éxito', `Excel de turnos de ${usuario.nombre} descargado`, 'success');
-    } catch (error) {
-      console.error('Error generando Excel individual:', error);
-      this.mostrarMensaje('Error', 'No se pudo generar el Excel', 'error');
-    }
-  }
-
-  private formatearUsuarioParaExcel(usuario: any) {
-    const turnosRealizados = this.getTurnosRealizados(usuario);
-    const totalTurnos = this.getTotalTurnos(usuario);
-    
-    return {
-      'Nombre': usuario.nombre || 'N/A',
-      'Apellido': usuario.apellido || 'N/A',
-      'DNI': usuario.dni || 'N/A',
-      'Email': usuario.email || 'N/A',
-      'Tipo Usuario': usuario.tipo_usuario || 'N/A',
-      'Estado': usuario.estado || 'N/A',
-      'Obra Social': usuario.obra_social || 'N/A',
-      'Especialidades': Array.isArray(usuario.especialidades) 
-        ? usuario.especialidades.join(', ') 
-        : 'N/A',
-      'Total Turnos': totalTurnos,
-      'Turnos Realizados': turnosRealizados,
-      'Porcentaje Realizados': totalTurnos > 0 
-        ? `${Math.round((turnosRealizados / totalTurnos) * 100)}%`
-        : '0%',
-      'Historias Clínicas': usuario.historiasClinicas?.length || 0
-    };
-  }
-
-  private generarExcel(data: any[], filename: string) {
-    const worksheet = utils.json_to_sheet(data);
-    const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, 'Usuarios');
-    writeFile(workbook, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
-  }
 
   volverALista() {
     this.mostrarDetalleUsuario = false;
@@ -517,6 +452,96 @@ turno: any = null;
       this.mostrarMensaje('Error', 'No se pudo generar el PDF', 'error');
     }
   }
+descargarExcelGeneral() {
+  try {
+    this.excelService.generarExcelUsuariosGeneral(this.usuariosFiltrados);
+    this.mostrarMensaje('Éxito', 'Excel general descargado correctamente', 'success');
+  } catch (error: any) {
+    console.error('Error generando Excel general:', error);
+    this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
+  }
+}
 
+// En usuarios.component.ts - Método corregido
+async descargarExcelUsuario(usuario: any) {
+  try {
+    console.log('🎯 Iniciando descarga de Excel para:', usuario.nombre);
+    
+    // Debug: ver estructura de turnos
+    
+    await this.excelService.generarExcelTurnosPaciente(usuario);
+    this.mostrarMensaje('Éxito', `Excel de turnos de ${usuario.nombre} descargado`, 'success');
+    
+  } catch (error: any) {
+    console.error('❌ Error generando Excel individual:', error);
+    this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
+  }
+}
+getTotalTurnos(user: any): number {
+  if (!user || !user.turnos || !Array.isArray(user.turnos)) {
+    console.log(`❌ No hay turnos para usuario: ${user?.nombre}`, user?.turnos);
+    return 0;
+  }
+  console.log(`✅ ${user.nombre} tiene ${user.turnos.length} turnos`);
+  return user.turnos.length;
+}
+
+getTurnosRealizados(user: any): number {
+  if (!user || !user.turnos || !Array.isArray(user.turnos)) {
+    return 0;
+  }
   
+  const realizados = user.turnos.filter((t: any) => 
+    t.estado === 'realizado' || t.estado === 'completado'
+  ).length;
+  
+  console.log(`📊 ${user.nombre}: ${realizados} turnos realizados de ${user.turnos.length}`);
+  return realizados;
+}
+
+// Agregar este método para debug
+debugUsuario(usuario: any): void {
+  console.log('🔍 DEBUG USUARIO:', {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    tipo: usuario.tipo_usuario,
+    turnos: usuario.turnos,
+    countTurnos: usuario.turnos?.length,
+    historias: usuario.historiasClinicas,
+    countHistorias: usuario.historiasClinicas?.length
+  });
+  
+  if (usuario.turnos && Array.isArray(usuario.turnos)) {
+    usuario.turnos.forEach((turno: any, index: number) => {
+      console.log(`   Turno ${index + 1}:`, {
+        id: turno.id,
+        fecha: turno.fecha_turno,
+        estado: turno.estado,
+        especialidad: turno.especialidad_id
+      });
+    });
+  }
+}
+
+// Llamar este método cuando selecciones un usuario
+seleccionarUsuario(usuario: any) {
+  this.usuarioSeleccionado = usuario;
+  this.mostrarDetalleUsuario = true;
+  
+  // DEBUG: Verificar datos del usuario
+  this.debugUsuario(usuario);
+}
+
+
+// En tu servicio de turnos, verifica que estos métodos funcionen correctamente
+async verificarServicioTurnos(): Promise<void> {
+  try {
+    // Test con un usuario específico
+    const testPacienteId = 1; // Cambia por un ID real
+    const turnos = await this.turnosService.obtenerTurnosPorPacienteId(testPacienteId);
+    console.log('🧪 TEST Servicio Turnos:', turnos);
+  } catch (error) {
+    console.error('❌ ERROR Servicio Turnos:', error);
+  }
+}
 }

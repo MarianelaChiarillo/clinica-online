@@ -451,6 +451,55 @@
       <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">Cerrar</button>
     </div>
   </div>
+
+
+  <!-- En tu template, agrega información de debug -->
+<div *ngIf="usuarioSeleccionado" class="usuario-detalle">
+  <h3>Detalle de {{ usuarioSeleccionado.nombre }} {{ usuarioSeleccionado.apellido }}</h3>
+  
+  <!-- DEBUG INFO -->
+  <div class="debug-info" style="background: #f5f5f5; padding: 10px; margin: 10px 0;">
+    <small>
+      <strong>Debug:</strong> 
+      Turnos cargados: {{ usuarioSeleccionado.turnos?.length || 0 }} |
+      Tipo: {{ usuarioSeleccionado.tipo_usuario }} |
+      ID: {{ usuarioSeleccionado.id }}
+    </small>
+  </div>
+  
+  <div class="stats">
+    <div class="stat-card">
+      <h4>Total Turnos</h4>
+      <span class="number">{{ getTotalTurnos(usuarioSeleccionado) }}</span>
+    </div>
+    
+    <div class="stat-card">
+      <h4>Turnos Realizados</h4>
+      <span class="number">{{ getTurnosRealizados(usuarioSeleccionado) }}</span>
+    </div>
+  </div>
+
+  <!-- Lista de turnos -->
+  <div class="turnos-list" *ngIf="usuarioSeleccionado.turnos && usuarioSeleccionado.turnos.length > 0">
+    <h4>Lista de Turnos</h4>
+    <div *ngFor="let turno of usuarioSeleccionado.turnos" class="turno-item">
+      <p><strong>Fecha:</strong> {{ turno.fecha_turno | date }}</p>
+      <p><strong>Estado:</strong> {{ turno.estado }}</p>
+      <p><strong>Especialidad:</strong> {{ turno.especialidad_id }}</p>
+      
+      <!-- Botón para ver historia clínica si existe -->
+      <button *ngIf="tieneHistoriaClinica(turno)" 
+              (click)="verHistoriaClinicaDelTurno(turno)"
+              class="btn btn-info">
+        Ver Historia Clínica
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!usuarioSeleccionado.turnos || usuarioSeleccionado.turnos.length === 0" class="no-data">
+    <p>No se encontraron turnos para este usuario.</p>
+  </div>
+</div>
 </div>
 
 @if (mensaje) {

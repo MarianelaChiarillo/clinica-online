@@ -184,33 +184,38 @@ export class HistoriaClinicaService {
 
 
   // En historia-clinica.service.ts - AGREGAR método de debug
-async debugEstructuraHistoriasClinicas(): Promise<void> {
-  console.log('🔍 === DEBUG ESTRUCTURA HISTORIAS CLÍNICAS ===');
+// En historia-clinica.service.ts - AGREGAR ESTE MÉTODO PARA DEBUG
+async debugHistoriaClinicaEstructura(usuarioId: number): Promise<void> {
+  console.log('🔍 === DEBUG COMPLETO DE HISTORIA CLÍNICA ===');
   
-  // Ver algunas historias existentes
-  const { data: historias, error } = await supabase
-    .from('historia_clinica')
-    .select('*')
-    .limit(5);
-
-  if (error) {
-    console.error('Error obteniendo historias clínicas:', error);
-    return;
-  }
-
-  console.log('📋 HISTORIAS CLÍNICAS EXISTENTES:', historias);
+  // 1. Obtener paciente
+  const { data: paciente } = await supabase
+    .from('pacientes')
+    .select('id')
+    .eq('usuario_id', usuarioId)
+    .single();
   
-  // Ver relación con pacientes
-  if (historias && historias.length > 0) {
-    const pacienteIds = [...new Set(historias.map(h => h.paciente_id))];
-    console.log('👤 IDs de Pacientes en historias:', pacienteIds);
+  console.log('👤 Paciente:', paciente);
+
+  if (paciente) {
+    // 2. Ver historias sin joins
+    const { data: historiasSimples } = await supabase
+      .from('historia_clinica')
+      .select('*')
+      .eq('paciente_id', paciente.id);
     
-    const { data: pacientes } = await supabase
-      .from('pacientes')
-      .select('id, nombre, usuario_id')
-      .in('id', pacienteIds);
+    console.log('📋 Historias simples:', historiasSimples);
 
-    console.log('📊 PACIENTES RELACIONADOS:', pacientes);
+    // 3. Ver turnos relacionados
+    if (historiasSimples && historiasSimples.length > 0) {
+      const turnoIds = historiasSimples.map(h => h.turno_id);
+      const { data: turnos } = await supabase
+        .from('turnos')
+        .select('*')
+        .in('id', turnoIds);
+      
+      console.log('📅 Turnos relacionados:', turnos);
+    }
   }
 }
 
@@ -282,11 +287,12 @@ async obtenerPorPaciente(usuarioId: number): Promise<any[]> {
 }
 
 // En historia-clinica.service.ts - CORREGIR COMPLETAMENTE
+// En historia-clinica.service.ts - MÉTODO CORREGIDO
 async obtenerHistoriaClinicaDePaciente(usuarioId: number): Promise<any[]> {
   console.log('🔍 Buscando historias clínicas para usuario ID:', usuarioId);
   
   try {
-    // PRIMERO: Obtener el ID real del paciente desde la tabla pacientes
+    // PRIMERO: Obtener el ID real del paciente
     const { data: paciente, error: errorPaciente } = await supabase
       .from('pacientes')
       .select('id')
@@ -300,17 +306,21 @@ async obtenerHistoriaClinicaDePaciente(usuarioId: number): Promise<any[]> {
 
     console.log('✅ Paciente encontrado - ID real:', paciente.id);
 
-    // SEGUNDO: Buscar historias clínicas usando el ID real del paciente
+    // SEGUNDO: Buscar historias clínicas con joins CORREGIDOS
     const { data: historias, error: errorHistorias } = await supabase
       .from('historia_clinica')
       .select(`
         *,
-        turnos (
+        turnos!inner (
           id,
           fecha_turno,
+          hora_inicio,
           especialista_id,
-          especialidades (nombre),
-          especialistas (
+          especialidad_id,
+          especialidades!inner (
+            nombre
+          ),
+          especialistas!inner (
             id,
             nombre,
             apellido
@@ -322,12 +332,13 @@ async obtenerHistoriaClinicaDePaciente(usuarioId: number): Promise<any[]> {
 
     if (errorHistorias) {
       console.error('❌ Error obteniendo historias:', errorHistorias);
+      console.error('Detalles del error:', errorHistorias.details);
       return [];
     }
 
     console.log('✅ Historias encontradas:', historias);
 
-    // TERCERO: Cargar datos dinámicos para cada historia
+    // TERCERO: Cargar datos dinámicos y normalizar estructura
     const historiasCompletas = await Promise.all(
       (historias || []).map(async (historia) => {
         const { data: datosDinamicos } = await supabase
@@ -335,20 +346,71 @@ async obtenerHistoriaClinicaDePaciente(usuarioId: number): Promise<any[]> {
           .select('*')
           .eq('historia_clinica_id', historia.id);
 
+        // Normalizar la estructura para que sea más fácil de usar
         return {
-          ...historia,
+          id: historia.id,
+          altura: historia.altura,
+          peso: historia.peso,
+          temperatura: historia.temperatura,
+          presion: historia.presion,
+          fecha_creacion: historia.fecha_creacion,
           datos_dinamicos: datosDinamicos || [],
-          turno: historia.turnos?.[0] || null // Normalizar estructura
+          turno: {
+            id: historia.turnos.id,
+            fecha_turno: historia.turnos.fecha_turno,
+            hora_inicio: historia.turnos.hora_inicio,
+            especialista: {
+              id: historia.turnos.especialistas.id,
+              nombre: historia.turnos.especialistas.nombre,
+              apellido: historia.turnos.especialistas.apellido
+            },
+            especialidad: {
+              nombre: historia.turnos.especialidades.nombre
+            }
+          }
         };
       })
     );
 
-    console.log('✅ Historias completas:', historiasCompletas);
+    console.log('✅ Historias completas normalizadas:', historiasCompletas);
     return historiasCompletas;
 
   } catch (err) {
     console.error('❌ Error general:', err);
     return [];
+  }
+}
+
+// En historia-clinica.service.ts - AGREGAR ESTE MÉTODO
+async obtenerHistoriaClinicaPorTurno(turnoId: number): Promise<any> {
+  try {
+    console.log('🔍 Buscando historia clínica para turno ID:', turnoId);
+    
+    // Buscar historia clínica por turno_id
+    const { data: historia, error } = await supabase
+      .from('historia_clinica')
+      .select(`
+        *,
+        datos_dinamicos:historia_clinica_datos(*)
+      `)
+      .eq('turno_id', turnoId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.log('ℹ️ No se encontró historia clínica para el turno:', turnoId);
+        return null;
+      }
+      console.error('❌ Error obteniendo historia clínica:', error);
+      return null;
+    }
+
+    console.log('✅ Historia clínica encontrada:', historia);
+    return historia;
+
+  } catch (err) {
+    console.error('❌ Error en obtenerHistoriaClinicaPorTurno:', err);
+    return null;
   }
 }
 }
