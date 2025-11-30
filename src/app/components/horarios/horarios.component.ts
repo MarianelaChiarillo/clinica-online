@@ -6,13 +6,14 @@ import { AuthService } from '../../services/auth.service';
 import { EspecialistaService } from '../../services/usuarios/especialista.service';
 import { UsuarioService } from '../../services/usuarios/usuario.service';
 import { EspecialidadService } from '../../services/usuarios/especialidad.service';
-
+import { MenuComponent } from '../componentes/menu/menu.component';
+import { SpinnerComponent } from '../componentes/spinner/spinner.component';
 @Component({
   selector: 'app-horarios',
   standalone: true,
   templateUrl: './horarios.component.html',
   styleUrls: ['./horarios.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MenuComponent],
 })
 export class MisHorariosComponent implements OnInit {
   cargando = false;

@@ -10,11 +10,12 @@ import { HistoriaClinicaService } from '../../../services/usuarios/historia-clin
 import { AuthService } from '../../../services/auth.service';
 import { FiltroService } from '../../../services/usuarios/filtro.service';
 import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
-
+import { MenuComponent } from '../../componentes/menu/menu.component';
+import { EstadoEtiquetaPipe } from '../../../pipes/estadoEtiqueta.pipe';
 @Component({
   selector: 'app-turnos-especialista',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalContainerComponent, FiltroGeneralComponent],
+  imports: [CommonModule, FormsModule, ModalContainerComponent, FiltroGeneralComponent, MenuComponent,EstadoEtiquetaPipe],
   templateUrl: './turnos-especialista.component.html',
   styleUrls: ['./turnos-especialista.component.scss'],
 })
@@ -232,11 +233,11 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
 
   getTextoAccion(accion: string): string {
     const textos: any = {
-      'aceptar': '✅ Aceptar',
-      'rechazar': '❌ Rechazar', 
-      'cancelar': '🗑️ Cancelar',
-      'finalizar': '🏁 Finalizar',
-      'ver_resena': '📝 Ver Reseña'
+      'aceptar': 'Aceptar',
+      'rechazar': 'Rechazar', 
+      'cancelar': ' Cancelar',
+      'finalizar': 'Finalizar',
+      'ver_resena': 'Ver Reseña'
     };
     return textos[accion] || accion;
   }

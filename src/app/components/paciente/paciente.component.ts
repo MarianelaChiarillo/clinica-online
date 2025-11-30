@@ -7,13 +7,8 @@ import { Router } from '@angular/router';
   styleUrl: './paciente.component.scss',
 })
 export class PacienteComponent {
-    constructor(
-      private router: Router
-    ){
-    
-  }
-verturnos() {
-
+  constructor(private router: Router) {}
+  verturnos() {
     this.router.navigate(['/turnos/paciente']);
   }
 }

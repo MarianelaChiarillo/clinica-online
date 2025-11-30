@@ -1,23 +1,19 @@
-
-h1{
-  margin-top: 200px;
-}.container {
+.container {
   padding: 1rem;
-  margin-top: 200px;
+  margin-top: 120px;
 }
 
 .turno-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  
 }
 
 .turno-card {
   background: #fff;
   padding: 14px;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .turno-header {
@@ -26,17 +22,18 @@ h1{
   margin-bottom: 8px;
 }
 
-.estado {
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.8rem;
+.estado.solicitado {
+  background: #007bff;
 }
-
-.estado.solicitado { background: #007bff; }
-.estado.aceptado { background: #28a745; }
-.estado.cancelado { background: #dc3545; }
-.estado.realizado { background: #6c757d; }
+.estado.aceptado {
+  background: #28a745;
+}
+.estado.cancelado {
+  background: #dc3545;
+}
+.estado.realizado {
+  background: #6c757d;
+}
 
 .acciones {
   margin-top: 12px;
@@ -51,12 +48,19 @@ h1{
   cursor: pointer;
 }
 
-.btn.cancelar { background: #dc3545; color: white; }
-.btn.info { background: #17a2b8; color: white; }
-.btn.calificar { background: #ffc107; color: black; }
+.btn.cancelar {
+  background: #dc3545;
+  color: white;
+}
+.btn.info {
+  background: #17a2b8;
+  color: white;
+}
+.btn.calificar {
+  background: #ffc107;
+  color: black;
+}
 
-
-// turnos-paciente.component.scss
 .coincidencias {
   margin-top: 8px;
   padding: 8px;
@@ -71,11 +75,11 @@ h1{
   border-radius: 4px;
   padding: 2px 6px;
   margin-bottom: 2px;
-  
+
   &:last-child {
     margin-bottom: 0;
   }
-  
+
   small {
     font-size: 0.75rem;
     line-height: 1.2;
@@ -88,63 +92,195 @@ h1{
   padding: 16px;
   margin-bottom: 16px;
   background: white;
-  
+
   .turno-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
-    
+
     h3 {
       margin: 0;
       color: #333;
     }
-    
+
     .estado {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      
-      &.solicitado { background-color: #fff3cd; color: #856404; }
-      &.aceptado { background-color: #d1ecf1; color: #0c5460; }
-      &.realizado { background-color: #d4edda; color: #155724; }
-      &.cancelado { background-color: #f8d7da; color: #721c24; }
-      &.rechazado { background-color: #e2e3e5; color: #383d41; }
+      font-size: 1.2rem;
+      width: 10rem;
+      height: 3rem;
+      text-align: center;
+      border-radius: 2rem;
+      padding-top: 0.5rem;
+
+      &.solicitado {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      &.aceptado {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      &.realizado {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      &.cancelado {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      &.rechazado {
+        background-color: #e2e3e5;
+        color: #383d41;
+      }
     }
   }
-  
+
   .turno-info {
     margin-bottom: 12px;
-    
+    font-size: 0.5rem;
+
     p {
-      margin: 4px 0;
+      margin: 2px 0;
       color: #666;
     }
   }
-  
+
   .acciones {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    
+
     .btn {
-      padding: 6px 12px;
+      padding: 7px 12px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.9rem;
-      
-      &.btn-cancelar { background-color: #dc3545; color: white; }
-      &.btn-completar_encuesta { background-color: #17a2b8; color: white; }
-      &.btn-calificar { background-color: #ffc107; color: black; }
-      &.btn-ver_resena { background-color: #6c757d; color: white; }
+      margin-top: 1rem;
+
+      &.btn-cancelar {
+        background-color: #dc3545;
+        color: white;
+      }
+      &.btn-completar_encuesta {
+        background-color: #17a2b8;
+        color: white;
+      }
+      &.btn-calificar {
+        background-color: #ffc107;
+        color: black;
+      }
+      &.btn-ver_resena {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      &:hover {
+        opacity: 0.95;
+        transform: scale(1.03);
+        transition: 0.2s ease;
+      }
     }
   }
 }
 
-.loading, .no-turnos {
-  text-align: center;
-  padding: 40px;
-  color: #666;
+p {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #0c2960;
+}
+
+h1 {
+  font-size: 2.8rem;
+  color: #1a798f;
+  margin-top: 1rem;
+}
+
+.container {
+  padding: 3rem;
+  margin-top: 2ren;
+}
+
+@media (max-width: 992px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  .turno-card .turno-header .estado {
+    font-size: 1.1rem;
+    width: 8rem;
+    height: 3rem;
+    padding-top: 0.6rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  h1 {
+    margin-top: 1rem;
+    font-size: 2rem;
+  }
+
+  .turno-card {
+    padding: 12px;
+  }
+
+  .turno-card .turno-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .turno-card .turno-header .estado {
+    width: 100%;
+    height: 3rem;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .acciones .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  p {
+    font-size: 0.9rem;
+  }
+
+  .turno-card {
+    padding: 10px;
+  }
+
+  .turno-card .turno-header .estado {
+    font-size: 0.9rem;
+    height: 2.5rem;
+    padding-top: 0.5rem;
+  }
+}
+
+.titulo-turnos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  img.icon-title {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+}
+
+.linea {
+  width: 100%;
+  height: 4px;
+  background: #1d8fa8;
+  margin: 10px 0 20px 0;
 }

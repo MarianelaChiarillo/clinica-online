@@ -86,18 +86,50 @@ export class PacienteForm implements OnInit {
 
 getError(controlName: string): string | null {
   const ctrl = this.form.get(controlName);
-  if (!ctrl || !ctrl.errors || !ctrl.touched) return null; 
+  if (!ctrl || !ctrl.errors || !ctrl.touched) return null;
 
   const errores = ctrl.errors;
 
-  if (errores['required'] || errores['requerido']) return errores['required'] || errores['requerido'];
-  if (errores['email']) return 'Formato de email inválido'; 
-  if (errores['emailInvalido']) return errores['emailInvalido']; 
+  // Built-in Angular
+  if (errores['required']) return 'Este campo es obligatorio';
+  if (errores['email']) return 'Formato de email inválido';
+  if (errores['minlength']) {
+    return `Debe tener al menos ${errores['minlength'].requiredLength} caracteres`;
+  }
+  if (errores['maxlength']) {
+    return `No puede superar ${errores['maxlength'].requiredLength} caracteres`;
+  }
+
+  // Validadores personalizados (ya devuelven mensajes)
+  if (errores['requerido']) return errores['requerido'];
+  if (errores['largoMin']) return errores['largoMin'];
+  if (errores['letraNumero']) return errores['letraNumero'];
+  if (errores['clavesNoCoinciden']) return errores['clavesNoCoinciden'];
+  if (errores['emailInvalido']) return errores['emailInvalido'];
   if (errores['dominioInvalido']) return errores['dominioInvalido'];
+  if (errores['nombreCorto']) return errores['nombreCorto'];
+  if (errores['nombreLargo']) return errores['nombreLargo'];
+  if (errores['nombreInvalido']) return errores['nombreInvalido'];
+  if (errores['apellidoCorto']) return errores['apellidoCorto'];
+  if (errores['apellidoLargo']) return errores['apellidoLargo'];
+  if (errores['apellidoInvalido']) return errores['apellidoInvalido'];
+  if (errores['dniInvalido']) return errores['dniInvalido'];
+  if (errores['tamañoDNI']) return errores['tamañoDNI'];
+  if (errores['rangoDNI']) return errores['rangoDNI'];
+  if (errores['edadInvalida']) return errores['edadInvalida'];
+  if (errores['edadNegativa']) return errores['edadNegativa'];
+  if (errores['edadMayor']) return errores['edadMayor'];
+  if (errores['edadMenor']) return errores['edadMenor'];
+  if (errores['obraSocialRequerida']) return errores['obraSocialRequerida'];
+  if (errores['obraSocialCorta']) return errores['obraSocialCorta'];
+  if (errores['obraSocialInvalida']) return errores['obraSocialInvalida'];
+  if (errores['tipoArchivoInvalido']) return errores['tipoArchivoInvalido'];
+  if (errores['archivoMuyGrande']) return errores['archivoMuyGrande'];
 
-  return Object.values(errores).join(' · ') || null;
+  // Si hay varios errores, concatenamos los mensajes
+  const mensajes = Object.values(errores).filter(v => typeof v === 'string');
+  return mensajes.length ? mensajes.join(' · ') : null;
 }
-
 
   toggleVerClave(): void { this.verClave = !this.verClave; }
   toggleVerClaveR(): void { this.verClaveR = !this.verClaveR; }

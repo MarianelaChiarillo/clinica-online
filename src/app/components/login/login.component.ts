@@ -29,7 +29,8 @@ import { Usuario } from '../../models/user-data';
     MensajeComponent,
     SpinnerComponent,
     MenuComponent,
-    LayoutComponent
+    LayoutComponent,
+    SpinnerComponent
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
@@ -63,8 +64,10 @@ export class LoginComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.cargando = true;
     this.inicializarFormulario();
     await this.cargarImagenesAccesos();
+    this.cargando=false;
   }
 
   get usuario() {

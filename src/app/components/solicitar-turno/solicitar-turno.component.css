@@ -1,0 +1,265 @@
+@charset "UTF-8";
+.contenedor-turno {
+  max-width: 1000px;
+  padding: 20px;
+  margin-left: 20%;
+}
+
+/* -------------------------------------------
+   TÍTULO PRINCIPAL
+------------------------------------------- */
+.titulo-turno {
+  text-align: left;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #1a798f;
+  margin-top: 9rem;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.linea {
+  width: 100%;
+  height: 4px;
+  background: #1d8fa8;
+  margin: 10px 0 20px 0;
+}
+
+/* -------------------------------------------
+   PASOS
+------------------------------------------- */
+.paso {
+  margin-bottom: 2rem;
+}
+.paso h2 {
+  font-size: 1.4rem;
+  color: #0d0e0e;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+/* -------------------------------------------
+   GRID DE ESPECIALIDADES
+------------------------------------------- */
+.grid-especialidades {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.boton-especialidad {
+  background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  /* Lo que arregla el problema */
+  height: auto;
+  min-height: 200px;
+  overflow: visible;
+  transition: 0.2s ease;
+}
+.boton-especialidad:hover {
+  background: #6caab8;
+  border-color: #1a798f;
+}
+
+.nombre-especialidad {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #082355;
+  text-align: left;
+}
+
+.imagen-especialidad {
+  width: 150px;
+  height: 150px;
+  -o-object-fit: contain;
+     object-fit: contain;
+  border-radius: 10px;
+}
+
+.nombre-especialidad {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: -1rem;
+}
+
+/* -------------------------------------------
+   ESPECIALISTAS
+------------------------------------------- */
+.grid-especialistas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* tres columnas reales, sin estirarse */
+  gap: 1rem;
+}
+
+.boton-especialista {
+  display: flex;
+  flex-direction: column; /* nombre arriba, foto abajo */
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2rem;
+  border-radius: 10px;
+  width: 260px;
+  padding: 12px;
+  background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  text-align: center;
+  gap: 8px;
+}
+.boton-especialista:hover {
+  background: #6caab8;
+  border-color: #1a798f;
+}
+
+.nombre-especialista {
+  font-size: 1.5rem;
+  font-weight: 600;
+  word-break: break-word;
+  color: #082355;
+}
+
+.imagen-especialista {
+  width: 100px;
+  height: 100px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(21, 72, 83, 0.2);
+  border-radius: 10px;
+}
+
+/* -------------------------------------------
+   FECHAS DISPONIBLES
+------------------------------------------- */
+.grid-fechas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.boton-fecha {
+  background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.2s ease;
+}
+.boton-fecha:hover {
+  background: #e7fbff;
+  border-color: #1a798f;
+}
+.boton-fecha .dia-semana {
+  font-size: 0.9rem;
+  color: #1a798f;
+  font-weight: 600;
+}
+.boton-fecha .fecha-numero {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+/* -------------------------------------------
+   HORARIOS
+------------------------------------------- */
+.grid-horarios {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* tres columnas fijas */
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.boton-horario {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 1rem;
+}
+.boton-horario.ocupado {
+  background: #f7f7f7;
+  border-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+.boton-horario:not(.ocupado):hover {
+  background: #e7fbff;
+  border-color: #1a798f;
+}
+.boton-horario.activo {
+  background: #1a798f;
+  color: white;
+  border-color: #125363;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+}
+
+.texto-ocupado {
+  display: block;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* -------------------------------------------
+   BOTONES DE ACCIÓN
+------------------------------------------- */
+.btn-atras,
+.btn-confirmar {
+  margin-top: 2rem;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-atras {
+  background: #349ab9;
+  color: white;
+}
+.btn-atras:hover {
+  background: #084d6d;
+}
+
+.btn-confirmar {
+  background: #08580c;
+  color: white;
+  margin-left: 30px;
+}
+.btn-confirmar:hover:not([disabled]) {
+  background: #318d36;
+}
+.btn-confirmar[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------
+   TEXTOS VACÍOS
+------------------------------------------- */
+.sin-resultados {
+  margin-top: 10px;
+  color: #666;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.titulo-seccion {
+  grid-column: 1/-1;
+  width: 100%;
+  white-space: nowrap;
+}/*# sourceMappingURL=solicitar-turno.component.css.map */

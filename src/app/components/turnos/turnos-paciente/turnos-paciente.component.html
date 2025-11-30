@@ -1,49 +1,51 @@
 <app-menu />
 <div class="container">
-  <h1>Mis Turnos</h1>
+  <h1 class="titulo-turnos">
+    Mis Turnos
+    <img src="assets/tu-icono.png" class="icon-title" />
+  </h1>
+  <div class="linea"></div>
+
+  <p>Busqueda rapida :</p>
 
   <app-filtro-general
     placeholder="Buscar por especialista, especialidad, estado o datos clínicos..."
     [tipoUsuario]="'paciente'"
     [turnos]="turnos"
     (filtroChange)="onFiltroChange($event)"
-    (turnosFiltradosChange)="onTurnosFiltradosChange($event)">
+    (turnosFiltradosChange)="onTurnosFiltradosChange($event)"
+  >
   </app-filtro-general>
+  <div *ngIf="cargando" class="loading">< <app-spinner /> ></div>
 
-  <!-- Loading -->
-  <div *ngIf="cargando" class="loading">
-    Cargando turnos...
-  </div>
-
-  <!-- Lista de turnos -->
   <div *ngIf="!cargando" class="turnos-list">
     <div *ngFor="let turno of turnosFiltrados" class="turno-card">
       <div class="turno-header">
-        <h3>{{ turno.especialidades?.nombre }}</h3>
+        <h2>{{ turno.especialidades?.nombre }}</h2>
         <span class="estado" [class]="turno.estado">{{ formatearEstado(turno.estado) }}</span>
       </div>
-      
+
       <div class="turno-info">
-        <p><strong>Especialista:</strong> {{ turno.especialistas?.nombre }} {{ turno.especialistas?.apellido }}</p>
-        <p><strong>Fecha:</strong> {{ formatearFecha(turno.fecha_turno) }}</p>
-        <p><strong>Horario:</strong> {{ formatearHora(turno.hora_inicio) }} - {{ formatearHora(turno.hora_fin) }}</p>
-        
-        <!-- Mostrar coincidencias -->
+        <p class="p-class">
+          Especialista: {{ turno.especialistas?.nombre }} {{ turno.especialistas?.apellido }}
+        </p>
+        <p>Fecha: {{ formatearFecha(turno.fecha_turno) }}</p>
+        <p>Horario: {{ formatearHora(turno.hora_inicio) }} - {{ formatearHora(turno.hora_fin) }}</p>
+
         <div *ngIf="turno.coincidencias && turno.coincidencias.length > 0" class="coincidencias">
           <div *ngFor="let coincidencia of turno.coincidencias" class="coincidencia-badge">
             <small class="text-success">
               <i class="bi bi-check-circle-fill me-1"></i>
-              <strong>{{ coincidencia.campo }}:</strong> 
+              {{ coincidencia.campo }}:
               {{ coincidencia.valor }}
             </small>
           </div>
         </div>
       </div>
 
-      <!-- Acciones -->
       <div class="acciones">
-        <button 
-          *ngFor="let accion of acciones(turno)" 
+        <button
+          *ngFor="let accion of acciones(turno)"
           (click)="ejecutarAccion(accion, turno)"
           [class]="'btn btn-' + accion"
         >
@@ -52,19 +54,16 @@
       </div>
     </div>
 
-    <!-- Mensaje si no hay turnos -->
     <div *ngIf="turnosFiltrados.length === 0 && !cargando" class="no-turnos">
       No se encontraron turnos
     </div>
   </div>
 
-  <!-- Modal de encuesta -->
   <app-encuesta-modal
     *ngIf="mostrarEncuestaModal"
     [turno]="turnoSeleccionado"
     (onClose)="cerrarEncuestaModal($event)"
   ></app-encuesta-modal>
 
-  <!-- Modal container para otros modales -->
   <app-modal-container></app-modal-container>
 </div>

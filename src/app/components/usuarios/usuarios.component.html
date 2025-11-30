@@ -20,27 +20,7 @@
       (filtroChange)="onFiltroChange($event)">
     </app-filtro-general>
     
-    <!-- CONTADOR Y EJEMPLOS -->
-    <div class="filtro-info">
-      <div class="contador-resultados">
-        <span class="resultados-texto">
-          Mostrando <strong>{{ usuariosFiltrados.length }}</strong> 
-          de <strong>{{ usuarios.length }}</strong> usuarios
-        </span>
-        <span *ngIf="textoFiltro" class="filtro-activo">
-          (Buscando: "<strong>{{ textoFiltro }}</strong>")
-        </span>
-      </div>
-      
-      <div class="ejemplos-busqueda">
-        <small>
-          <strong>Ejemplos:</strong> 
-          "maría", "paciente", "especialista", "admin", "gómez", "12345678"
-        </small>
-      </div>
-    </div>
-  </div>
-
+   
   <!-- VISTA DE CARDS PARA SELECCIÓN -->
   <div *ngIf="!mostrarDetalleUsuario">
     <!-- Grid de usuarios tipo card -->
@@ -50,9 +30,8 @@
            (click)="seleccionarUsuario(user)">
         
         <div class="usuario-header">
-          <img [src]="user.imagen_perfil || './assets/user-default.png'" 
-               class="usuario-imagen"
-               [alt]="user.nombre">
+        <img [src]="user.imagen_perfil_url" class="usuario-imagen" [alt]="user.nombre">
+
           <div class="usuario-info">
             <h3>{{ user.nombre }} {{ user.apellido }}</h3>
             <p class="dni">{{ user.dni }}</p>

@@ -1,16 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica.service';
 import { PdfService } from '../../services/pdf.service';
 import { MenuComponent } from './../componentes/menu/menu.component';
-
+import { SpinnerComponent } from '../componentes/spinner/spinner.component';
 @Component({
   selector: 'app-mi-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule, MenuComponent],
+  imports: [CommonModule, FormsModule, MenuComponent, SpinnerComponent],
   templateUrl: './mi-perfil.component.html',
   styleUrls: ['./mi-perfil.component.scss']
 })
@@ -30,7 +31,8 @@ export class MiPerfilComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private historiaClinicaService: HistoriaClinicaService,
-    private pdfService: PdfService
+    private pdfService: PdfService,
+    private router: Router
   ) {}
 
   // ============================================================
@@ -38,13 +40,14 @@ export class MiPerfilComponent implements OnInit {
   // ============================================================
 // En mi-perfil.component.ts - temporalmente
 async ngOnInit() {
+  this.cargando = true;
   await this.cargarPerfil();
 
   if (this.esPaciente()) {
-    // Llamar al debug temporalmente
-    await this.historiaClinicaService.debugHistoriaClinicaEstructura(this.perfil.usuario_id ?? this.perfil.id);
     await this.cargarHistoriaClinica();
   }
+
+  this.cargando= false;
 }
   // ============================================================
   // PERFIL
@@ -144,5 +147,11 @@ filtrarPorEspecialista() {
       default: return this.perfil?.estado || '';
     }
   }
+ navegarAHorarios() {
+  this.router.navigate(['/horarios']);
+}
 
+esEspecialista(): boolean {
+  return this.perfil?.tipo_usuario === 'especialista';
+}
 }

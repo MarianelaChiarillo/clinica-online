@@ -6,11 +6,12 @@ import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2'; 
 import { Usuario } from '../../../models/user-data';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [SpinnerComponent, CommonModule, RouterLink],
+  imports: [SpinnerComponent, CommonModule, RouterLink, RouterModule],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss',
 })

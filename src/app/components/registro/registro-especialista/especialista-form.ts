@@ -104,11 +104,7 @@ export class EspecialistaForm implements OnInit {
     this.form.get('recaptcha')?.setErrors({ required: true });
   }
 
-  // 🧩 Helpers UI
-  getError(controlName: string): string | null {
-    return this.validators.getEspecialistaErrors(controlName, this.form);
-  }
-
+ 
   toggleVerClave(): void { this.verClave = !this.verClave; }
   toggleVerClaveR(): void { this.verClaveR = !this.verClaveR; }
 
@@ -136,6 +132,25 @@ onFileSelect(event: Event) {
   }
 }
 
+getError(campo: string): string | null {
+  const control = this.form.get(campo);
+  if (control?.hasError('required')) {
+    return 'Este campo es obligatorio';
+  }
+  if (control?.hasError('email')) {
+    return 'El formato del email no es válido';
+  }
+  if (control?.hasError('minlength')) {
+    return `Debe tener al menos ${control.errors?.['minlength'].requiredLength} caracteres`;
+  }
+  if (control?.hasError('maxlength')) {
+    return `No puede superar ${control.errors?.['maxlength'].requiredLength} caracteres`;
+  }
+  if (campo === 'repiteClave' && control?.hasError('mismatch')) {
+    return 'Las contraseñas no coinciden';
+  }
+  return null;
+}
 
   // 🧩 Especialidades personalizadas
   get especialidadesPersonalizadas(): FormArray<FormControl> {

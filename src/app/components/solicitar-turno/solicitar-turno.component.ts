@@ -12,6 +12,8 @@ import { FechaFormatoPipe } from '../../pipes/fecha-formato.pipe';
 import { HoraFormatoPipe } from '../../pipes/hora-formato.pipe';
 import supabase from '../../services/supabase.client';
 import { MenuComponent } from './../componentes/menu/menu.component';
+import { SpinnerComponent } from '../componentes/spinner/spinner.component';
+import { MensajeComponent } from '../componentes/mensaje/mensaje.component';
 
 @Component({
   selector: 'app-solicitar-turno',
@@ -19,16 +21,16 @@ import { MenuComponent } from './../componentes/menu/menu.component';
   templateUrl: './solicitar-turno.component.html',
   styleUrl: './solicitar-turno.component.scss',
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     FiltroGeneralComponent,
     FechaFormatoPipe,
     HoraFormatoPipe,
-    MenuComponent
-  ]
+    MenuComponent,
+    SpinnerComponent,
+  ],
 })
 export class SolicitarTurnoComponent implements OnInit {
-
   pasoActual = 1;
 
   pacientes: any[] = [];
@@ -48,6 +50,8 @@ export class SolicitarTurnoComponent implements OnInit {
   procesando: boolean = false;
   usuarioLogueado: any = null;
   esAdmin: boolean = false;
+  horarioSeleccionado: any = null;
+  cargando = false;
 
   turnoData: any = {
     pacienteId: null,
@@ -55,7 +59,7 @@ export class SolicitarTurnoComponent implements OnInit {
     especialistaId: null,
     fecha: null,
     hora: null,
-    duracion: null
+    duracion: null,
   };
 
   constructor(
@@ -65,10 +69,11 @@ export class SolicitarTurnoComponent implements OnInit {
     private especialidadSrv: EspecialidadService,
     private horariosService: HorariosService,
     private turnosService: TurnosService
-  ){}
+  ) {}
 
   async ngOnInit() {
     console.log('🔵 Iniciando Solicitar Turno');
+    this.cargando = true;
 
     const user = await this.authSrv.getUsuarioActual();
     if (!user) {
@@ -88,7 +93,9 @@ export class SolicitarTurnoComponent implements OnInit {
     if (this.esAdmin) {
       await this.cargarPacientes();
     } else {
-      const { data: pacienteReal, error } = await this.usuarioSrv.obtenerPacientePorUsuarioId(usuario.id);
+      const { data: pacienteReal, error } = await this.usuarioSrv.obtenerPacientePorUsuarioId(
+        usuario.id
+      );
       if (error || !pacienteReal) {
         console.error('❌ No se encontró paciente para este usuario');
       } else {
@@ -97,6 +104,7 @@ export class SolicitarTurnoComponent implements OnInit {
     }
 
     await this.cargarEspecialidades();
+    this.cargando = false;
   }
 
   // =======================================================
@@ -121,10 +129,11 @@ export class SolicitarTurnoComponent implements OnInit {
     }
 
     const f = texto.toLowerCase();
-    this.pacientesFiltrados = this.pacientes.filter(p => 
-      p.nombre?.toLowerCase().includes(f) ||
-      p.apellido?.toLowerCase().includes(f) ||
-      p.dni?.toString().includes(f)
+    this.pacientesFiltrados = this.pacientes.filter(
+      (p) =>
+        p.nombre?.toLowerCase().includes(f) ||
+        p.apellido?.toLowerCase().includes(f) ||
+        p.dni?.toString().includes(f)
     );
   }
 
@@ -136,14 +145,14 @@ export class SolicitarTurnoComponent implements OnInit {
       .single();
 
     if (error || !pacienteData) {
-      console.error("❌ No se encontró el paciente en la tabla pacientes", error);
+      console.error('❌ No se encontró el paciente en la tabla pacientes', error);
       return;
     }
 
-    console.log("Paciente real encontrado:", pacienteData);
+    console.log('Paciente real encontrado:', pacienteData);
     this.pacienteSeleccionado = pacienteData;
     this.turnoData.pacienteId = pacienteData.id;
-    console.log("✔ pacienteId seteado:", this.turnoData.pacienteId);
+    console.log('✔ pacienteId seteado:', this.turnoData.pacienteId);
   }
 
   // =======================================================
@@ -153,11 +162,11 @@ export class SolicitarTurnoComponent implements OnInit {
   async cargarEspecialidades() {
     try {
       const especialidades = await this.especialidadSrv.obtenerTodas();
-      
-      this.especialidades = (especialidades || []).map(esp => ({
+
+      this.especialidades = (especialidades || []).map((esp) => ({
         id: esp.id,
         nombre: esp.nombre,
-        imagen_url: esp.imagen_url || esp.imagenUrl || esp.imagen || null
+        imagen_url: esp.imagen_url || esp.imagenUrl || esp.imagen || null,
       }));
 
       console.log('📚 Especialidades cargadas:', this.especialidades);
@@ -181,25 +190,29 @@ export class SolicitarTurnoComponent implements OnInit {
 
   async cargarEspecialistas() {
     try {
+      this.cargando = true;
+
       const especialidadId = Number(this.turnoData.especialidadId);
       const especialistas = await this.especialistaSrv.obtenerPorEspecialidad(especialidadId);
 
       this.especialistas = await Promise.all(
         (especialistas || []).map(async (esp) => {
           const especialistaCompleto = await this.obtenerEspecialistaConImagen(esp.id);
-          
+
           return {
             id: esp.id,
             nombre: esp.nombre,
             apellido: esp.apellido,
             email: esp.email,
             estado: esp.estado,
-            imagen_perfil: especialistaCompleto?.usuario?.imagen_perfil || 
-                          esp.imagen_perfil || 
-                          'assets/images/perfil-default.jpg'
+            imagen_perfil:
+              especialistaCompleto?.usuario?.imagen_perfil ||
+              esp.imagen_perfil ||
+              'assets/images/perfil-default.jpg',
           };
         })
       );
+      this.cargando = false;
 
       console.log('👨‍⚕️ Especialistas cargados:', this.especialistas);
     } catch (error) {
@@ -227,95 +240,95 @@ export class SolicitarTurnoComponent implements OnInit {
   // FECHAS DISPONIBLES
   // =======================================================
 
-  
-seleccionarFecha(fecha: any) {
-  console.log('📌 Seleccionaste fecha:', fecha);
-  this.turnoData.fecha = fecha.value;
-  this.turnoData.diaSemana = fecha.diaSemana; // ← Guardar el día ya calculado
-  
-  console.log('📅 turnoData.fecha luego de asignar:', this.turnoData.fecha);
-  console.log('📅 Día de la semana guardado:', this.turnoData.diaSemana);
-  this.cargarHorariosDisponibles();
-}
+  seleccionarFecha(fecha: any) {
+    console.log('📌 Seleccionaste fecha:', fecha);
+    this.turnoData.fecha = fecha.value;
+    this.turnoData.diaSemana = fecha.diaSemana; // ← Guardar el día ya calculado
 
-async cargarHorariosDisponibles() {
-  console.log('🟦 Entró a cargarHorariosDisponibles()');
-  console.log('📅 turnoData.fecha:', this.turnoData.fecha);
+    console.log('📅 turnoData.fecha luego de asignar:', this.turnoData.fecha);
+    console.log('📅 Día de la semana guardado:', this.turnoData.diaSemana);
+    this.cargarHorariosDisponibles();
+  }
 
-  if (!this.turnoData.fecha) return;
+  async cargarHorariosDisponibles() {
+    console.log('🟦 Entró a cargarHorariosDisponibles()');
+    console.log('📅 turnoData.fecha:', this.turnoData.fecha);
 
-  // USAR el día que ya calculamos en lugar de recalcular
-  const dia = this.turnoData.diaSemana;
-  console.log('📅 Día de la semana (desde fecha seleccionada):', dia, `(${this.getNombreDia(dia)})`);
-  
-  console.log('🔍 Horarios configurados disponibles:', this.horariosConfigurados);
+    if (!this.turnoData.fecha) return;
 
-  const horario = this.horariosConfigurados.find((h: any) => h.dia_semana === dia);
-  console.log('🔍 Horario encontrado para este día:', horario);
-
-  if (!horario) {
-    console.warn('⚠️ No existe horario para este día');
-    console.log('🎯 Día buscado:', dia, `(${this.getNombreDia(dia)})`);
-    console.log('📝 Días configurados:', 
-      this.horariosConfigurados.map(h => `${h.dia_semana} (${this.getNombreDia(h.dia_semana)})`)
+    // USAR el día que ya calculamos en lugar de recalcular
+    const dia = this.turnoData.diaSemana;
+    console.log(
+      '📅 Día de la semana (desde fecha seleccionada):',
+      dia,
+      `(${this.getNombreDia(dia)})`
     );
-    this.horariosDisponibles = [];
-    return;
+
+    console.log('🔍 Horarios configurados disponibles:', this.horariosConfigurados);
+
+    const horario = this.horariosConfigurados.find((h: any) => h.dia_semana === dia);
+    console.log('🔍 Horario encontrado para este día:', horario);
+
+    if (!horario) {
+      console.warn('⚠️ No existe horario para este día');
+      console.log('🎯 Día buscado:', dia, `(${this.getNombreDia(dia)})`);
+      console.log(
+        '📝 Días configurados:',
+        this.horariosConfigurados.map((h) => `${h.dia_semana} (${this.getNombreDia(h.dia_semana)})`)
+      );
+      this.horariosDisponibles = [];
+      return;
+    }
+
+    console.log('🟧 Horario elegido:', horario);
+
+    this.turnoData.duracion = horario.duracion_consulta;
+
+    const turnos = await this.turnosService.obtenerTurnosPorEspecialistaYFecha(
+      this.turnoData.especialistaId,
+      this.turnoData.fecha
+    );
+
+    this.horariosOcupados = turnos.map((t: any) => t.hora_inicio.slice(0, 5));
+    console.log('🔴 Ocupados:', this.horariosOcupados);
+
+    this.todosLosHorarios = this.generarSlots(
+      horario.hora_inicio,
+      horario.hora_fin,
+      horario.duracion_consulta
+    );
+
+    this.horariosDisponibles = this.todosLosHorarios.filter(
+      (h) => !this.horariosOcupados.includes(h)
+    );
+
+    console.log('🟢 Horarios disponibles:', this.horariosDisponibles);
+    this.pasoActual = 4;
+
+    // =======================================================
+    // HORARIOS
+    // =======================================================
+
+    // ... resto del código igual
   }
 
-  console.log('🟧 Horario elegido:', horario);
+  // En solicitar-turno.component.ts, dentro de la clase
+  getNombresDiasConfigurados(): string {
+    if (!this.horariosConfigurados || this.horariosConfigurados.length === 0) {
+      return 'Ninguno';
+    }
 
-  this.turnoData.duracion = horario.duracion_consulta;
+    const diasUnicos = [...new Set(this.horariosConfigurados.map((h: any) => h.dia_semana))];
+    const nombres = diasUnicos.map((dia) => this.getNombreDia(dia));
 
-  const turnos = await this.turnosService.obtenerTurnosPorEspecialistaYFecha(
-    this.turnoData.especialistaId,
-    this.turnoData.fecha
-  );
-
-  this.horariosOcupados = turnos.map((t: any) => t.hora_inicio.slice(0, 5));
-  console.log('🔴 Ocupados:', this.horariosOcupados);
-
-  this.todosLosHorarios = this.generarSlots(
-    horario.hora_inicio,
-    horario.hora_fin,
-    horario.duracion_consulta
-  );
-
-  this.horariosDisponibles = this.todosLosHorarios
-    .filter(h => !this.horariosOcupados.includes(h));
-
-  console.log('🟢 Horarios disponibles:', this.horariosDisponibles);
-  this.pasoActual = 4;
-
-
-
-
-
-  // =======================================================
-  // HORARIOS
-  // =======================================================
-
-  // ... resto del código igual
-}
-
-// En solicitar-turno.component.ts, dentro de la clase
-getNombresDiasConfigurados(): string {
-  if (!this.horariosConfigurados || this.horariosConfigurados.length === 0) {
-    return 'Ninguno';
+    return nombres.join(', ');
   }
-  
-  const diasUnicos = [...new Set(this.horariosConfigurados.map((h: any) => h.dia_semana))];
-  const nombres = diasUnicos.map(dia => this.getNombreDia(dia));
-  
-  return nombres.join(', ');
-}
 
-
-// Agregar este método helper para debug
-private getNombreDia(diaSemana: number): string {
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  return dias[diaSemana] || 'Desconocido';
-}
+  // Agregar este método helper para debug
+  private getNombreDia(diaSemana: number): string {
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return dias[diaSemana] || 'Desconocido';
+  }
   getDiaSemana(fecha: string): number {
     const [y, m, d] = fecha.split('-').map(Number);
     return new Date(y, m - 1, d).getDay();
@@ -329,7 +342,10 @@ private getNombreDia(diaSemana: number): string {
     while (h < hFin || (h === hFin && m < mFin)) {
       lista.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
       m += duracion;
-      if (m >= 60) { h++; m -= 60; }
+      if (m >= 60) {
+        h++;
+        m -= 60;
+      }
     }
 
     return lista;
@@ -337,6 +353,7 @@ private getNombreDia(diaSemana: number): string {
 
   seleccionarHorario(horario: string) {
     this.turnoData.hora = horario;
+
     console.log('⏰ Horario seleccionado:', horario);
   }
 
@@ -355,20 +372,21 @@ private getNombreDia(diaSemana: number): string {
   }
 
   getImagenEspecialidad(especialidad: any): string {
-    return especialidad.imagen_url || 
-           especialidad.imagenUrl || 
-           especialidad.imagen ||
-           'assets/images/especialidad-default.jpg';
+    return (
+      especialidad.imagen_url ||
+      especialidad.imagenUrl ||
+      especialidad.imagen ||
+      'assets/images/especialidad-default.jpg'
+    );
   }
 
   getImagenEspecialista(especialista: any): string {
-    return especialista.imagen_perfil || 
-           'assets/images/perfil-default.jpg';
+    return especialista.imagen_perfil || 'assets/images/perfil-default.jpg';
   }
 
   onErrorImagen(event: any, tipo: string, item: any) {
     console.log(`Error cargando imagen de ${tipo}:`, item);
-    
+
     if (tipo === 'especialidad') {
       event.target.src = 'assets/images/especialidad-default.jpg';
     } else if (tipo === 'especialista') {
@@ -396,27 +414,27 @@ private getNombreDia(diaSemana: number): string {
     // 2️⃣ VALIDACIONES
     // ------------------------------------------------------------------
     if (!this.turnoData.pacienteId) {
-      console.error("❌ Falta paciente");
+      console.error('❌ Falta paciente');
       return;
     }
     if (!this.turnoData.especialistaId) {
-      console.error("❌ Falta especialista");
+      console.error('❌ Falta especialista');
       return;
     }
     if (!this.turnoData.especialidadId) {
-      console.error("❌ Falta especialidad");
+      console.error('❌ Falta especialidad');
       return;
     }
     if (!this.turnoData.fecha) {
-      console.error("❌ Falta fecha");
+      console.error('❌ Falta fecha');
       return;
     }
     if (!this.turnoData.hora) {
-      console.error("❌ Falta horario");
+      console.error('❌ Falta horario');
       return;
     }
     if (!this.turnoData.duracion) {
-      console.error("❌ Falta duración del turno");
+      console.error('❌ Falta duración del turno');
       return;
     }
 
@@ -432,7 +450,10 @@ private getNombreDia(diaSemana: number): string {
       horaFinMin = horaFinMin % 60;
     }
 
-    const horaFin = `${String(horaFinHora).padStart(2, '0')}:${String(horaFinMin).padStart(2, '0')}`;
+    const horaFin = `${String(horaFinHora).padStart(2, '0')}:${String(horaFinMin).padStart(
+      2,
+      '0'
+    )}`;
 
     // ------------------------------------------------------------------
     // 4️⃣ ARMAR PAYLOAD FINAL
@@ -444,35 +465,41 @@ private getNombreDia(diaSemana: number): string {
       fecha: this.turnoData.fecha,
       horaInicio: this.turnoData.hora,
       horaFin: horaFin,
-      duracion: this.turnoData.duracion
+      duracion: this.turnoData.duracion,
     };
 
-    console.log("📦 Payload final enviado al service:", payload);
+    console.log('📦 Payload final enviado al service:', payload);
 
     // ------------------------------------------------------------------
     // 5️⃣ ENVIAR AL SERVICE
     // ------------------------------------------------------------------
     this.procesando = true;
-    
+
     try {
       const resp = await this.turnosService.crearTurno(payload);
-      console.log("📥 Respuesta crearTurno():", resp);
 
       if (resp.error) {
-        console.error("❌ Error creando turno:", resp.error.message);
-        alert('Error al crear el turno: ' + resp.error.message);
+        MensajeComponent.show({
+          titulo: 'Error',
+          mensaje: resp.error.message,
+          tipo: 'error',
+        });
         return;
       }
 
-      console.log("✅ Turno creado correctamente:", resp.data);
-      alert('✅ Turno creado correctamente');
-      
-      // Aquí podrías redirigir o resetear el formulario
+      MensajeComponent.show({
+        titulo: 'Turno creado',
+        mensaje: 'El turno fue registrado correctamente.',
+        tipo: 'success',
+      });
+
       this.resetearFormulario();
-      
     } catch (error) {
-      console.error("❌ Error inesperado:", error);
-      alert('Error inesperado al crear el turno');
+      MensajeComponent.show({
+        titulo: 'Error inesperado',
+        mensaje: 'Ocurrió un problema al procesar la solicitud.',
+        tipo: 'error',
+      });
     } finally {
       this.procesando = false;
     }
@@ -482,14 +509,14 @@ private getNombreDia(diaSemana: number): string {
     this.pasoActual = 1;
     this.pacienteSeleccionado = null;
     this.especialistaSeleccionado = null;
-    
+
     this.turnoData = {
       pacienteId: null,
       especialidadId: null,
       especialistaId: null,
       fecha: null,
       hora: null,
-      duracion: null
+      duracion: null,
     };
 
     this.fechasDisponibles = [];
@@ -497,62 +524,61 @@ private getNombreDia(diaSemana: number): string {
     this.horariosOcupados = [];
   }
 
-
   generarFechasDisponibles(diasPermitidos: number[]) {
-  this.fechasDisponibles = [];
-  const hoy = new Date();
+    this.fechasDisponibles = [];
+    const hoy = new Date();
 
-  for (let i = 0; i < 15; i++) {
-    const fecha = new Date();
-    fecha.setDate(hoy.getDate() + i);
-    const diaSemana = fecha.getDay();
+    for (let i = 0; i < 15; i++) {
+      const fecha = new Date();
+      fecha.setDate(hoy.getDate() + i);
+      const diaSemana = fecha.getDay();
 
-    // SOLO agregar si el día está en los permitidos
-    if (diasPermitidos.includes(diaSemana)) {
-      this.fechasDisponibles.push({
-        label: fecha.toISOString().split('T')[0],
-        value: fecha.toISOString().split('T')[0],
-        diaSemana: diaSemana,
-        nombreDia: this.getNombreDia(diaSemana)
-      });
+      // SOLO agregar si el día está en los permitidos
+      if (diasPermitidos.includes(diaSemana)) {
+        this.fechasDisponibles.push({
+          label: fecha.toISOString().split('T')[0],
+          value: fecha.toISOString().split('T')[0],
+          diaSemana: diaSemana,
+          nombreDia: this.getNombreDia(diaSemana),
+        });
+      }
+    }
+
+    console.log(
+      '📆 Fechas generadas CON horario:',
+      this.fechasDisponibles.map((f) => `${f.value} (${f.nombreDia} - día ${f.diaSemana})`)
+    );
+
+    // Si no hay fechas, mostrar mensaje
+    if (this.fechasDisponibles.length === 0) {
+      console.warn('⚠️ No hay fechas disponibles en los próximos 15 días');
     }
   }
-
-  console.log('📆 Fechas generadas CON horario:', 
-    this.fechasDisponibles.map(f => 
-      `${f.value} (${f.nombreDia} - día ${f.diaSemana})`
-    )
-  );
-
-  // Si no hay fechas, mostrar mensaje
-  if (this.fechasDisponibles.length === 0) {
-    console.warn('⚠️ No hay fechas disponibles en los próximos 15 días');
-  }
-  }
   async cargarFechasDisponibles() {
-  try {
-    const horarios = await this.horariosService.obtenerHorariosPorEspecialista(
-      this.turnoData.especialistaId
-    );
+    try {
+      const horarios = await this.horariosService.obtenerHorariosPorEspecialista(
+        this.turnoData.especialistaId
+      );
 
-    console.log('📅 Todos los horarios del especialista:', horarios);
+      console.log('📅 Todos los horarios del especialista:', horarios);
 
-    this.horariosConfigurados = horarios.filter(
-      (h: any) => h.especialidad_id == this.turnoData.especialidadId && h.activo
-    );
+      this.horariosConfigurados = horarios.filter(
+        (h: any) => h.especialidad_id == this.turnoData.especialidadId && h.activo
+      );
 
-    console.log('🔍 Horarios filtrados para esta especialidad:', this.horariosConfigurados);
+      console.log('🔍 Horarios filtrados para esta especialidad:', this.horariosConfigurados);
 
-    const dias = this.horariosConfigurados.map((h: any) => h.dia_semana);
-    console.log('🎯 Días de trabajo (números):', dias);
-    console.log('📝 Días de trabajo (nombres):', 
-      dias.map(dia => `${dia} = ${this.getNombreDia(dia)}`)
-    );
+      const dias = this.horariosConfigurados.map((h: any) => h.dia_semana);
+      console.log('🎯 Días de trabajo (números):', dias);
+      console.log(
+        '📝 Días de trabajo (nombres):',
+        dias.map((dia) => `${dia} = ${this.getNombreDia(dia)}`)
+      );
 
-    this.generarFechasDisponibles(dias);
-    this.pasoActual = 3;
-  } catch (error) {
-    console.error('❌ Error cargando fechas disponibles:', error);
+      this.generarFechasDisponibles(dias);
+      this.pasoActual = 3;
+    } catch (error) {
+      console.error('❌ Error cargando fechas disponibles:', error);
+    }
   }
-}
 }

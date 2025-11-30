@@ -14,12 +14,5 @@ export class EspecialistaComponent {
     private router: Router,
   ) {}
 
-  // Método para navegar a los turnos del especialista
-  navegarATurnos() {
-    this.router.navigate(['/turnos/especialista']);
-  }
-
-  navegarAHorarios() {
-    this.router.navigate(['/horarios']);
-  }
+ 
 }

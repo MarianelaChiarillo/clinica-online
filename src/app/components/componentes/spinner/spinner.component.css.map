@@ -1,0 +1,1 @@
+{"version":3,"sources":["spinner.component.scss","spinner.component.css"],"names":[],"mappings":"AAAA;EACE,eAAA;EACA,MAAA;EACA,OAAA;EACA,WAAA;EACA,YAAA;EACA,gCAAA;EACA,aAAA;EACA,mBAAA;EACA,uBAAA;EACA,aAAA;ACCF;;ADEA;EACE,qCAAA;EACA,wBAAA;ACCF;;ADEA;EACE;IACE,uBAAA;ECCF;EDCA;IACE,yBAAA;ECCF;AACF","file":"spinner.component.css"}

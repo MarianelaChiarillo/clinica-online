@@ -1,32 +1,25 @@
-// components/estadisticas/estadisticas-admin.component.scss
+// ==========================================
+// 📌 ESTADÍSTICAS ADMIN - ESTILOS
+// ==========================================
+
+// Layout general
 :host {
   display: block;
   min-height: 100vh;
   background-color: #f8f9fa;
 }
 
+// Cards
 .card {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.5rem;
 }
 
+// Tablas
 .table-responsive {
   max-height: 400px;
   overflow-y: auto;
-}
-
-
-
-// estadisticas-admin.component.scss
-.chart-container {
-  canvas {
-    max-width: 100%;
-  }
-}
-
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  border: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 .table th {
@@ -34,7 +27,18 @@
   font-weight: 600;
 }
 
+// Botones
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+// Gráficos
+.chart-container {
+  position: relative;
+  height: 400px;
+
+  canvas {
+    max-width: 100%;
+  }
 }

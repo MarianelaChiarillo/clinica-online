@@ -1,33 +1,34 @@
 .filtro-container {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  max-width: 400px;
-  margin: 1rem auto;
-  border: 1px solid #ddd;
+  width: 80%;
+  margin-bottom: 2rem;
+}
+
+.icono-busqueda {
+  position: absolute;
+  left: 12px;
+  font-size: 1rem;
+  color: #666;
+  pointer-events: none;
+}
+
+.filtro-input {
+  width: 100%;
+  padding: 10px 40px 10px 36px; 
+  border: 1px solid #ccc;
   border-radius: 8px;
-  padding: 0.5rem 1rem;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
+  border-color: #008c9e;
+}
 
-  input {
-    flex: 1;
-    border: none;
-    outline: none;
-    font-size: 1rem;
-    background: transparent;
-  }
-
-  .btn-limpiar {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: #888;
-    cursor: pointer;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: #000;
-    }
-  }
+.btn-limpiar {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #888;
 }

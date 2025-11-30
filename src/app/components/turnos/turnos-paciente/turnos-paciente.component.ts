@@ -10,7 +10,7 @@ import { MenuComponent } from '../../componentes/menu/menu.component';
 import { HistoriaClinicaService } from '../../../services/usuarios/historia-clinica.service';
 import { TurnoExtendido } from '../../../models/turno';
 import { FiltroService } from '../../../services/usuarios/filtro.service';
-
+import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
 @Component({
   selector: 'app-turnos-paciente',
   standalone: true,
@@ -19,7 +19,8 @@ import { FiltroService } from '../../../services/usuarios/filtro.service';
     FiltroGeneralComponent,
     ModalContainerComponent,
     EncuestaModalComponent,
-    MenuComponent
+    MenuComponent,
+    SpinnerComponent,
   ],
   templateUrl: './turnos-paciente.component.html',
   styleUrls: ['./turnos-paciente.component.scss'],
@@ -29,7 +30,6 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
   turnos: TurnoExtendido[] = [];
   turnosFiltrados: TurnoExtendido[] = [];
 
-  // Variables para controlar el modal de encuesta
   mostrarEncuestaModal = false;
   turnoSeleccionado: any = null;
 
@@ -61,9 +61,9 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
         {
           event: '*',
           schema: 'public',
-          table: 'turnos'
+          table: 'turnos',
         },
-        async payload => {
+        async (payload) => {
           await this.obtenerTurnos();
         }
       )
@@ -73,24 +73,22 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
   async obtenerTurnos() {
     this.cargando = true;
     const turnosBase = await this.turnosService.obtenerTurnosDelPacienteActual();
-    
-    // Inicializar turnos con estructura extendida
-    this.turnos = turnosBase.map(turno => ({
+
+    this.turnos = turnosBase.map((turno) => ({
       ...turno,
       historia_clinica: undefined,
-      coincidencias: []
+      coincidencias: [],
     })) as TurnoExtendido[];
-    
-    // Cargar historias clínicas para los turnos realizados
+
     await this.cargarHistoriasClinicas();
-    
+
     this.turnosFiltrados = [...this.turnos];
     this.cargando = false;
   }
 
   private async cargarHistoriasClinicas(): Promise<void> {
-    const turnosRealizados = this.turnos.filter(t => t.estado === 'realizado');
-    
+    const turnosRealizados = this.turnos.filter((t) => t.estado === 'realizado');
+
     const promesas = turnosRealizados.map(async (turno) => {
       try {
         const historia = await this.historiaClinicaService.obtenerHistoriaClinicaPorTurno(turno.id);
@@ -104,14 +102,11 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     await Promise.all(promesas);
   }
 
-  // Método llamado cuando el filtro general emite turnos filtrados
   onTurnosFiltradosChange(turnosFiltrados: TurnoExtendido[]) {
     this.turnosFiltrados = turnosFiltrados;
   }
 
-  // Método opcional si necesitas el texto del filtro
   onFiltroChange(filtroTexto: string) {
-    // Puedes usar esto para mostrar info del filtro si lo necesitas
     console.log('Filtro aplicado:', filtroTexto);
   }
 
@@ -121,17 +116,14 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     if (t.estado !== 'realizado') {
       acciones.push('cancelar');
     } else {
-      // ENCUESTA: disponible si el array de encuestas está VACÍO
       if (Array.isArray(t.encuestas) && t.encuestas.length === 0) {
         acciones.push('completar_encuesta');
       }
-      
-      // CALIFICACIÓN: disponible si no tiene calificación
+
       if (!t.calificacion_atencion) {
         acciones.push('calificar');
       }
 
-      // RESEÑA: disponible si hay comentario del especialista
       if (t.comentario_especialista?.trim()) {
         acciones.push('ver_resena');
       }
@@ -163,30 +155,26 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     if (res) await this.obtenerTurnos();
   }
 
-  // Método para abrir el modal de encuesta
   abrirEncuestaModal(turno: TurnoExtendido) {
     this.turnoSeleccionado = turno;
     this.mostrarEncuestaModal = true;
   }
 
-  // Método para cerrar el modal de encuesta
   cerrarEncuestaModal(encuestaCompletada: boolean) {
     this.mostrarEncuestaModal = false;
     this.turnoSeleccionado = null;
-    
-    // Si se completó la encuesta, refrescar los turnos
+
     if (encuestaCompletada) {
       this.obtenerTurnos();
     }
   }
 
-  // Método para mejor visualización de los botones
   getTextoAccion(accion: string): string {
     const textos: any = {
-      'cancelar': '❌ Cancelar',
-      'completar_encuesta': '📊 Completar Encuesta',
-      'calificar': '⭐ Calificar',
-      'ver_resena': '📝 Ver Reseña'
+      cancelar: 'Cancelar',
+      completar_encuesta: 'Completar Encuesta',
+      calificar: 'Calificar',
+      ver_resena: 'Ver Reseña',
     };
     return textos[accion] || accion;
   }

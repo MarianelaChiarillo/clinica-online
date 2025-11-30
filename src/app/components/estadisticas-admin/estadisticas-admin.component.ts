@@ -1,599 +1,639 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Chart, registerables } from 'chart.js';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { EstadisticasService } from '../../services/usuarios/estadisticas.service';
+import { TurnosService } from '../../services/turnos.service';
+import { UsuarioService } from '../../services/usuarios/usuario.service';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import Chart from 'chart.js/auto';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ExportacionService } from '../../services/usuarios/exportacion.service';
 
-Chart.register(...registerables);
-
 @Component({
-  selector: 'app-estadisticas-admin',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './estadisticas-admin.component.html',
-  styleUrls: ['./estadisticas-admin.component.scss']
+  selector: 'app-estadisticas-admin',
+  imports: [DatePipe, FormsModule, CommonModule],
+  templateUrl: './estadisticas-admin.component.html',
+  styleUrls: ['./estadisticas-admin.component.scss']
 })
-export class EstadisticasAdminComponent implements OnInit, AfterViewInit, OnDestroy {
-  // Filtros
-  fechaInicio: string = '';
-  fechaFin: string = '';
-  medicoSeleccionado: string = 'todos';
-  
-  // NUEVO: Filtro para seleccionar la Especialidad en el gráfico
-  filtroEspecialidadSeleccionada: string = 'todos'; 
-  
-  // Lista de médicos
-  medicos: any[] = [];
-  // NUEVO: Lista de especialidades únicas para el dropdown
-  especialidadesDisponibles: { id: string, nombre: string }[] = []; 
-  
-  // Datos
-  logIngresos: any[] = [];
-  turnosPorEspecialidad: any[] = []; // Usado para mostrar: Especialidad/Estado y Cantidad
-  turnosPorDia: any[] = [];
-  turnosSolicitadosPorMedico: any[] = [];
-  turnosFinalizadosPorMedico: any[] = [];
-  turnosPorMedicoEspecifico: any[] = [];
-  // NECESARIO: Almacena los turnos crudos para poder aplicar filtros en el componente
-  turnosSinAgrupar: any[] = []; 
 
-  // Charts
-  chartEspecialidad: Chart | null = null;
-  chartPorDia: Chart | null = null;
-  chartMedicosSolicitados: Chart | null = null;
-  chartMedicosFinalizados: Chart | null = null;
-  chartMedicoEspecifico: Chart | null = null;
+export class EstadisticasAdminComponent implements OnInit, OnDestroy {
+ @ViewChild('chartEspecialidadCanvas') chartRef!: ElementRef<HTMLCanvasElement>;
+ @ViewChild('chartPorDiaCanvas') chartPorDiaRef!: ElementRef<HTMLCanvasElement>;
 
-  loading = false;
-  filtrosAplicados = false;
-  datosDisponibles: any = {};
+  constructor(
+    private estadisticasService: EstadisticasService,
+    private turnosService: TurnosService,
+    private usuariosService: UsuarioService,
+      private exportacionService: ExportacionService
 
-  // Colores para gráficos de torta
-  coloresTorta = [
-    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', 
-    '#FF9F40', '#FF6384', '#C9CBCF', '#7EBF7F', '#E87B7B',
-    '#9B59B6', '#3498DB', '#E74C3C', '#2ECC71', '#F39C12'
-  ];
+  ) {}
 
-  constructor(
-    private estadisticasService: EstadisticasService,
-    private exportacionService: ExportacionService
-  ) {}
+  // ---------------------------------------------------------------------------
+  // VARIABLES
+  // ---------------------------------------------------------------------------
 
-// estadisticas-admin.component.ts
+  logIngresos: any[] = [];
+  especialidadesDisponibles: any[] = [];
+  filtroEspecialidadSeleccionada: string = "todas";
+turnosPorEspecialidad: any[] = [];
+hayturnos = false;
+  turnosPorDia: any[] = [];
+  chartPorDia: Chart | null = null;
+medicoSeleccionado: string = 'todos';
+fechaInicio: string = '';
+fechaFin: string = '';
 
-// ...
+turnosSolicitadosPorMedico: any[] = [];
+turnosFinalizadosPorMedico: any[] = [];
 
-async ngOnInit() {
-    await this.verificarDatos();
-    this.establecerFechasPorDefecto();
-    await this.cargarDatosIniciales();
-    // 🛑 QUITA ESTA LÍNEA si ya la llamas dentro de cargarDatosIniciales()
-    // this.crearGraficosIniciales(); 
-}
-
-ngAfterViewInit() {
-    // 🛑 QUITA ESTA LÍNEA, la inicialización debe esperar a los datos en ngOnInit
-    // this.crearGraficosIniciales(); 
-}
+chartMedicosSolicitados: Chart | null = null;
+chartMedicosFinalizados: Chart | null = null;
+  chartEspecialidad: Chart | null = null;
+ 
+  filtrosAplicados = false;
+  loading = false;
 
 
 
-  ngOnDestroy() {
-    this.destruirGraficos();
-  }
+  turnosPorMedicoEspecifico: any[] = [];
+  chartMedicoEspecifico: Chart | null = null;
 
-  async verificarDatos() {
-    this.datosDisponibles = await this.estadisticasService.verificarDatosDisponibles();
-    console.log('📊 Datos disponibles:', this.datosDisponibles);
-    
-    if (!this.datosDisponibles.tieneTurnos) {
-      console.warn('⚠️ No hay turnos en la base de datos');
-    }
-  }
+  medicos: any[] = [];
+  datosDisponibles = {
+    tieneTurnos: true
+  };
+turnosEspecialidadOriginal: any[] = [];
 
-  establecerFechasPorDefecto() {
-    const fechaFin = new Date();
-    const fechaInicio = new Date();
-    fechaInicio.setDate(fechaInicio.getDate() - 30);
-    
-    this.fechaFin = fechaFin.toISOString().split('T')[0];
-    this.fechaInicio = fechaInicio.toISOString().split('T')[0];
-  }
+  // ---------------------------------------------------------------------------
+  // MÉTODOS DEL CICLO DE VIDA
+  // ---------------------------------------------------------------------------
 
-  async cargarDatosIniciales() {
-    this.loading = true;
-    try {
-      // Cargar médicos
-      this.medicos = await this.estadisticasService.obtenerMedicos();
-      this.medicos.unshift({
-        id: 'todos',
-        nombre_completo: '👥 Todos los médicos',
-        especialidad: 'Resumen general'
-      });
+  ngOnInit(): void {
+    this.cargarLogs();
+    this.cargarEspecialidades();
+    this.cargarTurnosEspecialidadGeneral();
+      this.cargarTurnosPorEspecialidad();
+          this.cargarTurnosPorDiaSemana();
+  this.cargarMedicos(); // 🔥 Agregar aquí
 
-      // Cargar datos sin filtro (se espera 'turnosCompletos' del servicio)
-      const datosSinFiltro = await this.estadisticasService.obtenerDatosSinFiltro();
-      this.logIngresos = datosSinFiltro.logIngresos;
-      this.turnosSinAgrupar = datosSinFiltro.turnosCompletos; 
-      
-      // NUEVO: Generar la lista de especialidades para el SELECT
-      this.especialidadesDisponibles = this.getUniqueSpecialties(this.turnosSinAgrupar);
 
-      // Inicializar el gráfico con la distribución general por especialidad
-      this.turnosPorEspecialidad = this.procesarTurnosPorEspecialidadGeneral(this.turnosSinAgrupar);
-
-      this.crearGraficosIniciales();
-    } catch (error) {
-      console.error('Error cargando datos iniciales:', error);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  async cargarDatosConFiltro() {
-    if (!this.fechaInicio || !this.fechaFin) {
-      alert('Por favor, selecciona ambas fechas');
-      return;
-    }
-
-    this.loading = true;
-    this.destruirGraficosFiltrados();
-    
-    try {
-      const datos = await this.estadisticasService.obtenerDatosConFiltro(
-        this.fechaInicio, 
-        this.fechaFin, 
-        this.medicoSeleccionado
-      );
-
-      this.turnosPorDia = datos.turnosPorDia;
-      this.turnosSolicitadosPorMedico = datos.turnosSolicitados;
-      this.turnosFinalizadosPorMedico = datos.turnosFinalizados;
-      this.turnosPorMedicoEspecifico = datos.turnosMedicoEspecifico;
-
-      this.filtrosAplicados = true;
-
-      setTimeout(() => {
-        this.crearGraficosFiltrados();
-      }, 100);
-
-    } catch (error) {
-      console.error('Error cargando datos con filtro:', error);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  async aplicarFiltros() {
-    await this.cargarDatosConFiltro();
-  }
-  
-  /** Lógica del nuevo filtro de especialidad */
-  filtrarGraficoEspecialidad() {
-    const selectedSpecialty = this.filtroEspecialidadSeleccionada;
-    
-    if (selectedSpecialty === 'todos') {
-      // Muestra el resumen general por especialidad
-      this.turnosPorEspecialidad = this.procesarTurnosPorEspecialidadGeneral(this.turnosSinAgrupar);
-    } else {
-      // Muestra la distribución por ESTADO para la especialidad seleccionada
-      const datosPorEstado = this.procesarTurnosPorEstadoPorEspecialidad(
-        this.turnosSinAgrupar,
-        selectedSpecialty
-      );
-      // Adaptamos la estructura para que la tabla y el gráfico puedan usarla, 
-      // usando 'especialidad' para el nombre del estado.
-      this.turnosPorEspecialidad = datosPorEstado.map(item => ({
-        especialidad: this.translateStatus(item.estado), 
-        cantidad: item.cantidad
-      }));
-    }
-
-    this.crearGraficoEspecialidad(); 
-  }
-  
-  /** * Procesa la lista de turnos para agrupar por Especialidad. 
-   * Se usa para la opción 'Todas las Especialidades' del filtro.
-   */
-  private procesarTurnosPorEspecialidadGeneral(turnos: any[]): any[] {
-    const agrupado = (turnos || []).reduce((acc: any, turno: any) => {
-        const especialidadNombre = turno.especialidades?.nombre || 'Sin especialidad';
-        acc[especialidadNombre] = (acc[especialidadNombre] || 0) + 1;
-        return acc;
-    }, {});
-
-    return Object.entries(agrupado).map(([especialidad, cantidad]) => ({
-        especialidad,
-        cantidad
-    }));
   }
 
-  /** * Procesa la lista de turnos para filtrar por una Especialidad 
-   * y luego agrupar por Estado del turno.
-   */
- // ... (dentro de tu clase EstadisticasAdminComponent)
-
-  // ... (dentro de tu clase EstadisticasAdminComponent)
-
-private procesarTurnosPorEstadoPorEspecialidad(turnos: any[], especialidadNombre: string): { estado: string, cantidad: number }[] {
-    
-    // 1. DECLARACIÓN E INICIALIZACIÓN DE LA VARIABLE
-    let turnosFiltrados = turnos; // Inicializamos con la lista completa
-
-    // 2. Filtrar por la Especialidad si no es 'todos'
-    if (especialidadNombre !== 'todos') {
-        // En este caso, ya no usamos 'const' o 'let' aquí, sino que reasignamos:
-        turnosFiltrados = turnos.filter((t: any) => t.especialidades?.nombre === especialidadNombre);
+  ngOnDestroy(): void {
+    if (this.chartEspecialidad) {
+      this.chartEspecialidad.destroy();
     }
-    
-    // 3. Agrupar por Estado (estado)
-    // El resto del código que usa 'turnosFiltrados' ahora tendrá acceso a la variable
-    const agrupado = (turnosFiltrados || []).reduce((acc: any, turno: any) => {
-        const estado = turno.estado || 'desconocido';
-        acc[estado] = (acc[estado] || 0) + 1;
-        return acc;
-    }, {});
-    
-    // 4. Convertir a array de objetos { estado, cantidad }
-    return Object.entries(agrupado).map(([estado, cantidad]) => ({
-        estado,
-        cantidad: cantidad as number 
-    }));
-}
-  
-  /** Genera la lista única de especialidades para el dropdown */
-  private getUniqueSpecialties(turnos: any[]): { id: string, nombre: string }[] {
-    const specialtiesSet = new Set();
-    // Opción por defecto
-    const uniqueSpecs = [{ id: 'todos', nombre: 'Todas las Especialidades' }];
+  }
 
-    (turnos || []).forEach(turno => {
-        const specName = turno.especialidades?.nombre;
-        if (specName && !specialtiesSet.has(specName)) {
-            specialtiesSet.add(specName);
-            uniqueSpecs.push({ id: specName, nombre: specName });
-        }
+  // ---------------------------------------------------------------------------
+  // LOG DE INGRESOS
+  // ---------------------------------------------------------------------------
+
+  cargarLogs() {
+    this.estadisticasService.obtenerLogIngresos().then((data) => {
+      this.logIngresos = data || [];
     });
-    return uniqueSpecs;
   }
-  
-  /** Traduce la clave del estado (ej. 'solicitado') a un nombre para mostrar ('Solicitados') */
-  private translateStatus(statusKey: string): string {
-    const estados: { [key: string]: string } = {
-      'solicitado': 'Solicitados',
-      'aceptado': 'Aceptados',
-      'realizado': 'Realizados',
-      'cancelado': 'Cancelados',
-      'rechazado': 'Rechazados',
-      'desconocido': 'Desconocido'
-    };
-    return estados[statusKey] || statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
+get hayTurnos(): boolean {
+  return this.turnosPorEspecialidad && this.turnosPorEspecialidad.some(t => t.cantidad > 0);
+}
+
+  exportarLogIngresos() {
+    const doc = new jsPDF();
+    doc.text("Log de Ingresos", 10, 10);
+
+    autoTable(doc, {
+      head: [["Usuario", "Primer ingreso", "Último ingreso"]],
+      body: this.logIngresos.map((l) => [
+        l.usuario_email,
+        l.primer_ingreso_fecha_hora,
+        l.ultimo_ingreso_fecha_hora
+      ])
+    });
+
+    doc.save("log_ingresos.pdf");
   }
+
+  // ---------------------------------------------------------------------------
+  // SECCIÓN — TURNOS POR ESPECIALIDAD
+  // ---------------------------------------------------------------------------
+// En el componente
+
+
+
+ async cargarEspecialidades() {
+    console.log('🔍 [SERVICE] Solicitando ESPECIALIDADES...');
+    const esp = await this.estadisticasService.obtenerEspecialidades();
+    this.especialidadesDisponibles = esp;
+    console.log('✅ [COMPONENT] Especialidades disponibles:', this.especialidadesDisponibles);
+  }
+
+  async filtrarGraficoEspecialidad() {
+    console.log('🎯 [COMPONENT] Especialidad seleccionada:', this.filtroEspecialidadSeleccionada);
+
+    if (!this.filtroEspecialidadSeleccionada) {
+      this.turnosPorEspecialidad = [];
+      this.hayturnos = false;
+      return;
+    }
+
+    const data = await this.estadisticasService.obtenerTurnosPorEspecialidad(this.filtroEspecialidadSeleccionada);
+    console.log('📊 [COMPONENT] Turnos filtrados:', data);
+
+    if (data.length > 0) {
+      this.turnosPorEspecialidad = data;
+      this.hayturnos = true;
+
+      // Esperar a que Angular renderice el canvas
+      setTimeout(() => {
+        this.renderizarGraficoEspecialidad();
+      }, 0);
+    } else {
+      this.turnosPorEspecialidad = [];
+      this.hayturnos = false;
+    }
+  }
+
+  renderizarGraficoEspecialidad() {
+    if (!this.chartRef) return;
+
+    if (this.chartEspecialidad) {
+      this.chartEspecialidad.destroy();
+    }
+
+    this.chartEspecialidad = new Chart(this.chartRef.nativeElement, {
+      type: 'pie',
+      data: {
+        labels: this.turnosPorEspecialidad.map(t => t.especialidad),
+        datasets: [{
+          data: this.turnosPorEspecialidad.map(t => t.cantidad),
+          backgroundColor: ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f"]
+        }]
+      }
+    });
+  }
+async cargarMedicos() {
+  const data = await this.estadisticasService.obtenerMedicos();
+  console.log('📌 Datos crudos del servicio:', data); // Mira exactamente qué llega
+  this.medicos = data || [];
+  console.log('✅ Médicos cargados en this.medicos:', this.medicos);
+}
+
+
+  /** Cargar gráfica con TODOS los turnos por especialidad */
+  async cargarTurnosEspecialidadGeneral() {
+    const data = await this.estadisticasService.obtenerTurnosPorEspecialidad();
+    this.turnosPorEspecialidad = data || [];
+  }
+
+  /** Se ejecuta cuando se cambia el select */
+
+
   
-  getMedicoSeleccionadoNombre(): string {
-    if (this.medicoSeleccionado === 'todos') {
-      return 'Todos los médicos';
-    }
-    const medico = this.medicos.find(m => m.id === this.medicoSeleccionado);
-    return medico ? medico.nombre_completo : 'Médico no encontrado';
-  }
 
-  // CREACIÓN DE GRÁFICOS DE TORTA
-  crearGraficosIniciales() {
-    this.crearGraficoEspecialidad();
-  }
+  // ---------------------------------------------------------------------------
+  // TODAS LAS DEMÁS ESTADÍSTICAS (Ya estaban bien, no se tocan)
+  // ---------------------------------------------------------------------------
 
-  crearGraficosFiltrados() {
-    this.crearGraficoPorDia();
-    this.crearGraficosMedicos();
-    
-    if (this.medicoSeleccionado !== 'todos') {
-      this.crearGraficoMedicoEspecifico();
-    }
-  }
 
-  crearGraficoEspecialidad() {
-    this.destruirChart(this.chartEspecialidad);
-    
-    const ctx = document.getElementById('chartEspecialidad') as HTMLCanvasElement;
-    if (!ctx) return;
+
+  
+  dibujarChartPorDia() {
+    const ctx = document.getElementById('chartPorDia') as HTMLCanvasElement;
+
+    if (this.chartPorDia) this.chartPorDia.destroy();
+
+    this.chartPorDia = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: this.turnosPorDia.map(d => d.dia),
+        datasets: [
+          {
+            label: 'Turnos',
+            data: this.turnosPorDia.map(d => d.cantidad),
+            backgroundColor: 'rgba(75,192,192,0.6)'
+          }
+        ]
+      }
+    });
+  }
+
+
+
+  dibujarChartMedicoEspecifico() {
+    const ctx = document.getElementById("chartMedicoEspecifico") as HTMLCanvasElement;
+
+    if (this.chartMedicoEspecifico) this.chartMedicoEspecifico.destroy();
+
+    this.chartMedicoEspecifico = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: this.turnosPorMedicoEspecifico.map((t) => t.estado),
+        datasets: [
+          {
+            data: this.turnosPorMedicoEspecifico.map((t) => t.cantidad),
+            backgroundColor: ["#4bc0c0", "#ffcd56", "#ff6384"]
+          }
+        ]
+      }
+    });
+  }
+exportarPDFEspecialidad() {
+  if (!this.hayTurnos || !this.turnosPorEspecialidad.length) {
+    alert('No hay turnos para la especialidad seleccionada');
+    return;
+  }
+
+  // 1️⃣ Crear documento PDF
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const titulo = `Turnos - Especialidad: ${this.filtroEspecialidadSeleccionada}`;
+  doc.setFontSize(16);
+  doc.text(titulo, 14, 15);
+
+  // 2️⃣ Convertir gráfico a imagen
+  if (this.chartRef && this.chartRef.nativeElement) {
+    const canvas = this.chartRef.nativeElement;
+    const imgData = canvas.toDataURL('image/png');
+    doc.addImage(imgData, 'PNG', 14, 25, 90, 90); // ajustar tamaño
+  }
+
+  // 3️⃣ Tabla de turnos
+  const body = this.turnosPorEspecialidad.map(t => [t.especialidad, t.cantidad]);
+autoTable(doc, {
+  startY: 120,
+  head: [['Especialidad/Estado', 'Cantidad']],
+  body: body,
+  theme: 'grid',
+  headStyles: { fillColor: [66, 135, 245] },
+  styles: { fontSize: 10, cellPadding: 3 },
+  margin: { top: 120 }
+});
+
+
+  // 4️⃣ Guardar archivo con fecha
+  const fecha = new Date().toISOString().split('T')[0];
+  doc.save(`turnos_${this.filtroEspecialidadSeleccionada}_${fecha}.pdf`);
+}
+
+
+async cargarTurnosPorEspecialidad() {
+  try {
+    // 1️⃣ Traer todas las especialidades
+    const especialidades = await this.estadisticasService.obtenerEspecialidades();
+
+    // 2️⃣ Traer los turnos por especialidad
+    const turnos = await this.estadisticasService.obtenerTurnosPorEspecialidad();
+
+    // 3️⃣ Combinar: si no hay turnos para una especialidad, poner cantidad 0
+    this.turnosPorEspecialidad = especialidades.map(esp => {
+      const t = turnos.find(turno => turno.especialidad === esp.nombre);
+      return {
+        especialidad: esp.nombre,
+        cantidad: t ? t.cantidad : 0
+      };
+    });
+
+    // 4️⃣ Dibujar gráfico
+    this.dibujarGrafico();
+  } catch (error) {
+    console.error('Error cargando turnos por especialidad:', error);
+    this.turnosPorEspecialidad = [];
+  }
+}
+
+
+  dibujarGrafico() {
+    if (!this.chartRef) return;
+    if (this.chartEspecialidad) this.chartEspecialidad.destroy();
+
+    this.chartEspecialidad = new Chart(this.chartRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels: this.turnosPorEspecialidad.map(t => t.especialidad),
+        datasets: [{
+          label: 'Cantidad de turnos',
+          data: this.turnosPorEspecialidad.map(t => t.cantidad),
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  exportarTurnosPorEspecialidadPDF() {
+    if (!this.turnosPorEspecialidad.length) {
+      alert('No hay datos de turnos para exportar');
+      return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // Título
+    doc.setFontSize(16);
+    doc.text('Turnos por Especialidad', 14, 15);
+
+    // Convertir gráfico a imagen
+    if (this.chartRef && this.chartRef.nativeElement) {
+      const imgData = this.chartRef.nativeElement.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 14, 25, 180, 90); // ajustar tamaño
+    }
+
+    // Tabla de datos
+    const body = this.turnosPorEspecialidad.map(t => [t.especialidad, t.cantidad]);
+    autoTable(doc, {
+      startY: 120,
+      head: [['Especialidad', 'Cantidad']],
+      body: body,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 135, 245] },
+      styles: { fontSize: 10, cellPadding: 3 }
+    });
+
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`turnos_por_especialidad_${fecha}.pdf`);
+  }
+
+  exportarTurnosPorEspecialidadExcel() {
+    if (!this.turnosPorEspecialidad.length) {
+      alert('No hay datos de turnos para exportar');
+      return;
+    }
+
+    const ws = XLSX.utils.json_to_sheet(this.turnosPorEspecialidad);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Turnos Especialidad');
+    const fecha = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `turnos_por_especialidad_${fecha}.xlsx`);
+  }
+  exportarPDF() {
+    if (!this.turnosPorEspecialidad || this.turnosPorEspecialidad.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // Título
+    doc.setFontSize(16);
+    doc.text('Turnos por Especialidad', 14, 15);
+
+    // Convertir gráfico a imagen
+    if (this.chartRef && this.chartRef.nativeElement) {
+      const canvas = this.chartRef.nativeElement;
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 14, 25, 180, 90); // ancho y alto ajustable
+    }
+
+    // Agregar tabla debajo del gráfico
+    const body = this.turnosPorEspecialidad.map(t => [t.especialidad, t.cantidad]);
+    autoTable(doc, {
+      startY: 120,
+      head: [['Especialidad', 'Cantidad']],
+      body: body,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 135, 245] },
+      styles: { fontSize: 10, cellPadding: 3 }
+    });
+
+    // Guardar PDF
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`turnos_por_especialidad_${fecha}.pdf`);
+  }
+
+
+   async cargarTurnosPorDiaSemana() {
+  this.turnosPorDia = await this.estadisticasService.obtenerTurnosPorDiaSemana();
+
+  if (!this.turnosPorDia || this.turnosPorDia.length === 0) return;
+
+  if (this.chartPorDia) this.chartPorDia.destroy();
+
+  this.chartPorDia = new Chart(this.chartPorDiaRef.nativeElement, {
+    type: 'bar',
+    data: {
+      labels: this.turnosPorDia.map(t => t.dia),
+      datasets: [{
+        label: 'Turnos',
+        data: this.turnosPorDia.map(t => t.cantidad),
+        backgroundColor: 'rgba(75,192,192,0.6)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
+  /** Dibujar gráfico de barras */
+  renderizarGraficoPorDia() {
+    if (!this.chartPorDiaRef) return;
+
+    if (this.chartPorDia) this.chartPorDia.destroy();
+
+    this.chartPorDia = new Chart(this.chartPorDiaRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels: this.turnosPorDia.map(t => t.dia),
+        datasets: [{
+          label: 'Turnos',
+          data: this.turnosPorDia.map(t => t.cantidad),
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
+  /** Exportar PDF con gráfico + tabla */
+  exportarPDFTurnosPorDia() {
+    if (!this.turnosPorDia || this.turnosPorDia.length === 0) {
+      alert('No hay turnos para exportar');
+      return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    doc.setFontSize(16);
+    doc.text('Turnos por Día', 14, 15);
+
+    // Convertir gráfico a imagen
+    if (this.chartPorDiaRef && this.chartPorDiaRef.nativeElement) {
+      const canvas = this.chartPorDiaRef.nativeElement;
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 14, 25, 180, 90); // ajustar tamaño
+    }
+
+    // Tabla
+    const body = this.turnosPorDia.map(t => [t.dia, t.cantidad]);
+    autoTable(doc, {
+      startY: 120,
+      head: [['Día', 'Cantidad de Turnos']],
+      body: body,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 135, 245] },
+      styles: { fontSize: 10, cellPadding: 3 }
+    });
+
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`turnos_por_dia_${fecha}.pdf`);
+  }
+
+
+async cargarTurnosPorMedicoSolicitados() {
+  if (!this.medicoSeleccionado || !this.fechaInicio || !this.fechaFin) return;
+
+  this.turnosSolicitadosPorMedico = await this.estadisticasService.obtenerTurnosPorMedico(
+    this.medicoSeleccionado, // ahora es id
+    'solicitado',
+    this.fechaInicio,
+    this.fechaFin
+  );
+
+  this.dibujarChartMedicosSolicitados();
+}
+
+// Método para cargar los turnos finalizados
+async cargarTurnosPorMedicoFinalizados() {
+  if (!this.medicoSeleccionado || !this.fechaInicio || !this.fechaFin) return;
+
+  this.turnosFinalizadosPorMedico = await this.estadisticasService.obtenerTurnosPorMedico(
+    this.medicoSeleccionado,
+    'realizado',
+    this.fechaInicio,
+    this.fechaFin
+  );
+
+  this.dibujarChartMedicosFinalizados();
+}
+
+// Graficar solicitados
+dibujarChartMedicosSolicitados() {
+  const ctx = document.getElementById("chartMedicosSolicitados") as HTMLCanvasElement;
+  if (!ctx) return;
+
+  if (this.chartMedicosSolicitados) this.chartMedicosSolicitados.destroy();
+
+  this.chartMedicosSolicitados = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: this.turnosSolicitadosPorMedico.map(t => t.medico),
+      datasets: [{
+        label: 'Solicitados',
+        data: this.turnosSolicitadosPorMedico.map(t => t.cantidad),
+        backgroundColor: 'rgba(255,159,64,0.6)',
+        
+      }]
+    },
+options: {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      ticks: {
+        autoSkip: false // mostrar todas las etiquetas
+      }
+    },
+    y: {
+      beginAtZero: true
+    }
+  }
+}
+
     
-    const selectedSpecialty = this.filtroEspecialidadSeleccionada;
-    
-    // Título dinámico
-    const chartTitle = selectedSpecialty === 'todos' 
-        ? 'Distribución General por Especialidad' 
-        : `Distribución de Estados para: ${selectedSpecialty}`;
+  });
+}
 
-    if (this.turnosPorEspecialidad.length === 0) {
-      this.crearGraficoVacio(ctx, `No hay datos para: ${selectedSpecialty}`);
-      return;
-    }
+// Graficar finalizados
+dibujarChartMedicosFinalizados() {
+  const ctx = document.getElementById("chartMedicosFinalizados") as HTMLCanvasElement;
+  if (!ctx) return;
 
-    this.chartEspecialidad = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        // Los labels son dinámicos (Especialidad o Estado)
-        labels: this.turnosPorEspecialidad.map(item => item.especialidad),
-        datasets: [{
-          data: this.turnosPorEspecialidad.map(item => item.cantidad),
-          backgroundColor: this.coloresTorta,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          title: {
-            display: true,
-            text: chartTitle,
-            font: { size: 16 }
-          },
-          tooltip: {
-            callbacks: {
- label: (context) => {
-   const label = context.label || '';
-   const value = context.parsed;
-   const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-   const percentage = Math.round((value / total) * 100);
-   return `${label}: ${value} (${percentage}%)`;
- }
-            }
-          }
-        }
-      }
-    });
-  }
+  if (this.chartMedicosFinalizados) this.chartMedicosFinalizados.destroy();
 
-  crearGraficoPorDia() {
-// ... (resto de funciones de gráficos y auxiliares)
-    this.destruirChart(this.chartPorDia);
-    
-    const ctx = document.getElementById('chartPorDia') as HTMLCanvasElement;
-    if (!ctx) return;
+  this.chartMedicosFinalizados = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: this.turnosFinalizadosPorMedico.map(t => t.medico),
+      datasets: [{
+        label: 'Finalizados',
+        data: this.turnosFinalizadosPorMedico.map(t => t.cantidad),
+        backgroundColor: 'rgba(153,102,255,0.6)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+exportarTurnosPorMedicoPDF() {
+  if ((!this.turnosSolicitadosPorMedico || this.turnosSolicitadosPorMedico.length === 0) &&
+      (!this.turnosFinalizadosPorMedico || this.turnosFinalizadosPorMedico.length === 0)) {
+    alert('No hay datos de turnos para exportar');
+    return;
+  }
 
-    if (this.turnosPorDia.length === 0) {
-      this.crearGraficoVacio(ctx, 'No hay turnos en el período seleccionado');
-      return;
-    }
+  const doc = new jsPDF('p', 'mm', 'a4');
+  let y = 15;
 
-    this.chartPorDia = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: this.turnosPorDia.map(item => item.dia),
-        datasets: [{
-          data: this.turnosPorDia.map(item => item.cantidad),
-          backgroundColor: this.coloresTorta,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          title: {
-            display: true,
-            text: `Distribución por Día de la Semana (${this.fechaInicio} al ${this.fechaFin})`,
-            font: { size: 14 }
-          }
-        }
-      }
-    });
-  }
+  doc.setFontSize(16);
+  doc.text('Turnos por Médico', 14, y);
 
-  crearGraficosMedicos() {
-    this.crearGraficoMedicosSolicitados();
-    this.crearGraficoMedicosFinalizados();
-  }
+  y += 10;
 
-  crearGraficoMedicosSolicitados() {
-    this.destruirChart(this.chartMedicosSolicitados);
-    
-    const ctx = document.getElementById('chartMedicosSolicitados') as HTMLCanvasElement;
-    if (!ctx) return;
+  // Gráfico de solicitados
+  if (this.chartMedicosSolicitados) {
+    const imgSolicitados = this.chartMedicosSolicitados.canvas.toDataURL('image/png');
+    doc.addImage(imgSolicitados, 'PNG', 14, y, 180, 90);
+    y += 95;
+  }
 
-    if (this.turnosSolicitadosPorMedico.length === 0) {
-      this.crearGraficoVacio(ctx, 'No hay turnos solicitados');
-      return;
-    }
+  // Tabla de solicitados
+  if (this.turnosSolicitadosPorMedico.length) {
+    const bodySolicitados = this.turnosSolicitadosPorMedico.map(t => [t.medico, t.cantidad]);
+    autoTable(doc, {
+      startY: y,
+      head: [['Médico', 'Solicitados']],
+      body: bodySolicitados,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 159, 64] },
+      styles: { fontSize: 10, cellPadding: 3 }
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
 
-    this.chartMedicosSolicitados = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: this.turnosSolicitadosPorMedico.map(item => item.medico),
-        datasets: [{
-          data: this.turnosSolicitadosPorMedico.map(item => item.cantidad),
-          backgroundColor: this.coloresTorta,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          title: {
-            display: true,
-            text: `Turnos Solicitados por Médico (${this.fechaInicio} al ${this.fechaFin})`,
-            font: { size: 14 }
-          }
-        }
-      }
-    });
-  }
+  // Gráfico de finalizados
+  if (this.chartMedicosFinalizados) {
+    const imgFinalizados = this.chartMedicosFinalizados.canvas.toDataURL('image/png');
+    doc.addImage(imgFinalizados, 'PNG', 14, y, 180, 90);
+    y += 95;
+  }
 
-  crearGraficoMedicosFinalizados() {
-    this.destruirChart(this.chartMedicosFinalizados);
-    
-    const ctx = document.getElementById('chartMedicosFinalizados') as HTMLCanvasElement;
-    if (!ctx) return;
+  // Tabla de finalizados
+  if (this.turnosFinalizadosPorMedico.length) {
+    const bodyFinalizados = this.turnosFinalizadosPorMedico.map(t => [t.medico, t.cantidad]);
+    autoTable(doc, {
+      startY: y,
+      head: [['Médico', 'Finalizados']],
+      body: bodyFinalizados,
+      theme: 'grid',
+      headStyles: { fillColor: [153, 102, 255] },
+      styles: { fontSize: 10, cellPadding: 3 }
+    });
+  }
 
-    if (this.turnosFinalizadosPorMedico.length === 0) {
-      this.crearGraficoVacio(ctx, 'No hay turnos finalizados');
-      return;
-    }
+  const fecha = new Date().toISOString().split('T')[0];
+  doc.save(`turnos_por_medico_${fecha}.pdf`);
+}
 
-    this.chartMedicosFinalizados = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: this.turnosFinalizadosPorMedico.map(item => item.medico),
-        datasets: [{
-          data: this.turnosFinalizadosPorMedico.map(item => item.cantidad),
-          backgroundColor: this.coloresTorta,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          title: {
-            display: true,
-            text: `Turnos Finalizados por Médico (${this.fechaInicio} al ${this.fechaFin})`,
-            font: { size: 14 }
-          }
-        }
-      }
-    });
-  }
-
-  crearGraficoMedicoEspecifico() {
-    this.destruirChart(this.chartMedicoEspecifico);
-    
-    const ctx = document.getElementById('chartMedicoEspecifico') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    const medicoNombre = this.getMedicoSeleccionadoNombre();
-
-    if (!this.turnosPorMedicoEspecifico || this.turnosPorMedicoEspecifico.length === 0) {
-      this.crearGraficoVacio(ctx, `No hay turnos para ${medicoNombre}`);
-      return;
-    }
-
-    this.chartMedicoEspecifico = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: this.turnosPorMedicoEspecifico.map(item => {
-          // Traducir estados a español
-          const estados: { [key: string]: string } = {
-            'solicitado': 'Solicitados',
-            'aceptado': 'Aceptados',
-            'realizado': 'Realizados',
-            'cancelado': 'Cancelados',
-            'rechazado': 'Rechazados'
-          };
-          return estados[item.estado] || item.estado;
-        }),
-        datasets: [{
-          data: this.turnosPorMedicoEspecifico.map(item => item.cantidad),
-          backgroundColor: this.coloresTorta,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-          },
-          title: {
-            display: true,
-            text: `Estado de Turnos - ${medicoNombre} (${this.fechaInicio} al ${this.fechaFin})`,
-            font: { size: 14 }
-          }
-        }
-      }
-    });
-  }
-
-  private crearGraficoVacio(ctx: HTMLCanvasElement, mensaje: string) {
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Sin datos'],
-        datasets: [{
-          data: [1],
-          backgroundColor: ['#f8f9fa']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: { 
-            display: true, 
-            text: mensaje,
-            font: { size: 14 }
-          }
-        }
-      }
-    });
-  }
-
-  private destruirChart(chart: Chart | null) {
-    if (chart) chart.destroy();
-  }
-
-  private destruirGraficos() {
-    this.destruirChart(this.chartEspecialidad);
-    this.destruirChart(this.chartPorDia);
-    this.destruirChart(this.chartMedicosSolicitados);
-    this.destruirChart(this.chartMedicosFinalizados);
-    this.destruirChart(this.chartMedicoEspecifico);
-  }
-
-  private destruirGraficosFiltrados() {
-    this.destruirChart(this.chartPorDia);
-    this.destruirChart(this.chartMedicosSolicitados);
-    this.destruirChart(this.chartMedicosFinalizados);
-    this.destruirChart(this.chartMedicoEspecifico);
-  }
-
-  // Métodos de exportación
-  exportarLogIngresos() {
-    this.exportacionService.exportarLogIngresos(this.logIngresos);
-  }
-
-  exportarTurnosPorEspecialidad() {
-    this.exportacionService.exportarTurnosPorEspecialidad(this.turnosPorEspecialidad);
-  }
-
-  exportarTurnosPorDia() {
-    this.exportacionService.exportarTurnosPorDia(this.turnosPorDia);
-  }
-
-  exportarTurnosPorMedico(tipo: 'solicitados' | 'finalizados') {
-    const data = tipo === 'solicitados' ? 
-      this.turnosSolicitadosPorMedico : this.turnosFinalizadosPorMedico;
-    this.exportacionService.exportarTurnosPorMedico(data, tipo);
-  }
-
-  exportarTurnosMedicoEspecifico() {
-    const medicoNombre = this.getMedicoSeleccionadoNombre();
-    this.exportacionService.exportarTurnosMedicoEspecifico(
-      this.turnosPorMedicoEspecifico, 
-      medicoNombre
-    );
-  }
 }

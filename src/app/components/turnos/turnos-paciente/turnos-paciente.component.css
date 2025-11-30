@@ -1,0 +1,267 @@
+.container {
+  padding: 1rem;
+  margin-top: 120px;
+}
+
+.turno-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.turno-card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.turno-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.estado.solicitado {
+  background: #007bff;
+}
+
+.estado.aceptado {
+  background: #28a745;
+}
+
+.estado.cancelado {
+  background: #dc3545;
+}
+
+.estado.realizado {
+  background: #6c757d;
+}
+
+.acciones {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn.cancelar {
+  background: #dc3545;
+  color: white;
+}
+
+.btn.info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn.calificar {
+  background: #ffc107;
+  color: black;
+}
+
+.coincidencias {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #28a745;
+}
+
+.coincidencia-badge {
+  background-color: #e8f5e8;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+}
+.coincidencia-badge:last-child {
+  margin-bottom: 0;
+}
+.coincidencia-badge small {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.turno-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: white;
+}
+.turno-card .turno-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.turno-card .turno-header h3 {
+  margin: 0;
+  color: #333;
+}
+.turno-card .turno-header .estado {
+  font-size: 1.2rem;
+  width: 10rem;
+  height: 3rem;
+  text-align: center;
+  border-radius: 2rem;
+  padding-top: 0.5rem;
+}
+.turno-card .turno-header .estado.solicitado {
+  background-color: #fff3cd;
+  color: #856404;
+}
+.turno-card .turno-header .estado.aceptado {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+.turno-card .turno-header .estado.realizado {
+  background-color: #d4edda;
+  color: #155724;
+}
+.turno-card .turno-header .estado.cancelado {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+.turno-card .turno-header .estado.rechazado {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+.turno-card .turno-info {
+  margin-bottom: 12px;
+  font-size: 0.5rem;
+}
+.turno-card .turno-info p {
+  margin: 2px 0;
+  color: #666;
+}
+.turno-card .acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.turno-card .acciones .btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+.turno-card .acciones .btn.btn-cancelar {
+  background-color: #dc3545;
+  color: white;
+}
+.turno-card .acciones .btn.btn-completar_encuesta {
+  background-color: #17a2b8;
+  color: white;
+}
+.turno-card .acciones .btn.btn-calificar {
+  background-color: #ffc107;
+  color: black;
+}
+.turno-card .acciones .btn.btn-ver_resena {
+  background-color: #6c757d;
+  color: white;
+}
+.turno-card .acciones .btn:hover {
+  opacity: 0.95;
+  transform: scale(1.03);
+  transition: 0.2s ease;
+}
+
+p {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #0c2960;
+}
+
+h1 {
+  font-size: 2.8rem;
+  color: #1a798f;
+  margin-top: 1rem;
+}
+
+.container {
+  padding: 3rem;
+  margin-top: 2ren;
+}
+
+@media (max-width: 992px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+  .turno-card .turno-header .estado {
+    font-size: 1.1rem;
+    width: 8rem;
+    height: 3rem;
+    padding-top: 0.6rem;
+  }
+  p {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 768px) {
+  h1 {
+    margin-top: 1rem;
+    font-size: 2rem;
+  }
+  .turno-card {
+    padding: 12px;
+  }
+  .turno-card .turno-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .turno-card .turno-header .estado {
+    width: 100%;
+    height: 3rem;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .acciones .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+  p {
+    font-size: 0.9rem;
+  }
+  .turno-card {
+    padding: 10px;
+  }
+  .turno-card .turno-header .estado {
+    font-size: 0.9rem;
+    height: 2.5rem;
+    padding-top: 0.5rem;
+  }
+}
+.titulo-turnos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.titulo-turnos img.icon-title {
+  width: 24px;
+  height: 24px;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+
+.linea {
+  width: 100%;
+  height: 4px;
+  background: #1d8fa8;
+  margin: 10px 0 20px 0;
+}/*# sourceMappingURL=turnos-paciente.component.css.map */

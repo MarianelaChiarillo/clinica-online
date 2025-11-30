@@ -22,7 +22,6 @@ export class CaptchaComponent implements OnInit, OnDestroy {
   @Output() captchaError = new EventEmitter<void>();
   @Output() captchaExpirado = new EventEmitter<void>();
 
-  // Cambiar a público para que el template pueda acceder
   public uniqueId: string;
   public captchaCargado = false;
   public error: string | null = null;

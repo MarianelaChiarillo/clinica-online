@@ -1,0 +1,90 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 90px;
+  background-color: #ffffff;
+  display: flex;
+  padding: 10px 40px;
+  box-shadow: 0px 2px 4px hsl(0, 0%, 67%);
+  align-items: center;
+}
+.navbar a {
+  text-decoration: none;
+  background: none;
+  font-size: 17px;
+  transition: font-size 0.3s ease;
+}
+.navbar a:hover {
+  font-size: 18px;
+  color: #065294;
+  font-weight: 600;
+}
+
+p {
+  color: #065294;
+  font-weight: 800;
+  font-size: 26px;
+  margin-top: 0.1rem;
+  margin-left: -1rem;
+  margin-right: 9rem;
+}
+
+.active {
+  font-weight: bold;
+  border-bottom: 3px solid #065294;
+  -webkit-text-decoration: dashed;
+          text-decoration: dashed;
+}
+
+button {
+  border-radius: 25px;
+  width: 165px;
+  height: 45px;
+  border: none;
+  font-size: 17px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.button-inicio {
+  background: #d0e1eb;
+  color: #000000;
+}
+.button-inicio:hover {
+  background-color: #b8e4fc;
+}
+
+.button-registro {
+  background: #69bfce;
+  color: #000000;
+}
+.button-registro:hover {
+  background-color: #5daab8;
+}
+
+.navbar__izquierda,
+.navbar__derecha,
+.navbar__centro {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.navbar__centro {
+  gap: 30px;
+  margin: 0 auto;
+}
+
+.navbar__derecha {
+  margin-left: auto;
+}
+
+.logo-izquierda {
+  width: 4rem;
+  height: 4rem;
+}/*# sourceMappingURL=menu.component.css.map */

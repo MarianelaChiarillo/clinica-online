@@ -1,574 +1,284 @@
 .contenedor-turno {
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 1000px;
   padding: 20px;
+  margin-left: 20%;
 }
 
+/* -------------------------------------------
+   TÍTULO PRINCIPAL
+------------------------------------------- */
+.titulo-turno {
+  text-align: left;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #1a798f;
+  margin-top: 9rem;
+  margin-bottom: 30px;
+  position: relative;
+
+ 
+}
+
+.linea {
+  width: 100%;
+  height: 4px;
+  background: #1d8fa8;
+  margin: 10px 0 20px 0;
+}
+
+/* -------------------------------------------
+   PASOS
+------------------------------------------- */
 .paso {
-  background: white;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.4rem;
+    color: #0d0e0e;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+  }
 }
 
-h2 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #333;
-  font-size: 1.6rem;
-  font-weight: 600;
-}
-
-/* ========================================================
-   GRID ESPECIALIDADES - COMPACTO
-======================================================== */
+/* -------------------------------------------
+   GRID DE ESPECIALIDADES
+------------------------------------------- */
 .grid-especialidades {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 2rem;
+  margin-top: 2rem;
 }
 
 .boton-especialidad {
+  background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px 10px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 130px;
-  justify-content: center;
-  text-decoration: none;
+  justify-content: flex-start;
+  gap: 14px;
+
+  /* Lo que arregla el problema */
+  height: auto;          // deja de forzar altura
+  min-height: 200px;      // opcional, para que todas queden parejas
+  overflow: visible;      // nada de recortar contenido
+
+  transition: 0.2s ease;
 
   &:hover {
-    border-color: #007bff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.2);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
+    background: #6caab8;
+    border-color: #1a798f;
   }
 }
 
+
+
+.nombre-especialidad {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #082355;
+  text-align: left;
+}
+
+
 .imagen-especialidad {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border-radius: 10px;
 }
 
 .nombre-especialidad {
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   color: #333;
-  text-align: center;
-  font-size: 0.9rem;
-  line-height: 1.2;
+  margin-top: -1rem;
 }
 
-/* ========================================================
-   GRID ESPECIALISTAS - COMPACTO
-======================================================== */
+/* -------------------------------------------
+   ESPECIALISTAS
+------------------------------------------- */
 .grid-especialistas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr); /* tres columnas reales, sin estirarse */
+  gap: 1rem;
 }
 
 .boton-especialista {
   display: flex;
-  flex-direction: column;
+  flex-direction: column;     /* nombre arriba, foto abajo */
   align-items: center;
-  padding: 15px 10px;
-  border: 2px solid #e0e0e0;
+  justify-content: flex-start;
+  margin-top: 2rem;
   border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 160px;
-  justify-content: center;
-  text-decoration: none;
 
-  &:hover:not(.inactivo) {
-    border-color: #28a745;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40,167,69,0.2);
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &.inactivo {
-    opacity: 0.5;
-    cursor: not-allowed;
-    
-    .imagen-especialista {
-      filter: grayscale(100%);
-    }
-    
-    .nombre-especialista {
-      color: #6c757d;
-    }
-  }
-}
-
-.imagen-especialista {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-bottom: 10px;
-  border: 2px solid #f8f9fa;
+  width: 260px;
+  padding: 12px;
+ background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  text-align: center;
+  gap: 8px;    
+  
+  &:hover {
+    background: #6caab8;
+    border-color: #1a798f;
+  }              
 }
 
 .nombre-especialista {
-  font-weight: 500;
-  color: #333;
-  text-align: center;
-  font-size: 0.9rem;
-  line-height: 1.2;
-  margin-bottom: 5px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  word-break: break-word;
+  color: #082355
 }
 
-.estado-especialista {
-  font-size: 0.75rem;
-  color: #dc3545;
-  font-weight: 500;
+.imagen-especialista {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+    border: 2px solid #15485333;  border-radius: 10px;
+
 }
 
-/* ========================================================
-   GRID FECHAS - COMPACTO
-======================================================== */
+/* -------------------------------------------
+   FECHAS DISPONIBLES
+------------------------------------------- */
 .grid-fechas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .boton-fecha {
-  padding: 15px 10px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  background: white;
+ background: rgb(234, 252, 255);
+  border: 3px solid #1a7a8f;
+  border-radius: 10px;
+  padding: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-transform: capitalize;
   text-align: center;
+  transition: 0.2s ease;
 
   &:hover {
-    border-color: #ffc107;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255,193,7,0.2);
-  }
-
-  &:focus {
-    outline: none;
-  }
-}
-
-/* ========================================================
-   GRID HORARIOS - COMPACTO
-======================================================== */
-.grid-horarios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 10px;
-  margin-bottom: 25px;
-}
-
-.boton-horario {
-  padding: 12px 8px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-align: center;
-  position: relative;
-
-  &:hover:not(.ocupado):not(:disabled) {
-    border-color: #17a2b8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(23,162,184,0.2);
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &.ocupado {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-}
-
-.texto-ocupado {
-  display: block;
-  font-size: 0.7rem;
-  color: #dc3545;
-  margin-top: 4px;
-  font-weight: bold;
-}
-
-/* ========================================================
-   BOTONES DE ACCIÓN
-======================================================== */
-.acciones {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 25px;
-  flex-wrap: wrap;
-}
-
-.btn-atras {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
-  min-width: 100px;
-
-  &:hover {
-    background: #5a6268;
-  }
-
-  &:focus {
-    outline: none;
-  }
-}
-
-.btn-confirmar {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
-  min-width: 140px;
-
-  &:hover:not(:disabled) {
-    background: #218838;
-  }
-
-  &:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  &:focus {
-    outline: none;
-  }
-}
-
-/* ========================================================
-   ESTILOS PARA PACIENTES (ADMIN)
-======================================================== */
-.lista-pacientes {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 20px;
-}
-
-.opcion-paciente {
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  font-size: 0.9rem;
-
-  &:hover {
-    background: #f8f9fa;
-    border-color: #007bff;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.paciente-seleccionado {
-  background: #e7f3ff;
-  padding: 12px 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #007bff;
-  font-size: 0.9rem;
-}
-
-/* ========================================================
-   ESTADOS Y MENSAJES
-======================================================== */
-.sin-resultados {
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
-  padding: 30px 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin: 20px 0;
-}
-
-.cargando {
-  text-align: center;
-  padding: 30px 20px;
-  color: #6c757d;
-}
-
-/* ========================================================
-   RESPONSIVE - MÓVIL
-======================================================== */
-@media (max-width: 768px) {
-  .contenedor-turno {
-    padding: 10px;
-  }
-
-  .paso {
-    padding: 20px 15px;
-    margin-bottom: 20px;
-  }
-
-  h2 {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-  }
-
-  /* Grids más compactos en móvil */
-  .grid-especialidades {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-  }
-
-  .grid-especialistas {
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 12px;
-  }
-
-  .grid-fechas {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 10px;
-  }
-
-  .grid-horarios {
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-    gap: 8px;
-  }
-
-  /* Botones más pequeños */
-  .boton-especialidad,
-  .boton-especialista {
-    padding: 12px 8px;
-    min-height: 120px;
-  }
-
-  .imagen-especialidad {
-    width: 50px;
-    height: 50px;
-  }
-
-  .imagen-especialista {
-    width: 60px;
-    height: 60px;
-  }
-
-  .nombre-especialidad,
-  .nombre-especialista {
-    font-size: 0.8rem;
-  }
-
-  /* Acciones en columna */
-  .acciones {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .btn-atras,
-  .btn-confirmar {
-    width: 100%;
-    max-width: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid-especialidades {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .grid-especialistas {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .grid-fechas {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .grid-horarios {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ========================================================
-   MEJORAS VISUALES
-======================================================== */
-.boton-especialidad,
-.boton-especialista,
-.boton-fecha,
-.boton-horario {
-  transition: all 0.2s ease;
-  
-  &:active:not(:disabled):not(.inactivo) {
-    transform: scale(0.98);
-  }
-}
-
-// Estados de carga para imágenes
-.imagen-especialidad,
-.imagen-especialista {
-  background: #f8f9fa;
-  
-  &[src*="default"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    &::before {
-      content: "IMG";
-      color: white;
-      font-size: 0.7rem;
-      font-weight: bold;
-    }
-  }
-}
-
-// Scroll suave
-.lista-pacientes {
-  scroll-behavior: smooth;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-    
-    &:hover {
-      background: #a8a8a8;
-    }
-  }
-}
-
-// Versión SUPER COMPACTA (agregar si necesitas)
-.grid-especialidades-compact {
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
-}
-
-.boton-compact {
-  padding: 10px 6px;
-  min-height: 100px;
-  
-  .imagen-especialidad {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .nombre-especialidad {
-    font-size: 0.8rem;
-  }
-}
-
-
-.info-dias {
-  text-align: center;
-  color: #666;
-  margin-bottom: 20px;
-  font-size: 0.9rem;
-}
-
-.boton-fecha {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 8px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    border-color: #ffc107;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255,193,7,0.2);
+    background: #e7fbff;
+    border-color: #1a798f;
   }
 
   .dia-semana {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-  }
-  
-  .fecha-numero {
     font-size: 0.9rem;
-    font-weight: 500;
+    color: #1a798f;
+    font-weight: 600;
+  }
+
+  .fecha-numero {
+    font-size: 1.2rem;
+    font-weight: 700;
     color: #333;
   }
 }
 
-.sin-resultados {
-  text-align: center;
-  padding: 30px 20px;
-  background: #f8f9fa;
+/* -------------------------------------------
+   HORARIOS
+------------------------------------------- */
+.grid-horarios {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* tres columnas fijas */
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.boton-horario {
+  background: white;
+  border: 2px solid #ddd;
   border-radius: 10px;
-  margin: 20px 0;
-  
-  h3 {
-    color: #dc3545;
-    margin-bottom: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+font-size: 1rem;
+  &.ocupado {
+    background: #f7f7f7;
+    border-color: #ccc;
+    color: #999;
+    cursor: not-allowed;
   }
-  
-  p {
-    color: #666;
-    margin-bottom: 8px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
+
+  &:not(.ocupado):hover {
+    background: #e7fbff;
+    border-color: #1a798f;
   }
+
+  &.activo {
+    background: #1a798f;
+    color: white;
+    border-color: #125363;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  }
+}
+
+
+.texto-ocupado {
+  display: block;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* -------------------------------------------
+   BOTONES DE ACCIÓN
+------------------------------------------- */
+.btn-atras,
+.btn-confirmar {
+  margin-top: 2rem;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-atras {
+  background: #349ab9;
+  color: white;
+
+  &:hover {
+    background: #084d6d;
+  }
+}
+
+.btn-confirmar {
+  background: #08580c;
+  color: white;
+  margin-left: 30px;
+
+  &:hover:not([disabled]) {
+    background: #318d36;
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* -------------------------------------------
+   TEXTOS VACÍOS
+------------------------------------------- */
+.sin-resultados {
+  margin-top: 10px;
+  color: #666;
+  font-size: 1rem;
+  text-align: center;
+}
+
+
+.titulo-seccion {
+  grid-column: 1 / -1;    
+  width: 100%;            
+  white-space: nowrap;
 }

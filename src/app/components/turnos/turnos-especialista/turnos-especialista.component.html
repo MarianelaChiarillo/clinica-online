@@ -1,18 +1,25 @@
-<div class="container mt-4">
+<app-menu />
+
+<div class="container">
   <div *ngIf="loading" class="text-center">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando turnos...</span>
     </div>
   </div>
 
-  <div *ngIf="error && !loading" class="alert alert-danger alert-dismissible fade show" role="alert">
+  <div
+    *ngIf="error && !loading"
+    class="alert alert-danger alert-dismissible fade show"
+    role="alert"
+  >
     {{ error }}
     <button type="button" class="btn-close" (click)="limpiarError()"></button>
   </div>
 
   <div *ngIf="!loading && !error">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>Mis Turnos</h2>
+      <h1>Mis Turnos</h1>
+      <div class="linea"></div>
     </div>
 
     <app-filtro-general
@@ -20,7 +27,8 @@
       [tipoUsuario]="'especialista'"
       [turnos]="turnos"
       (filtroChange)="onFiltroChange($event)"
-      (turnosFiltradosChange)="onTurnosFiltradosChange($event)">
+      (turnosFiltradosChange)="onTurnosFiltradosChange($event)"
+    >
     </app-filtro-general>
 
     <div *ngIf="turnosFiltrados.length > 0; else noTurnos">
@@ -44,42 +52,56 @@
                   <tbody>
                     <tr *ngFor="let turno of turnosFiltrados">
                       <td>
-                        <strong>{{ turno.pacientes?.nombre }} {{ turno.pacientes?.apellido }}</strong>
+                        <strong class="font"
+                          >{{ turno.pacientes?.nombre }} {{ turno.pacientes?.apellido }}</strong
+                        >
                       </td>
                       <td>
-                        <span class="badge bg-light text-dark">
+                        <span class="font badge bg-light text-dark">
                           {{ turno.especialidades?.nombre }}
                         </span>
                       </td>
                       <td>{{ formatearFecha(turno.fecha_turno) }}</td>
                       <td>{{ formatearHora(turno.hora_inicio) }}</td>
                       <td>
-                        <span 
-                          class="badge" 
+                        <span
+                          class="badge font"
                           [ngClass]="'bg-' + obtenerColorEstado(turno.estado)"
                         >
-                          {{ obtenerTextoEstado(turno.estado) }}
+                          {{ turno.estado | estadoEtiqueta }}
                         </span>
                       </td>
                       <td>
-                        <div *ngIf="turno.coincidencias && turno.coincidencias.length > 0" class="coincidencias-container">
-                          <div *ngFor="let coincidencia of turno.coincidencias" class="coincidencia-badge">
+                        <div
+                          *ngIf="turno.coincidencias && turno.coincidencias.length > 0"
+                          class="coincidencias-container"
+                        >
+                          <div
+                            *ngFor="let coincidencia of turno.coincidencias"
+                            class="coincidencia-badge"
+                          >
                             <small class="text-success">
                               <i class="bi bi-check-circle-fill me-1"></i>
-                              <strong>{{ coincidencia.campo }}:</strong> 
+                              <strong class="font">{{ coincidencia.campo }}:</strong>
                               {{ coincidencia.valor }}
                             </small>
                           </div>
                         </div>
-                        <small *ngIf="!turno.coincidencias || turno.coincidencias.length === 0" class="text-muted">
+                        <small
+                          *ngIf="!turno.coincidencias || turno.coincidencias.length === 0"
+                          class="text-muted"
+                        >
                           -
                         </small>
                       </td>
                       <td>
-                        <div class="btn-group btn-group-sm" *ngIf="accionesEspecialista(turno).length > 0">
-                          <button 
+                        <div
+                          class="btn-group btn-group-sm"
+                          *ngIf="accionesEspecialista(turno).length > 0"
+                        >
+                          <button
                             *ngFor="let accion of accionesEspecialista(turno)"
-                            class="btn" 
+                            class="btn"
                             [ngClass]="{
                               'btn-success': accion === 'aceptar',
                               'btn-warning': accion === 'rechazar',
@@ -110,9 +132,7 @@
     <ng-template #noTurnos>
       <div class="text-center py-5">
         <i class="bi bi-calendar-x display-1 text-muted"></i>
-        <h3 class="mt-3 text-muted">
-          No se encontraron turnos
-        </h3>
+        <h3 class="mt-3 text-muted">No se encontraron turnos</h3>
       </div>
     </ng-template>
   </div>

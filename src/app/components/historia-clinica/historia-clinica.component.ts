@@ -31,9 +31,9 @@ export class HistoriaClinicaFormComponent {
   private crearForm(): FormGroup {
     return this.fb.group({
       // Datos fijos SOLO estos 4 campos
-      altura: ['', [Validators.required, Validators.min(50), Validators.max(250)]],
+      altura: ['', [Validators.required, Validators.min(0), Validators.max(250)]],
       peso: ['', [Validators.required, Validators.min(1), Validators.max(300)]],
-      temperatura: ['', [Validators.required, Validators.min(35), Validators.max(45)]],
+      temperatura: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
       presion: ['', [Validators.required, Validators.pattern(/^\d{2,3}\/\d{2,3}$/)]],
       
       // Datos dinámicos
@@ -161,4 +161,6 @@ export class HistoriaClinicaFormComponent {
     const control = this.datosDinamicos.at(index).get(controlName);
     return !!control && control.invalid && (control.dirty || control.touched);
   }
+
+
 }

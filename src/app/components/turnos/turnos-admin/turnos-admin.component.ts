@@ -2,11 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import supabase from '../../../services/supabase.client';
-
+import { MenuComponent } from '../../componentes/menu/menu.component';
 @Component({
   selector: 'app-turnos-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MenuComponent],
   templateUrl: './turnos-admin.component.html',
   styleUrls: ['./turnos-admin.component.scss'],
 })

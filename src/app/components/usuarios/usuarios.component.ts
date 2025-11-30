@@ -86,17 +86,6 @@ turno: any = null;
 
   // ========== MÉTODOS EXISTENTES (gestión de usuarios) ==========
   
-  async cargarUsuarios(): Promise<void> {
-    try {
-      this.usuarios = await this.usuarioSrv.obtenerTodos();
-      // Cargar datos completos para Excel
-      await this.cargarDatosCompletosUsuarios();
-      this.aplicarFiltro();
-    } catch (error) {
-      console.error('Error cargando usuarios:', error);
-      this.mostrarMensaje('Error', 'No se pudieron cargar los usuarios.', 'error');
-    }
-  }
 
   // MÉTODO: Cargar datos completos para Excel
 // En el método cargarDatosCompletosUsuarios - CORREGIR
@@ -260,6 +249,33 @@ async cargarDatosCompletosUsuarios(): Promise<void> {
       (h: any) => h.turno_id === turno.id
     );
   }
+
+  async cargarUsuarios(): Promise<void> {
+  try {
+    this.usuarios = await this.usuarioSrv.obtenerTodos();
+
+    // Convertir cada imagen de perfil a URL descargable
+    for (const user of this.usuarios) {
+      try {
+        if (user.imagen_perfil) {
+          user.imagen_perfil_url = await this.storage.obtenerImagen(user.imagen_perfil);
+        } else {
+          user.imagen_perfil_url = './assets/user-default.png';
+        }
+      } catch (error) {
+        console.error('Error cargando imagen de perfil:', error);
+        user.imagen_perfil_url = './assets/user-default.png';
+      }
+    }
+
+    // Cargar datos completos para Excel y aplicar filtro
+    await this.cargarDatosCompletosUsuarios();
+    this.aplicarFiltro();
+  } catch (error) {
+    console.error('Error cargando usuarios:', error);
+    this.mostrarMensaje('Error', 'No se pudieron cargar los usuarios.', 'error');
+  }
+}
 
   // 👇 MÉTODO PARA VER LA HISTORIA CLÍNICA DE UN TURNO
   verHistoriaClinicaDelTurno(turno: any): void {
@@ -499,29 +515,7 @@ getTurnosRealizados(user: any): number {
   return realizados;
 }
 
-// Agregar este método para debug
-debugUsuario(usuario: any): void {
-  console.log('🔍 DEBUG USUARIO:', {
-    id: usuario.id,
-    nombre: usuario.nombre,
-    tipo: usuario.tipo_usuario,
-    turnos: usuario.turnos,
-    countTurnos: usuario.turnos?.length,
-    historias: usuario.historiasClinicas,
-    countHistorias: usuario.historiasClinicas?.length
-  });
-  
-  if (usuario.turnos && Array.isArray(usuario.turnos)) {
-    usuario.turnos.forEach((turno: any, index: number) => {
-      console.log(`   Turno ${index + 1}:`, {
-        id: turno.id,
-        fecha: turno.fecha_turno,
-        estado: turno.estado,
-        especialidad: turno.especialidad_id
-      });
-    });
-  }
-}
+
 
 // Llamar este método cuando selecciones un usuario
 seleccionarUsuario(usuario: any) {
@@ -529,7 +523,6 @@ seleccionarUsuario(usuario: any) {
   this.mostrarDetalleUsuario = true;
   
   // DEBUG: Verificar datos del usuario
-  this.debugUsuario(usuario);
 }
 
 
