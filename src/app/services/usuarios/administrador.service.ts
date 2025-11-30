@@ -1,82 +1,46 @@
 import { Injectable } from '@angular/core';
-import supabase from '../supabase.client';
 import { UsuarioService } from './usuario.service';
-import { Usuario } from '../../models/user-data';
+import supabase from '../supabase.client';
 
 @Injectable({ providedIn: 'root' })
 export class AdministradorService {
-  constructor(private usuarioSrv: UsuarioService) {}
 
-  async crearAdministrador(admin: {
-    nombre: string;
-    apellido: string;
-    edad: number;
-    dni: string;
-    email: string;
-    auth_id: string;
-    imagen_perfil?: string;
-  }) {
-    const { data: usuarioData, error: usuarioError } = await this.usuarioSrv.crear({
+  constructor(private usuarioService: UsuarioService) {}
+
+  async crearAdministrador(admin: any) {
+    const { data, error } = await this.usuarioService.crear({
       auth_id: admin.auth_id,
       email: admin.email,
       tipo_usuario: 'administrador',
       estado: 'activo',
-      imagen_perfil: admin.imagen_perfil || undefined,
+      imagen_perfil: admin.imagen_perfil
     });
 
-    if (usuarioError) throw usuarioError;
-    if (!usuarioData) throw new Error('No se pudo crear el usuario.');
+    if (error || !data) {
+      return { data: null, error };
+    }
 
-    const { data, error } = await supabase
-      .from('administradores')
-      .insert([{
-        usuario_id: usuarioData.id,
-        nombre: admin.nombre,
-        apellido: admin.apellido,
-        edad: admin.edad,
-        dni: admin.dni,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return this.usuarioService.crearRelacionado('administradores', {
+      usuario_id: data.id,
+      nombre: admin.nombre,
+      apellido: admin.apellido,
+      edad: admin.edad,
+      dni: admin.dni
+    });
   }
 
-  async actualizarDatos(usuarioId: number, datos: any) {
-    const { error } = await supabase
-      .from('administradores')
-      .update(datos)
-      .eq('usuario_id', usuarioId);
+  actualizarDatos(usuarioId: number, datos: any) {
+    return this.usuarioService.actualizarRelacionado('administradores', usuarioId, datos);
+  }
 
-    if (error) throw error;
+  obtenerPorUsuarioId(usuarioId: number) {
+    return this.usuarioService.obtenerRelacionado('administradores', usuarioId);
   }
 
   async obtenerTodos() {
     const { data, error } = await supabase
       .from('administradores')
-      .select('*, usuarios(email, tipo_usuario, estado, imagen_perfil)');
-    if (error) throw error;
-    return data;
-  }
-
-  async obtenerPorAuthId(authId: string) {
-    const { data, error } = await supabase
-      .from('administradores')
-      .select('*, usuarios!inner(email, auth_id)')
-      .eq('usuarios.auth_id', authId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  }
-
-  async obtenerPorUsuarioId(usuarioId: number) {
-    const { data, error } = await supabase
-      .from('administradores')
-      .select('*')
-      .eq('usuario_id', usuarioId)
-      .single();
+      .select('*');
 
     return { data, error };
   }

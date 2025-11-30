@@ -5,13 +5,13 @@ import { AuthService } from '../services/auth.service';
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
   constructor(
-    private authSrv: AuthService,
+    private servicioAuth: AuthService,
     private router: Router
   ) {}
 
   async canActivate(): Promise<boolean> {
     try {
-      const usuario = await this.authSrv.getUsuarioActual();
+      const usuario = await this.servicioAuth.getUsuarioActual();
 
       if (usuario) {
         return true; 

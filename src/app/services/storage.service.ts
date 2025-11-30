@@ -4,24 +4,23 @@ import supabase from './supabase.client';
 @Injectable({ providedIn: 'root' })
 export class StorageService {
 
-  async subirImagen(archivo: File, carpeta = 'perfiles') {
-    const nombreArchivo = Date.now() + '_' + archivo.name;
+  async subirImagen(archivo: File, carpeta: string = 'perfiles') {
+    const tiempo = Date.now();
+    const nombreArchivo = tiempo + '_' + archivo.name;
     const ruta = carpeta + '/' + nombreArchivo;
 
-    const { error } = await supabase.storage.from('imagenes').upload(ruta, archivo);
-    if (error) throw error;
+    const respuesta = await supabase.storage.from('imagenes').upload(ruta, archivo);
+    if (respuesta.error) throw respuesta.error;
 
-    const { data } = supabase.storage.from('imagenes').getPublicUrl(ruta);
-    return data.publicUrl;
+    const publicUrlRespuesta = supabase.storage.from('imagenes').getPublicUrl(ruta);
+    return publicUrlRespuesta.data.publicUrl;
   }
 
   async obtenerImagen(urlPublica: string): Promise<string> {
     if (!urlPublica) return '';
 
-    let path = urlPublica;
     let esUrlCompleta = false;
-
-    const http = "http";
+    let http = "http";
     let coincide = true;
 
     for (let i = 0; i < http.length; i++) {
@@ -33,52 +32,55 @@ export class StorageService {
 
     if (coincide) esUrlCompleta = true;
 
+    let ruta = urlPublica;
+
     if (esUrlCompleta) {
       const marcador = "/object/public/";
-      let inicio = -1;
+      let inicioMarcador = -1;
 
       for (let i = 0; i < urlPublica.length - marcador.length; i++) {
         let match = true;
-
         for (let j = 0; j < marcador.length; j++) {
           if (urlPublica[i + j] !== marcador[j]) {
             match = false;
             break;
           }
         }
-
         if (match) {
-          inicio = i + marcador.length;
+          inicioMarcador = i + marcador.length;
           break;
         }
       }
 
-      if (inicio === -1) return '';
+      if (inicioMarcador === -1) return '';
 
-      path = urlPublica.substring(inicio);
+      ruta = '';
+      for (let i = inicioMarcador; i < urlPublica.length; i++) {
+        ruta += urlPublica[i];
+      }
 
-      // Quitar "imagenes/" manualmente
       const prefijo = "imagenes/";
       let tienePrefijo = true;
 
-      for (let k = 0; k < prefijo.length && k < path.length; k++) {
-        if (path[k] !== prefijo[k]) {
+      for (let i = 0; i < prefijo.length && i < ruta.length; i++) {
+        if (ruta[i] !== prefijo[i]) {
           tienePrefijo = false;
           break;
         }
       }
 
       if (tienePrefijo) {
-        path = path.substring(prefijo.length);
+        let rutaSinPrefijo = '';
+        for (let i = prefijo.length; i < ruta.length; i++) {
+          rutaSinPrefijo += ruta[i];
+        }
+        ruta = rutaSinPrefijo;
       }
     }
 
-    const { data, error } = await supabase.storage
-      .from('imagenes')
-      .download(path);
+    const descarga = await supabase.storage.from('imagenes').download(ruta);
+    if (descarga.error) throw descarga.error;
 
-    if (error) throw error;
-
-    return URL.createObjectURL(data);
+    return URL.createObjectURL(descarga.data);
   }
 }

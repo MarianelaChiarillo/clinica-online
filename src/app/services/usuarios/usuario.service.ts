@@ -1,117 +1,41 @@
 import { Injectable } from '@angular/core';
 import supabase from '../supabase.client';
-import { Usuario } from '../../models/user-data';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
-  // 🔹 Crear un usuario base
-  async crear(usuario: Partial<Usuario>) {
-    const { data, error } = await supabase.from('usuarios').insert([usuario]).select().single();
+
+  async crear(usuario: any) {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([usuario])
+      .select()
+      .single();
 
     return { data, error };
   }
 
-  // 🔹 Obtener usuario por email
-  async obtenerPacientes() {
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select(`
-      id,
-      email,
-      pacientes (
-        nombre,
-        apellido
-      )
-    `)
-    .eq('tipo_usuario', 'paciente');
-
-  if (error) {
-    console.error('❌ Error obteniendo pacientes:', error);
-    return [];
-  }
-
-  // Mapeo simple
-  return data.map(u => ({
-    id: u.id,
-    email: u.email,
-    nombre: u.pacientes?.[0]?.nombre || '',
-    apellido: u.pacientes?.[0]?.apellido || ''
-  }));
-}
-
-  async obtenerPorEmail(email: string): Promise<Usuario | null> {
+  async crearRelacionado(tabla: string, payload: any) {
     const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
+      .from(tabla)
+      .insert([payload])
+      .select()
+      .single();
 
-    if (error) {
-      console.error('❌ Error al obtener usuario:', error.message);
-      return null;
-    }
-
-    return data as Usuario | null;
+    return { data, error };
   }
 
-  // 🔹 Obtener usuario por Auth ID
-  obtenerPorAuthId(authId: string) {
-    return supabase.from('usuarios').select('*').eq('auth_id', authId).single();
+  async actualizarRelacionado(tabla: string, usuarioId: number, datos: any) {
+    const { error } = await supabase
+      .from(tabla)
+      .update(datos)
+      .eq('usuario_id', usuarioId);
+
+    return { error };
   }
 
-  // 🔹 Obtener todos los usuarios con sus datos asociados
-  async obtenerTodos(): Promise<any[]> {
-    const { data, error } = await supabase.from('usuarios').select(`
-        id,
-        auth_id,
-        email,
-        estado,
-        tipo_usuario,
-        pacientes (
-          nombre,
-          apellido
-        ),
-        especialistas (
-          nombre,
-          apellido,
-          especialista_especialidad (
-            especialidades (nombre)
-          )
-        ),
-        administradores (
-          nombre,
-          apellido
-        )
-      `);
-
-    if (error) {
-      console.error('❌ Error obteniendo usuarios:', error);
-      return [];
-    }
-
-    // 🔹 Mapeo simple y seguro
-    return data.map((u) => {
-      const paciente = u.pacientes?.[0];
-      const especialista = u.especialistas?.[0];
-      const admin = u.administradores?.[0];
-
-      return {
-        id: u.id,
-        auth_id: u.auth_id,
-        email: u.email,
-        estado: u.estado,
-        tipo_usuario: u.tipo_usuario,
-        nombre: paciente?.nombre || especialista?.nombre || admin?.nombre || '',
-        apellido: paciente?.apellido || especialista?.apellido || admin?.apellido || '',
-        especialidades:
-          especialista?.especialista_especialidad?.map((rel: any) => rel.especialidades?.nombre) ||
-          [],
-      };
-    });
-  }
-  async obtenerPacientePorUsuarioId(usuarioId: number) {
+  async obtenerRelacionado(tabla: string, usuarioId: number) {
     const { data, error } = await supabase
-      .from('pacientes')
+      .from(tabla)
       .select('*')
       .eq('usuario_id', usuarioId)
       .single();
@@ -119,25 +43,70 @@ export class UsuarioService {
     return { data, error };
   }
 
-  async obtenerTodosPacientes() {
-    const { data, error } = await supabase.from('pacientes').select('*');
-
-    return { data, error };
-  }
-
-  async obtenerTodosUsuarios() {
-    const { data, error } = await supabase.from('usuarios').select('*');
-
-    return { data, error };
-  }
-  async actualizarEstado(authId: string, nuevoEstado: string): Promise<void> {
-    const { error } = await supabase
+  async obtenerPorAuthId(authId: string) {
+    const { data, error } = await supabase
       .from('usuarios')
-      .update({ estado: nuevoEstado })
-      .eq('auth_id', authId);
+      .select('*')
+      .eq('auth_id', authId)
+      .single();
 
-    if (error) throw error;
+    return { data, error };
   }
 
+  async obtenerPerfilCompleto(authId: string) {
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('auth_id', authId)
+      .single();
 
+    if (!usuario) return null;
+
+    if (usuario.tipo_usuario === 'paciente') {
+      const { data: p } = await supabase
+        .from('pacientes')
+        .select('*')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      return { ...usuario, ...p };
+    }
+
+    if (usuario.tipo_usuario === 'especialista') {
+      const { data: esp } = await supabase
+        .from('especialistas')
+        .select('*')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      const { data: rel } = await supabase
+        .from('especialista_especialidad')
+        .select('especialidad_id')
+        .eq('especialista_id', esp.id);
+
+      let especialidades = [];
+      if (rel?.length) {
+        const ids = rel.map(r => r.especialidad_id);
+        const { data: espDatas } = await supabase
+          .from('especialidades')
+          .select('*')
+          .in('id', ids);
+        especialidades = espDatas || [];
+      }
+
+      return { ...usuario, ...esp, especialidades };
+    }
+
+    if (usuario.tipo_usuario === 'administrador') {
+      const { data: admin } = await supabase
+        .from('administradores')
+        .select('*')
+        .eq('usuario_id', usuario.id)
+        .single();
+
+      return { ...usuario, ...admin };
+    }
+
+    return usuario;
+  }
 }

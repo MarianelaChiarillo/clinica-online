@@ -8,8 +8,6 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormUtilsService } from '../../../services/forms.utils.service';
-import { PacienteValidatorsService } from '../../../validators/paciente-validator.service';
 import { Paciente } from '../../../models/user-data';
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';

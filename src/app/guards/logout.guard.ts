@@ -1,14 +1,13 @@
-// src/app/guards/logout.guard.ts
 import { inject } from '@angular/core';
 import { CanMatchFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 export const LogoutGuard: CanMatchFn = async () => {
-  const authSrv = inject(AuthService);
+  const servicioAuth = inject(AuthService);
   const router = inject(Router);
 
   try {
-    const usuario = await authSrv.getUsuarioActual();
+    const usuario = await servicioAuth.getUsuarioActual();
 
     if (!usuario) {
       return true;

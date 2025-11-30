@@ -24,7 +24,15 @@ export interface Turno {
 }
 
 export interface Coincidencia {
-  tipo: 'paciente' | 'especialista' | 'especialidad' | 'estado' | 'fecha' | 'hora' | 'historia_clinica_fija' | 'historia_clinica_dinamica';
+  tipo:
+    | 'paciente'
+    | 'especialista'
+    | 'especialidad'
+    | 'estado'
+    | 'fecha'
+    | 'hora'
+    | 'historia_clinica_fija'
+    | 'historia_clinica_dinamica';
   campo: string;
   valor: string;
 }
@@ -32,4 +40,44 @@ export interface Coincidencia {
 export interface TurnoExtendido extends Turno {
   historia_clinica?: any;
   coincidencias?: Coincidencia[];
+}
+
+export interface LogIngreso {
+  id: number;
+  usuario_email: string;
+  fecha_ingreso: string;
+  ip_address?: string;
+}
+
+export interface TurnoRaw {
+  id: number;
+  estado: string;
+  fecha_turno: string;
+  especialidad_id?: number;
+  especialista_id?: number;
+  especialidades?: { nombre: string }[] | null;
+  especialistas?: { nombre: string; apellido: string }[] | null;
+}
+
+export interface TurnoProcesado {
+  id: number;
+  estado: string;
+  fecha_turno: string;
+  especialidad?: string;
+  medico?: string;
+}
+
+export interface EstadisticaEspecialidad {
+  especialidad: string;
+  cantidad: number;
+}
+
+export interface EstadisticaDia {
+  fecha: string;
+  cantidad: number;
+}
+
+export interface EstadisticaMedico {
+  medico: string;
+  cantidad: number;
 }

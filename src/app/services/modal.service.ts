@@ -1,29 +1,19 @@
-// src/app/services/modal.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { ModalData } from '../models/modales';
 
-export interface ModalData {
-  tipo: 'aceptar' | 'cancelar' | 'rechazar' | 'finalizar' | 'comentario' | 'calificar' | 'historia-clinica'; // ← AGREGAR 'historia-clinica'
-  turno: any;
-  titulo?: string;
-  mensaje?: string;
-  requiereComentario?: boolean;
-  requiereCalificacion?: boolean;
-  mostrarEncuesta?: boolean;
-  mostrarHistoriaClinica?: boolean;
-}
 
 @Injectable({ providedIn: 'root' })
 export class ModalService {
-  private modalSubject = new BehaviorSubject<ModalData | null>(null);
-  public modal$ = this.modalSubject.asObservable();
+  private sujetoModal = new BehaviorSubject<ModalData | null>(null);
+  public modal = this.sujetoModal.asObservable();
 
   private resolverAccion: ((resultado: any) => void) | null = null;
 
   private abrir(tipo: ModalData) {
     return new Promise(resolve => {
       this.resolverAccion = resolve;
-      this.modalSubject.next(tipo);
+      this.sujetoModal.next(tipo);
     });
   }
 
@@ -56,14 +46,13 @@ export class ModalService {
     });
   }
 
-  // En modal.service.ts - REEMPLAZAR completamente
 abrirFinalizarTurno(turno: any) {
   return this.abrir({
-    tipo: 'historia-clinica',  // ← Ahora sí está permitido
+    tipo: 'historia-clinica',
     turno,
     titulo: 'Finalizar Turno - Historia Clínica',
     mensaje: 'Completá los datos de la consulta:',
-    mostrarHistoriaClinica: true  // ← Y esta propiedad también
+    mostrarHistoriaClinica: true  
   });
 }
 
@@ -90,6 +79,6 @@ abrirFinalizarTurno(turno: any) {
       this.resolverAccion(resultado);
       this.resolverAccion = null;
     }
-    this.modalSubject.next(null);
+    this.sujetoModal.next(null);
   }
 }

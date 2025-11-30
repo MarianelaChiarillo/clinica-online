@@ -1,227 +1,154 @@
 import { Injectable } from '@angular/core';
-import supabase from '../supabase.client';
 import { UsuarioService } from './usuario.service';
-import { Especialista, Especialidad } from '../../models/user-data';
+import { Especialista } from '../../models/user-data';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { AuthService } from '../auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class EspecialistaService {
-  constructor(private usuarioSrv: UsuarioService) {}
+
+  constructor(
+    private usuarioService: UsuarioService,
+    private supabase: SupabaseClient,
+    private auth: AuthService
+  ) {}
 
   async guardar(especialista: Especialista, authId: string, especialidadesIds: number[]) {
-    const usuario = await this.usuarioSrv.crear({
+    const usuarioRespuesta = await this.usuarioService.crear({
       auth_id: authId,
       email: especialista.email,
       tipo_usuario: 'especialista',
-      estado: 'pendiente', 
-      imagen_perfil: especialista.imagen_perfil,
+      estado: 'pendiente',
+      imagen_perfil: especialista.imagen_perfil
     });
 
-    if (usuario.error || !usuario.data) throw usuario.error;
+    if (usuarioRespuesta.error) {
+      return { data: null, error: usuarioRespuesta.error };
+    }
 
-    const especialistaInsert = await supabase
-      .from('especialistas')
-      .insert([{
-        usuario_id: usuario.data.id,
+    if (!usuarioRespuesta.data) {
+      return { data: null, error: usuarioRespuesta.error };
+    }
+
+    const especialistaRespuesta = await this.usuarioService.crearRelacionado(
+      'especialistas',
+      {
+        usuario_id: usuarioRespuesta.data.id,
         nombre: especialista.nombre,
         apellido: especialista.apellido,
         edad: especialista.edad,
-        dni: especialista.dni,
-      }])
-      .select()
-      .single();
+        dni: especialista.dni
+      }
+    );
 
-    if (especialistaInsert.error || !especialistaInsert.data) throw especialistaInsert.error;
-
-    if (especialidadesIds?.length > 0) {
-      const relaciones = especialidadesIds.map(id => ({
-        especialista_id: especialistaInsert.data.id,
-        especialidad_id: id,
-      }));
-
-      const { error } = await supabase
-        .from('especialista_especialidad')
-        .insert(relaciones);
-
-      if (error) throw error;
+    if (especialistaRespuesta.error) {
+      return { data: null, error: especialistaRespuesta.error };
     }
 
-    return { usuario: usuario.data, especialista: especialistaInsert.data };
+    if (!especialistaRespuesta.data) {
+      return { data: null, error: especialistaRespuesta.error };
+    }
+
+    if (especialidadesIds && especialidadesIds.length > 0) {
+      const relaciones = [];
+
+      for (const id of especialidadesIds) {
+        relaciones.push({
+          especialista_id: especialistaRespuesta.data.id,
+          especialidad_id: id
+        });
+      }
+
+      await this.supabase
+        .from('especialista_especialidad')
+        .insert(relaciones);
+    }
+
+    return {
+      usuario: usuarioRespuesta.data,
+      especialista: especialistaRespuesta.data
+    };
   }
 
-  async actualizarDatos(usuarioId: number, datos: any) {
-    const { error } = await supabase
-      .from('especialistas')
-      .update(datos)
-      .eq('usuario_id', usuarioId);
-
-    if (error) throw error;
+  actualizarDatos(usuarioId: number, datos: any) {
+    return this.usuarioService.actualizarRelacionado('especialistas', usuarioId, datos);
   }
 
-  async obtenerPorId(especialistaId: number): Promise<Especialista | null> {
-    const especialista = await supabase
+  obtenerPorUsuarioId(usuarioId: number) {
+    return this.usuarioService.obtenerRelacionado('especialistas', usuarioId);
+  }
+
+  async obtenerEspecialistaActual() {
+    const authUser = await this.auth.getUsuarioActual();
+
+    if (!authUser) {
+      return null;
+    }
+
+    const respuesta = await this.supabase
       .from('especialistas')
       .select('*')
-      .eq('id', especialistaId)
+      .eq('usuario_id', authUser.id)
       .single();
 
-    if (especialista.error || !especialista.data) return null;
+    if (respuesta.error) {
+      throw respuesta.error;
+    }
 
-    const usuario = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', especialista.data.usuario_id)
-      .single();
-
-    const especialidades = await this.obtenerEspecialidades(especialistaId);
-
-    return { 
-      ...especialista.data, 
-      especialidades,
-      usuario: usuario.data
-    } as Especialista;
+    return respuesta.data;
   }
 
-  async obtenerPorUsuarioId(usuarioId: number): Promise<Especialista | null> {
-    const especialista = await supabase
+  async obtenerEspecialistaPorUsuario(usuarioId: number) {
+    const respuesta = await this.supabase
       .from('especialistas')
       .select('*')
       .eq('usuario_id', usuarioId)
       .single();
 
-    if (especialista.error || !especialista.data) return null;
+    if (respuesta.error) {
+      throw respuesta.error;
+    }
 
-    const usuario = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('id', usuarioId)
-      .single();
-
-    const especialidades = await this.obtenerEspecialidades(especialista.data.id);
-
-    return { 
-      ...especialista.data, 
-      especialidades,
-      usuario: usuario.data
-    } as Especialista;
+    return respuesta.data;
   }
 
-  private async obtenerEspecialidades(especialistaId: number): Promise<any[]> {
-    const relaciones = await supabase
+  async obtenerEspecialidades() {
+    const respuesta = await this.supabase
+      .from('especialidades')
+      .select('*');
+
+    if (respuesta.error) {
+      throw respuesta.error;
+    }
+
+    return respuesta.data;
+  }
+
+  async obtenerEspecialidadesDeEspecialista(especialistaId: number) {
+    const relacionRespuesta = await this.supabase
       .from('especialista_especialidad')
       .select('especialidad_id')
-      .eq('especialista_id', especialistaId)
-      .eq('activo', true);
+      .eq('especialista_id', especialistaId);
 
-    if (relaciones.error || !relaciones.data?.length) return [];
+    if (relacionRespuesta.error) {
+      return [];
+    }
 
-    const ids = relaciones.data.map(rel => rel.especialidad_id);
-    const especialidades = await supabase
+    if (!relacionRespuesta.data) {
+      return [];
+    }
+
+    const ids = relacionRespuesta.data.map(item => item.especialidad_id);
+
+    const especialidadesRespuesta = await this.supabase
       .from('especialidades')
       .select('id, nombre')
       .in('id', ids);
 
-    if (especialidades.error) return [];
-    return especialidades.data.map(esp => ({ id: esp.id, nombre: esp.nombre, activo: true }));
-  }
+    if (!especialidadesRespuesta.data) {
+      return [];
+    }
 
-  async obtenerTodos(): Promise<any[]> {
-    const especialistas = await supabase
-      .from('especialistas')
-      .select(`
-        id,
-        nombre,
-        apellido,
-        edad,
-        dni,
-        usuario:usuario_id (id, email, estado, tipo_usuario)
-      `);
-
-    if (especialistas.error) return [];
-
-    const completos = await Promise.all(
-      especialistas.data.map(async (esp) => {
-        const especialidades = await this.obtenerEspecialidades(esp.id);
-        const usuario = Array.isArray(esp.usuario) ? esp.usuario[0] : esp.usuario;
-
-        return {
-          id: esp.id,
-          nombre: esp.nombre,
-          apellido: esp.apellido,
-          email: usuario?.email || '',
-          estado: usuario?.estado || 'pendiente',
-          tipo_usuario: usuario?.tipo_usuario || 'especialista',
-          especialidades: especialidades.map(e => e.nombre),
-        };
-      })
-    );
-
-    return completos;
-  }
-
-  async actualizarEstadoYEspecialidades(authId: string, nuevoEstado: 'activo' | 'pendiente' | 'inactivo'): Promise<void> {
-    const usuario = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('auth_id', authId)
-      .single();
-
-    if (usuario.error || !usuario.data) throw usuario.error;
-
-    const updateUser = await supabase
-      .from('usuarios')
-      .update({ estado: nuevoEstado })
-      .eq('auth_id', authId);
-
-    if (updateUser.error) throw updateUser.error;
-
-    const especialista = await supabase
-      .from('especialistas')
-      .select('id')
-      .eq('usuario_id', usuario.data.id)
-      .single();
-
-    if (!especialista.data) return;
-
-    const updateEsp = await supabase
-      .from('especialista_especialidad')
-      .update({ activo: nuevoEstado === 'activo' })
-      .eq('especialista_id', especialista.data.id);
-
-    if (updateEsp.error) throw updateEsp.error;
-  }
-
-  async obtenerPorEspecialidad(especialidadId: number): Promise<any[]> {
-    const { data: relaciones, error: relError } = await supabase
-      .from('especialista_especialidad')
-      .select('especialista_id')
-      .eq('especialidad_id', especialidadId)
-      .eq('activo', true);
-
-    if (relError) return [];
-    if (!relaciones?.length) return [];
-
-    const ids = relaciones.map(r => r.especialista_id);
-    const { data: especialistas, error: espError } = await supabase
-      .from('especialistas')
-      .select(`
-        id,
-        nombre,
-        apellido,
-        usuario:usuario_id ( email, estado )
-      `)
-      .in('id', ids);
-
-    if (espError) return [];
-
-    return especialistas.map(e => {
-      const usuario = Array.isArray(e.usuario) ? e.usuario[0] : e.usuario;
-      return {
-        id: e.id,
-        nombre: e.nombre,
-        apellido: e.apellido,
-        email: usuario?.email || '',
-        estado: usuario?.estado || 'pendiente',
-      };
-    });
+    return especialidadesRespuesta.data;
   }
 }
