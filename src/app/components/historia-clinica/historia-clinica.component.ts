@@ -30,16 +30,14 @@ export class HistoriaClinicaFormComponent {
 
   private crearForm(): FormGroup {
     return this.fb.group({
-      // Datos fijos SOLO estos 4 campos
       altura: ['', [Validators.required, Validators.min(0), Validators.max(250)]],
       peso: ['', [Validators.required, Validators.min(1), Validators.max(300)]],
       temperatura: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
       presion: ['', [Validators.required, Validators.pattern(/^\d{2,3}\/\d{2,3}$/)]],
-      
-      // Datos dinámicos
-      datosDinamicos: this.fb.array([this.crearDatoDinamico()]),
-        comentario: ['']   // <-- acá
 
+      datosDinamicos: this.fb.array([this.crearDatoDinamico()]),
+
+      comentario: ['']
     });
   }
 
@@ -67,100 +65,66 @@ export class HistoriaClinicaFormComponent {
   }
 
   async onSubmit(): Promise<void> {
-  console.log('🟡 Validando formulario...');
-  console.log('📋 Estado del formulario:', this.historiaForm.status);
-  console.log('❌ Errores del formulario:', this.historiaForm.errors);
-  
-  // Mostrar estado de cada campo
-  Object.keys(this.historiaForm.controls).forEach(key => {
-    const control = this.historiaForm.get(key);
-    console.log(`📝 Campo ${key}:`, {
-      valor: control?.value,
-      valido: control?.valid,
-      errores: control?.errors,
-      sucio: control?.dirty,
-      tocado: control?.touched
-    });
-  });
+    if (this.historiaForm.valid) {
+      this.procesando = true;
+      this.error = '';
 
-  if (this.historiaForm.valid) {
-    console.log('✅ Formulario VÁLIDO - Enviando datos...');
-    this.procesando = true;
-    this.error = '';
+      try {
+        const formValue = this.historiaForm.value;
 
-    try {
-      const formValue = this.historiaForm.value;
-      console.log('📦 Datos a enviar:', formValue);
+        const historiaGuardada = await this.historiaService.crearHistoriaClinicaCompleta(
+          {
+            turno_id: this.turnoId,
+            paciente_id: this.pacienteId,
+            especialista_id: this.especialistaId,
+            especialidad_id: this.especialidadId,
+            altura: parseFloat(formValue.altura),
+            peso: parseFloat(formValue.peso),
+            temperatura: parseFloat(formValue.temperatura),
+            presion: formValue.presion
+          },
+          formValue.datosDinamicos
+        );
 
-      const historiaGuardada = await this.historiaService.crearHistoriaClinicaCompleta({
-        turno_id: this.turnoId,
-        paciente_id: this.pacienteId,
-        especialista_id: this.especialistaId,
-        especialidad_id: this.especialidadId,
-        altura: parseFloat(formValue.altura),
-        peso: parseFloat(formValue.peso),
-        temperatura: parseFloat(formValue.temperatura),
-        presion: formValue.presion
-      }, formValue.datosDinamicos);
+        this.guardado.emit({
+          success: true,
+          comentario: this.historiaForm.value.comentario,
+          historia: historiaGuardada
+        });
 
-      console.log('✅ Historia clínica guardada:', historiaGuardada);
-      
-     this.guardado.emit({
-  success: true,
-  comentario: this.historiaForm.value.comentario,   // ← clave
-  historia: historiaGuardada
-});
-
-
-    } catch (error: any) {
-      console.error('❌ Error guardando historia clínica:', error);
-      this.error = error.message || 'Error al guardar la historia clínica';
-      
-      this.guardado.emit({
-        success: false,
-        error: this.error
-      });
-    } finally {
-      this.procesando = false;
+      } catch (error: any) {
+        this.error = error.message || 'Error al guardar la historia clínica';
+        this.guardado.emit({ success: false, error: this.error });
+      } finally {
+        this.procesando = false;
+      }
+    } else {
+      this.marcarCamposComoSucios();
+      this.error = 'Por favor completá todos los campos requeridos correctamente';
     }
-  } else {
-    console.log('❌ Formulario INVÁLIDO - Mostrando errores...');
-    this.marcarCamposComoSucios();
-    this.error = 'Por favor completá todos los campos requeridos correctamente';
-    
-    // Debug adicional de campos inválidos
-    const camposInvalidos = Object.keys(this.historiaForm.controls)
-      .filter(key => this.historiaForm.get(key)?.invalid);
-    console.log('🚫 Campos inválidos:', camposInvalidos);
   }
-}
+
   private marcarCamposComoSucios(): void {
-  Object.keys(this.historiaForm.controls).forEach(key => {
-    const control = this.historiaForm.get(key);
-    if (control) {
-      control.markAsTouched();
-    }
-  });
-  
-  // Marcar también los controles del FormArray - CORREGIDO
-  this.datosDinamicos.controls.forEach((control: AbstractControl) => {
-    if (control instanceof FormGroup) {
-      Object.keys(control.controls).forEach(key => {
-        control.get(key)?.markAsTouched();
-      });
-    }
-  });
-} 
+    Object.keys(this.historiaForm.controls).forEach(key => {
+      this.historiaForm.get(key)?.markAsTouched();
+    });
+
+    this.datosDinamicos.controls.forEach((control: AbstractControl) => {
+      if (control instanceof FormGroup) {
+        Object.keys(control.controls).forEach(key => {
+          control.get(key)?.markAsTouched();
+        });
+      }
+    });
+  }
+
   mostrarError(controlName: string): boolean {
     const control = this.historiaForm.get(controlName);
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
-  // Helper para datos dinámicos
   mostrarErrorDatoDinamico(index: number, controlName: string): boolean {
     const control = this.datosDinamicos.at(index).get(controlName);
     return !!control && control.invalid && (control.dirty || control.touched);
   }
-
-
 }

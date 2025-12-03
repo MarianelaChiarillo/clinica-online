@@ -10,9 +10,9 @@ import { CommonModule } from '@angular/common';
   styleUrl: './especialista.component.scss',
 })
 export class EspecialistaComponent {
-   constructor(
+  constructor(
     private router: Router,
-  ) {}
+  ) { }
 
- 
+
 }

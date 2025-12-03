@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ConfirmEmailComponent } from './components/confirmar-email/confirmar-email';
+import { ConfirmarEmailComponent } from './components/confirmar-email/confirmar-email';
 import { AuthGuard } from './guards/auth.guard';
 import { LogoutGuard } from './guards/logout.guard';
 import { RoleGuard } from './guards/role.guard';
@@ -17,10 +17,13 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'bienvenida',
+      },
+      {
+        path: 'bienvenida',
         loadComponent: () =>
-          import('./components/bienvenida/bienvenida').then(
-            (m) => m.Bienvenida
-          ),
+          import('./components/bienvenida/bienvenida').then((m) => m.Bienvenida),
       },
       {
         path: 'paciente',
@@ -40,6 +43,7 @@ export const routes: Routes = [
             (m) => m.EspecialistaComponent
           ),
       },
+      
     ],
   },
   {
@@ -50,50 +54,54 @@ export const routes: Routes = [
       import('../app/components/usuarios/usuarios.component').then(
         (m) => m.UsuarioComponente
       ),
-    children: [  // ← AGREGAR CHILDREN AQUÍ
+    children: [
       {
-        path: 'admin',
-        canActivate: [AuthGuard, RoleGuard],
-        data: { rol: 'administrador' },
-        loadComponent: () =>
-          import('../app/components/registro/registro-admin/admin-form').then((m) => m.AdministradorFormComponent),
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'admin',
       },
-    ]
+
+    ],
   },
   {
     path: 'login',
     canMatch: [LogoutGuard],
-    loadComponent: () => import('./components/login/login.component').then((m) => m.LoginComponent),
+    loadComponent: () =>
+      import('./components/login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: 'registro',
     canMatch: [LogoutGuard],
-    loadChildren: () => import('./components/registro/registro.routes').then((m) => m.Registro),
+    loadChildren: () =>
+      import('./components/registro/registro.routes').then((m) => m.Registro),
   },
   {
     path: 'turnos',
-    loadChildren: () => import('./components/turnos/turnos.routes').then((m) => m.Turnos),
+    loadChildren: () =>
+      import('./components/turnos/turnos.routes').then((m) => m.Turnos),
   },
   {
     path: 'horarios',
-    loadComponent: () => import('./components/horarios/horarios.component').then((m) => m.MisHorariosComponent),
+    loadComponent: () =>
+      import('./components/horarios/horarios.component').then(
+        (m) => m.MisHorariosComponent
+      ),
   },
   {
     path: 'solicitar-turno',
-    loadComponent: () => import('./components/solicitar-turno/solicitar-turno.component').then((m) => m.SolicitarTurnoComponent),
-  },
-  {
-    path: 'bienvenida',
-    loadComponent: () => import('./components/bienvenida/bienvenida').then((m) => m.Bienvenida),
+    loadComponent: () =>
+      import('./components/solicitar-turno/solicitar-turno.component').then(
+        (m) => m.SolicitarTurnoComponent
+      ),
   },
   {
     path: 'auth/confirm',
-    component: ConfirmEmailComponent,
+    component: ConfirmarEmailComponent,
   },
   {
     path: 'confirm',
-    component: ConfirmEmailComponent,
-  }, 
+    component: ConfirmarEmailComponent,
+  },
   {
     path: 'mi-perfil',
     canActivate: [AuthGuard],
@@ -102,21 +110,25 @@ export const routes: Routes = [
         (m) => m.MiPerfilComponent
       ),
   },
-   {
+  {
     path: 'pacientes',
     canActivate: [AuthGuard],
     loadComponent: () =>
-      import('../app/components/pacientes-especialista/pacientes-especialista.component').then(
-        (m) => m.PacientesAtendidosComponent
-      ),
+      import(
+        '../app/components/pacientes-especialista/pacientes-especialista.component'
+      ).then((m) => m.PacientesAtendidosComponent),
   },
-   {
-        path: 'estadisticas-admin',
-        canActivate: [AuthGuard, RoleGuard],
-        data: { rol: 'administrador' },
-        loadComponent: () =>
-          import('../app/components/estadisticas-admin/estadisticas-admin.component').then((m) => m.EstadisticasAdminComponent),
-      },
-  { path: '**', redirectTo: 'home' },
-
+  {
+    path: 'estadisticas-admin',
+    canActivate: [AuthGuard, RoleGuard],
+    data: { rol: 'administrador' },
+    loadComponent: () =>
+      import(
+        '../app/components/estadisticas-admin/estadisticas-admin.component'
+      ).then((m) => m.EstadisticasAdminComponent),
+  },
+  {
+    path: '**',
+    redirectTo: 'home',
+  },
 ];

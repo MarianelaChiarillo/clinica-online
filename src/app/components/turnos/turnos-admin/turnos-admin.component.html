@@ -4,7 +4,6 @@
 
   <h2 class="text-2xl font-bold mb-4">Turnos de la Clínica</h2>
 
-  <!-- FILTRO ÚNICO -->
   <input
     type="text"
     class="w-full p-2 border rounded mb-4"
@@ -13,7 +12,6 @@
     (input)="aplicarFiltro()"
   />
 
-  <!-- TABLA -->
   <table class="min-w-full">
     <thead>
       <tr class="bg-gray-100">
@@ -64,7 +62,6 @@
   </table>
 </div>
 
-<!-- MODAL CANCELAR TURNO -->
 <div class="modal-backdrop" *ngIf="modalCancelar" (click)="cerrarModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">

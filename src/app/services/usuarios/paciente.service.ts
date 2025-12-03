@@ -1,32 +1,28 @@
 import { Injectable } from '@angular/core';
 import { UsuarioService } from './usuario.service';
 import { Paciente } from '../../models/user-data';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { AuthService } from '../auth.service';
+import supabase from '../../services/supabase.client';
 
 @Injectable({ providedIn: 'root' })
 export class PacienteService {
-
   constructor(
     private usuarioService: UsuarioService,
-    private auth: AuthService,
-    private supabase: SupabaseClient
+    private auth: AuthService
   ) {}
 
   async guardar(paciente: Paciente) {
-    const { data, error } = await this.usuarioService.crear({
+    const { data: usuario, error } = await this.usuarioService.crear({
       auth_id: paciente.auth_id,
       email: paciente.email,
       tipo_usuario: 'paciente',
       estado: 'activo',
       imagen_perfil: paciente.imagen_perfil
     });
-
-    if (error) return { data: null, error };
-    if (!data) return { data: null, error: new Error('No se pudo crear usuario') };
+    if (error || !usuario) return { data: null, error };
 
     const result = await this.usuarioService.crearRelacionado('pacientes', {
-      usuario_id: data.id,
+      usuario_id: usuario.id, // integer
       nombre: paciente.nombre,
       apellido: paciente.apellido,
       edad: paciente.edad,
@@ -50,26 +46,36 @@ export class PacienteService {
     const authUser = await this.auth.getUsuarioActual();
     if (!authUser) return null;
 
-    const { data, error } = await this.supabase
+    // Obtener usuario interno por auth_id (UUID)
+    const { data: usuarioInterno, error: usuarioError } = await this.usuarioService.obtenerPorAuthId(authUser.id);
+    if (usuarioError || !usuarioInterno) throw new Error('Usuario interno no encontrado');
+
+    // Obtener paciente por usuario_id (integer)
+    const { data: paciente, error: pacienteError } = await supabase
       .from('pacientes')
       .select('*')
-      .eq('usuario_id', authUser.id)
-      .single();
+      .eq('usuario_id', usuarioInterno.id)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (pacienteError) throw pacienteError;
 
-    return data;
+    return paciente;
   }
 
   async obtenerPacientePorUsuario(usuarioId: number) {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('pacientes')
       .select('*')
       .eq('usuario_id', usuarioId)
       .single();
 
     if (error) throw error;
-
     return data;
+  }
+
+  async obtenerTodos(): Promise<any[]> {
+    const { data, error } = await supabase.from('pacientes').select('*');
+    if (error) throw error;
+    return data || [];
   }
 }

@@ -10,193 +10,83 @@
         <div class="columna">
           <h3 class="seccion-titulo">Datos personales:</h3>
 
-          <!-- Nombre -->
           <label for="nombre">Nombre:</label>
-          <input
-            id="nombre"
-            formControlName="nombre"
-            class="input-inicio"
-            [class.input-error]="form.get('nombre')?.touched && form.get('nombre')?.invalid"
-            placeholder="Ingresa tu nombre"
-          />
-          @if (getError('nombre')) {
-          <small class="text-danger fade-in textito">{{ getError('nombre') }}</small>
-          }
+          <input id="nombre" formControlName="nombre" class="input-inicio" 
+                 [class.input-error]="form.get('nombre')?.touched && form.get('nombre')?.invalid" 
+                 placeholder="Ingresa tu nombre" />
+          <small class="text-danger" *ngIf="getError('nombre')">{{ getError('nombre') }}</small>
 
-          <!-- Apellido -->
           <label for="apellido">Apellido:</label>
-          <input
-            id="apellido"
-            formControlName="apellido"
-            class="input-inicio"
-            [class.input-error]="form.get('apellido')?.touched && form.get('apellido')?.invalid"
-            placeholder="Ingresa tu apellido"
-          />
-          @if (getError('apellido')) {
-          <small class="text-danger fade-in textito">{{ getError('apellido') }}</small>
-          }
+          <input id="apellido" formControlName="apellido" class="input-inicio" 
+                 [class.input-error]="form.get('apellido')?.touched && form.get('apellido')?.invalid" 
+                 placeholder="Ingresa tu apellido" />
+          <small class="text-danger" *ngIf="getError('apellido')">{{ getError('apellido') }}</small>
 
-          <!-- Edad -->
           <label for="edad">Edad:</label>
-          <input
-            id="edad"
-            formControlName="edad"
-            class="input-inicio"
-            [class.input-error]="form.get('edad')?.touched && form.get('edad')?.invalid"
-            placeholder="Ingresa tu edad"
-          />
-          @if (getError('edad')) {
-          <small class="text-danger fade-in textito">{{ getError('edad') }}</small>
-          }
+          <input id="edad" formControlName="edad" class="input-inicio" 
+                 [class.input-error]="form.get('edad')?.touched && form.get('edad')?.invalid" 
+                 placeholder="Ingresa tu edad" />
+          <small class="text-danger" *ngIf="getError('edad')">{{ getError('edad') }}</small>
 
-          <!-- DNI -->
           <label for="dni">DNI:</label>
-          <input
-            id="dni"
-            formControlName="dni"
-            class="input-inicio"
-            [class.input-error]="form.get('dni')?.touched && form.get('dni')?.invalid"
-            placeholder="Ingresa tu dni"
-          />
-          @if (getError('dni')) {
-          <small class="text-danger fade-in textito">{{ getError('dni') }}</small>
-          }
+          <input id="dni" formControlName="dni" class="input-inicio" 
+                 [class.input-error]="form.get('dni')?.touched && form.get('dni')?.invalid" 
+                 placeholder="Ingresa tu dni" />
+          <small class="text-danger" *ngIf="getError('dni')">{{ getError('dni') }}</small>
 
-          <!-- Especialidades -->
           <label for="especialidades">Especialidades:</label>
           <mat-form-field appearance="outline" class="green margin padding">
-            <mat-select
-              formControlName="especialidades"
-              multiple
-              placeholder="Seleccioná tus especialidades"
-            >
-              @for (esp of especialidades; track esp.id) {
-              <mat-option [value]="esp.id">{{ esp.nombre }}</mat-option>
-              }
+            <mat-select formControlName="especialidades" multiple placeholder="Seleccioná tus especialidades">
+              <mat-option *ngFor="let esp of especialidades" [value]="esp.id">{{ esp.nombre }}</mat-option>
               <mat-option value="otra">Otra</mat-option>
             </mat-select>
           </mat-form-field>
+          <small class="text-danger" *ngIf="getError('especialidades')">{{ getError('especialidades') }}</small>
 
-          @if (getError('especialidades')) {
-          <small class="text-danger fade-in textito">{{ getError('especialidades') }}</small>
-          }
-
-          <!-- Especialidades Personalizadas -->
-          @if (form.get('especialidades')?.value?.includes('otra')) {
-          <div class="especialidades-personalizadas">
-            <label class="labelA">Especialidades personalizadas:</label>
-
-            @for (control of especialidadesPersonalizadas.controls; track i; let i = $index) {
-            <div class="especialidad-item">
-              <input
-                type="text"
-                [formControl]="control"
-                placeholder="Ingresá una especialidad"
-                class="input-inicio"
-              />
-
-              @if (control.invalid && control.touched) {
-              <small class="text-danger fade-in textito">Esta especialidad es requerida</small>
-              }
-
-              <button
-                type="button"
-                class="btn-eliminar"
-                (click)="eliminarEspecialidadPersonalizada(i)"
-              >
-                ✖
-              </button>
+          <div *ngIf="form.get('especialidades')?.value?.includes('otra')">
+            <label>Especialidades personalizadas:</label>
+            <div *ngFor="let control of especialidadesPersonalizadasControls; let i = index">
+              <input type="text" [formControl]="control" placeholder="Ingresá una especialidad" class="input-inicio" />
+              <small class="text-danger" *ngIf="control.invalid && control.touched">Esta especialidad es requerida</small>
+              <button type="button" (click)="eliminarEspecialidadPersonalizada(i)">✖</button>
             </div>
-            }
-
-            <button type="button" class="btn-agregar" (click)="agregarEspecialidadPersonalizada()">
-              ＋ Agregar otra
-            </button>
+            <button type="button" (click)="agregarEspecialidadPersonalizada()">＋ Agregar otra</button>
           </div>
-          }
         </div>
 
-        <!-- COLUMNA DERECHA -->
         <div class="columna">
           <h3 class="seccion-titulo">Datos cuenta:</h3>
 
-          <!-- Email -->
           <label for="email">Email:</label>
-          <input
-            id="email"
-            formControlName="email"
-            class="input-inicio"
-            [class.input-error]="form.get('email')?.touched && form.get('email')?.invalid"
-            placeholder="Ingresa tu email"
-          />
-          @if (getError('email')) {
-          <small class="text-danger fade-in textito">{{ getError('email') }}</small>
-          }
+          <input id="email" formControlName="email" class="input-inicio" 
+                 [class.input-error]="form.get('email')?.touched && form.get('email')?.invalid" 
+                 placeholder="Ingresa tu email" />
+          <small class="text-danger" *ngIf="getError('email')">{{ getError('email') }}</small>
 
-          <!-- Clave -->
-          <label for="clave">Ingrese una contraseña:</label>
+          <label for="clave">Contraseña:</label>
           <div class="clave-container">
-            <input
-              id="clave"
-              [type]="verClave ? 'text' : 'password'"
-              formControlName="clave"
-              class="input-inicio"
-              [class.input-error]="form.get('clave')?.touched && form.get('clave')?.invalid"
-              placeholder="Ingresa tu contraseña"
-            />
-            <i
-              (click)="toggleVerClave()"
-              class="iconito fas"
-              [class.fa-eye]="!verClave"
-              [class.fa-eye-slash]="verClave"
-            ></i>
+            <input id="clave" [type]="verClave ? 'text' : 'password'" formControlName="clave" class="input-inicio" 
+                   [class.input-error]="form.get('clave')?.touched && form.get('clave')?.invalid" />
+            <i (click)="toggleVerClave()" class="iconito fas" 
+               [class.fa-eye]="!verClave" [class.fa-eye-slash]="verClave"></i>
           </div>
+          <small class="text-danger" *ngIf="form.get('clave')?.touched && form.get('clave')?.invalid">{{ getError('clave') }}</small>
 
-          @if (form.get('clave')?.touched && form.get('clave')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('clave') }}</small>
-          }
-
-          <!-- Repetir -->
           <label for="repiteClave">Repetir contraseña:</label>
           <div class="clave-container">
-            <input
-              id="repiteClave"
-              [type]="verClaveR ? 'text' : 'password'"
-              formControlName="repiteClave"
-              class="input-inicio"
-              [class.input-error]="
-                form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid
-              "
-              placeholder="Ingresa nuevamente la contraseña"
-            />
-
-            <i
-              (click)="toggleVerClaveR()"
-              class="iconito fas"
-              [class.fa-eye]="!verClaveR"
-              [class.fa-eye-slash]="verClaveR"
-            ></i>
+            <input id="repiteClave" [type]="verClaveR ? 'text' : 'password'" formControlName="repiteClave" class="input-inicio" 
+                   [class.input-error]="form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid" />
+            <i (click)="toggleVerClaveR()" class="iconito fas" 
+               [class.fa-eye]="!verClaveR" [class.fa-eye-slash]="verClaveR"></i>
           </div>
+          <small class="text-danger" *ngIf="form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid">{{ getError('repiteClave') }}</small>
 
-          @if (form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('repiteClave') }}</small>
-          }
-
-          <!-- Imagen -->
           <div class="file-group">
             <label>Imagen de Perfil</label>
-
-            <div class="custom-file-upload2" (click)="fileInput1.click()">
-              <i class="fas fa-upload"></i> Subir imagen
-            </div>
-
+            <div class="custom-file-upload2" (click)="fileInput1.click()"><i class="fas fa-upload"></i> Subir imagen</div>
             <input #fileInput1 type="file" hidden (change)="onFileSelect($event)" />
-
-            @if (fileName1) {
-            <p class="file-name">{{ fileName1 }}</p>
-            } @if (getError('imagen')) {
-            <small class="text-danger fade-in textito">{{ getError('imagen') }}</small>
-            }
+            <p class="file-name" *ngIf="fileName1">{{ fileName1 }}</p>
+            <small class="text-danger" *ngIf="getError('imagen')">{{ getError('imagen') }}</small>
           </div>
         </div>
       </div>
@@ -206,16 +96,13 @@
       </div>
 
       <a routerLink="/login" class="fade-in enlace-cuenta">¿Ya tenés cuenta? Iniciá sesión</a>
-
       <button type="submit" class="submit-button">
-        @if (cargando) { Registrando... } @else { INICIAR SESIÓN }
+        <ng-container *ngIf="cargando; else iniciar">Registrando...</ng-container>
+        <ng-template #iniciar>INICIAR SESIÓN</ng-template>
       </button>
     </form>
   </div>
 </div>
 
-@if (mensaje) {
-<app-mensaje [titulo]="mensaje.titulo" [mensaje]="mensaje.texto" [tipo]="mensaje.tipo" />
-} @if (cargando) {
-<app-spinner />
-}
+<app-mensaje *ngIf="mensaje" [titulo]="mensaje.titulo" [mensaje]="mensaje.texto" [tipo]="mensaje.tipo"></app-mensaje>
+<app-spinner *ngIf="cargando"></app-spinner>

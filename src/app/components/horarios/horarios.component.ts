@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HorariosService } from '../../services/disponibilidad.service';
+import { DisponibilidadService } from '../../services/disponibilidad.service';
 import { AuthService } from '../../services/auth.service';
 import { EspecialistaService } from '../../services/usuarios/especialista.service';
 import { UsuarioService } from '../../services/usuarios/usuario.service';
-import { EspecialidadService } from '../../services/usuarios/especialidad.service';
 import { MenuComponent } from '../componentes/menu/menu.component';
-import { SpinnerComponent } from '../componentes/spinner/spinner.component';
+
 @Component({
   selector: 'app-horarios',
   standalone: true,
@@ -24,7 +23,6 @@ export class MisHorariosComponent implements OnInit {
   especialidadSeleccionada: number | null = null;
 
   horasPosibles: string[] = [];
-
   dias = [
     { id: 1, nombre: 'Lunes' },
     { id: 2, nombre: 'Martes' },
@@ -32,6 +30,7 @@ export class MisHorariosComponent implements OnInit {
     { id: 4, nombre: 'Jueves' },
     { id: 5, nombre: 'Viernes' },
     { id: 6, nombre: 'Sábado' },
+    { id: 7, nombre: 'Domingo' },
   ];
 
   nuevoHorario = {
@@ -42,36 +41,33 @@ export class MisHorariosComponent implements OnInit {
   };
 
   constructor(
-    private horariosService: HorariosService,
+    private horariosService: DisponibilidadService,
     private authSrv: AuthService,
     private especialistaSrv: EspecialistaService,
-    private usuarioSrv: UsuarioService,
-    private especialidadSrv: EspecialidadService
-  ) {}
+    private usuarioSrv: UsuarioService
+  ) { }
 
   async ngOnInit() {
-    this.onDiaChange(); // Inicializar selector de horas
-
     this.cargando = true;
     try {
-      const user = await this.authSrv.getUsuarioActual();
-      if (!user) throw new Error('No hay sesión activa.');
+      const authUser = await this.authSrv.getUsuarioActual();
+      if (!authUser) throw new Error('No hay sesión activa.');
 
-      const { data: usuario, error } = await this.usuarioSrv.obtenerPorAuthId(user.id);
-      if (error || !usuario) throw new Error('No se encontró el usuario en la base de datos.');
+      const { data: usuarioDb, error } = await this.usuarioSrv.obtenerPorAuthId(authUser.id);
+      if (error || !usuarioDb) throw new Error('Usuario no encontrado.');
 
-      if (usuario.tipo_usuario !== 'especialista') {
-        throw new Error('No tienes permisos de especialista');
-      }
+      if (usuarioDb.tipo_usuario !== 'especialista') throw new Error('No tienes permisos de especialista.');
 
-      const especialista = await this.especialistaSrv.obtenerPorUsuarioId(usuario.id);
-      if (!especialista?.id) throw new Error('No se encontró el perfil del especialista.');
+      const respEspecialista = await this.especialistaSrv.obtenerPorUsuarioId(usuarioDb.id);
+      if (respEspecialista.error || !respEspecialista.data) throw new Error('Perfil de especialista no encontrado.');
+      const especialista = respEspecialista.data;
+      this.especialistaId = Number(especialista.id);
 
       this.especialistaId = Number(especialista.id);
 
       await this.cargarEspecialidades(this.especialistaId);
       await this.cargarHorarios();
-      
+      this.onDiaChange();
     } catch (err: any) {
       console.error(err);
       this.error = err.message;
@@ -79,82 +75,38 @@ export class MisHorariosComponent implements OnInit {
       this.cargando = false;
     }
   }
- 
 
-onDiaChange() {
-  const dia = Number(this.nuevoHorario.dia_semana);
-
-  let inicio = 8;      // Default
-  let fin = 19;      // Default
-
-  if (dia === 6) {
-    // SÁBADO → 08:00 a 13:00
-    fin = 14;
-  }
-
-  if (dia === 7) {
-    // DOMINGO → sin horarios
-    this.horasPosibles = [];
-    return;
-  }
-
-  this.horasPosibles = this.generarHoras(inicio, fin);
-}
-
-generarHoras(inicio: number, fin: number): string[] {
-  const horas: string[] = [];
-  for (let h = inicio; h <= fin; h += 0.5) {
-    const hora = Math.floor(h);
-    const minutos = h % 1 === 0 ? '00' : '30';
-    horas.push(`${hora.toString().padStart(2, '0')}:${minutos}`);
-  }
-  return horas;
-}
-
-
-  // 🔥 Especialidades
-  // ------------------------------------------------------------------
+  // Cargar especialidades del especialista
   async cargarEspecialidades(especialistaId: number) {
     try {
-      const especialistaCompleto = await this.especialistaSrv.obtenerPorId(especialistaId);
-      if (!especialistaCompleto) throw new Error();
-
-      this.especialidades = especialistaCompleto.especialidades?.filter(e => e.activo) || [];
-
-      if (this.especialidades.length > 0) {
+      this.especialidades = await this.especialistaSrv.obtenerEspecialidadesDeEspecialista(especialistaId);
+      if (this.especialidades.length) {
         this.especialidadSeleccionada = this.especialidades[0].id;
       } else {
-        this.error = 'No tienes especialidades activas asignadas.';
+        this.error = 'No tienes especialidades activas.';
       }
     } catch {
-      this.error = 'Error al cargar las especialidades';
+      this.error = 'Error al cargar especialidades';
     }
   }
 
-  // ------------------------------------------------------------------
-  // 🔥 Cargar horarios
-  // ------------------------------------------------------------------
+  // Cargar horarios del especialista
   async cargarHorarios() {
     if (!this.especialistaId) return;
     this.horarios = await this.horariosService.obtenerHorariosPorEspecialista(this.especialistaId);
   }
 
-  // ------------------------------------------------------------------
-  // 🔥 Agregar horario
-  // ------------------------------------------------------------------
+  // Agregar nuevo horario
   async agregarHorario() {
     if (!this.especialistaId) return alert('No se pudo identificar al especialista');
     if (!this.especialidadSeleccionada) return alert('Selecciona una especialidad');
 
     const { dia_semana, hora_inicio, hora_fin, duracion_consulta } = this.nuevoHorario;
 
-    if (hora_inicio >= hora_fin) {
-      return alert('La hora de inicio debe ser anterior a la hora de fin');
-    }
+    if (hora_inicio >= hora_fin) return alert('Hora inicio debe ser menor a hora fin');
 
     try {
       this.cargando = true;
-
       await this.horariosService.agregarHorario(
         this.especialistaId,
         this.especialidadSeleccionada,
@@ -163,20 +115,13 @@ generarHoras(inicio: number, fin: number): string[] {
         hora_fin,
         duracion_consulta
       );
-
       await this.cargarHorarios();
 
       // Reset
-      this.nuevoHorario = {
-        dia_semana: 1,
-        hora_inicio: '08:00',
-        hora_fin: '19:00',
-        duracion_consulta: 30,
-      };
+      this.nuevoHorario = { dia_semana: 1, hora_inicio: '08:00', hora_fin: '19:00', duracion_consulta: 30 };
       this.onDiaChange();
 
       alert('Horario agregado correctamente');
-
     } catch (error: any) {
       alert('Error al agregar horario: ' + error.message);
     } finally {
@@ -184,21 +129,37 @@ generarHoras(inicio: number, fin: number): string[] {
     }
   }
 
-  // ------------------------------------------------------------------
-  // 🔥 Eliminar horario
-  // ------------------------------------------------------------------
   async eliminarHorario(id: number) {
     if (!confirm('¿Eliminar este horario?')) return;
-
     try {
       await this.horariosService.eliminarHorario(id);
       await this.cargarHorarios();
     } catch {
-      alert('Error al eliminar el horario');
+      alert('Error al eliminar horario');
     }
   }
 
-  // Helpers de display
+  onDiaChange() {
+    const dia = Number(this.nuevoHorario.dia_semana);
+    let inicio = 8;
+    let fin = 19;
+
+    if (dia === 6) fin = 14; // Sábado
+    if (dia === 7) { this.horasPosibles = []; return; } // Domingo sin horarios
+
+    this.horasPosibles = this.generarHoras(inicio, fin);
+  }
+
+  generarHoras(inicio: number, fin: number): string[] {
+    const horas: string[] = [];
+    for (let h = inicio; h <= fin; h += 0.5) {
+      const hora = Math.floor(h).toString().padStart(2, '0');
+      const minutos = h % 1 === 0 ? '00' : '30';
+      horas.push(`${hora}:${minutos}`);
+    }
+    return horas;
+  }
+
   getDiaNombre(id: number) {
     return this.dias.find(d => d.id === id)?.nombre || '';
   }

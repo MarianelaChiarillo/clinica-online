@@ -1,17 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 
 import supabase from '../../services/supabase.client';
 
 import { MensajeComponent } from '../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
-import { MenuComponent } from '../componentes/menu/menu.component';
-import { LayoutComponent } from '../componentes/layout/layout.component';
 
-import { claveSeguraValidator } from '../../validators/clave.validator';
-import { emailDominioValidator } from '../../validators/email-dominio.validator';
+import { LoginValidatorsService } from '../../validators/login.validator';
 
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuarios/usuario.service';
@@ -28,9 +25,6 @@ import { Usuario } from '../../models/user-data';
     RouterLink,
     MensajeComponent,
     SpinnerComponent,
-    MenuComponent,
-    LayoutComponent,
-    SpinnerComponent
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
@@ -38,36 +32,34 @@ import { Usuario } from '../../models/user-data';
 export class LoginComponent implements OnInit {
 
   form!: FormGroup;
-
   cargando = false;
   verClave = false;
-
   Object = Object;
-
   mensaje: { titulo: string; texto: string; tipo: 'error' | 'success' | 'info' } | null = null;
 
-  accesos = [
-    { src: '', alt: 'Paciente Alexia', email: 'alexach@gmail.com', pass: 'alexita1', rol: 'paciente' },
-    { src: '', alt: 'Paciente Juan', email: 'juanperez@gmail.com', pass: 'juani123', rol: 'paciente' },
-    { src: '', alt: 'Paciente María', email: 'mariag@gmail.com', pass: 'maria456', rol: 'paciente' },
-    { src: '', alt: 'Especialista Dr. López', email: 'drlopez@gmail.com', pass: 'doctor123', rol: 'especialista' },
-    { src: '', alt: 'Especialista Dra. García', email: 'dragarcia@gmail.com', pass: 'dra456', rol: 'especialista' },
-    { src: '', alt: 'Administrador', email: 'admin@gmail.com', pass: 'admin789', rol: 'administrador' }
-  ];
+ accesos = [
+  { src: 'assets/perfiles/alexia.png', alt: 'Paciente Alexia', email: 'alexach@gmail.com', pass: 'alexita1', rol: 'paciente' },
+  { src: 'assets/perfiles/juan.png', alt: 'Paciente Juan', email: 'juanperez@gmail.com', pass: 'juani123', rol: 'paciente' },
+  { src: 'assets/perfiles/maria2.png', alt: 'Paciente María', email: 'mariag@gmail.com', pass: 'maria456', rol: 'paciente' },
+  { src: 'assets/perfiles/jose.png', alt: 'Especialista Dr. López', email: 'drlopez@gmail.com', pass: 'doctor123', rol: 'especialista' },
+  { src: 'assets/perfiles/nadia2.png', alt: 'Especialista Dra. García', email: 'dragarcia@gmail.com', pass: 'dra456', rol: 'especialista' },
+  { src: 'assets/perfiles/admin2.png', alt: 'Administrador', email: 'admin@gmail.com', pass: 'admin789', rol: 'administrador' }
+];
+
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private authSrv: AuthService,
     private usuarioSrv: UsuarioService,
-    private storageSrv: StorageService
+    private storageSrv: StorageService,
+    private loginValidators: LoginValidatorsService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.cargando = true;
     this.inicializarFormulario();
-    await this.cargarImagenesAccesos();
-    this.cargando=false;
+    this.cargando = false;
   }
 
   get usuario() {
@@ -78,57 +70,29 @@ export class LoginComponent implements OnInit {
     return this.form.controls['clave'];
   }
 
-  get erroresClave(): string {
-    const errors = this.clave?.errors;
-    if (!errors) return '';
-    return Object.values(errors).join(' · ');
+  get erroresUsuario(): string | null {
+    return this.loginValidators.getLoginError('usuario', this.form, { usuario: 'Email' });
   }
 
-  get erroresUsuario(): string {
-  const errors = this.usuario?.errors;
-  if (!errors) return '';
-
-  return Object.values(errors).join(' · ');
-}
-
-private inicializarFormulario(): void {
-  this.form = this.fb.group({
-    usuario: ['', [emailDominioValidator]],
-    clave: ['', [claveSeguraValidator]]
-  });
-}
-
-
-
-  private async cargarImagenesAccesos(): Promise<void> {
-    try {
-      for (const acceso of this.accesos) {
-        const usuario = await this.usuarioSrv.obtenerPorEmail(acceso.email);
-
-        if (usuario?.imagen_perfil) {
-          const img = await this.storageSrv.obtenerImagen(usuario.imagen_perfil);
-          acceso.src = img;
-        }
-      }
-    } catch (error) {
-      this.mensaje = {
-        titulo: 'Error',
-        texto: 'No se pudieron cargar las imágenes de los accesos.',
-        tipo: 'error'
-      };
-      console.error(error);
-    }
+  get erroresClave(): string | null {
+    return this.loginValidators.getLoginError('clave', this.form, { clave: 'Contraseña' });
   }
+
+  private inicializarFormulario(): void {
+    this.form = this.fb.group({
+      usuario: ['', this.loginValidators.getEmailValidators()],
+      clave: ['', this.loginValidators.getClaveValidators()]
+    });
+  }
+
+  userTrackBy(index: number, item: any) {
+  return item?.id || index;
+}
 
   async iniciarSesion(): Promise<void> {
     this.form.markAllAsTouched();
-
     if (this.form.invalid) {
-      this.mensaje = {
-        titulo: 'Datos inválidos',
-        texto: 'Verificá usuario y contraseña.',
-        tipo: 'error'
-      };
+      this.mostrarError('Datos inválidos', 'Verificá usuario y contraseña.');
       return;
     }
 
@@ -139,21 +103,15 @@ private inicializarFormulario(): void {
 
     try {
       const { user, error } = await this.authSrv.iniciarSesion(usuario, clave);
-
-      if (error || !user) {
-        this.manejarErrorAuth(error);
-        return;
-      }
-
+      if (error || !user) return this.manejarErrorAuth(error);
       if (!user.email_confirmed_at) {
         this.mostrarError('Email no confirmado', 'Revisá tu correo y confirmá tu cuenta.');
         await this.authSrv.cerrarSesion();
         return;
       }
 
-      const usuarioDB = await this.usuarioSrv.obtenerPorEmail(usuario);
-
-      if (!usuarioDB) {
+      const { data: usuarioDB, error: usuarioError } = await this.usuarioSrv.obtenerPorEmail(usuario);
+      if (usuarioError || !usuarioDB) {
         this.mostrarError('Usuario no encontrado', 'Contactá al administrador.');
         await this.authSrv.cerrarSesion();
         return;
@@ -168,8 +126,9 @@ private inicializarFormulario(): void {
 
       await this.manejarLoginExitoso(usuarioDB);
 
-    } catch {
+    } catch (err) {
       this.mostrarError('Error de conexión', 'Ocurrió un problema al intentar iniciar sesión.');
+      console.error(err);
     } finally {
       this.cargando = false;
     }
@@ -207,12 +166,7 @@ private inicializarFormulario(): void {
       estado: usuario.estado
     }));
 
-    this.mensaje = {
-      titulo: '¡Bienvenido!',
-      texto: 'Acceso exitoso',
-      tipo: 'success'
-    };
-
+    this.mensaje = { titulo: '¡Bienvenido!', texto: 'Acceso exitoso', tipo: 'success' };
     setTimeout(() => this.redirigirSegunRol(usuario), 1500);
   }
 
@@ -222,7 +176,6 @@ private inicializarFormulario(): void {
       especialista: '/home/especialista',
       administrador: '/home/administrador'
     };
-
     this.router.navigate([rutas[usuario.tipo_usuario] || '/home/paciente']);
   }
 

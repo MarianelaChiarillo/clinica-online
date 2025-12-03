@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import supabase from '../../../services/supabase.client';
 import { MenuComponent } from '../../componentes/menu/menu.component';
+import { TurnoService } from '../../../services/turnos.service'; 
+
 @Component({
   selector: 'app-turnos-admin',
   standalone: true,
@@ -22,46 +23,33 @@ export class TurnosAdminComponent implements OnInit {
   guardando = false;
   error: string | null = null;
 
+  constructor(private turnoSrv: TurnoService) {} // <-- inyectá el servicio
+
   async ngOnInit() {
     await this.cargarTurnos();
   }
 
   async cargarTurnos() {
-    const { data, error } = await supabase
-      .from('turnos')
-      .select(`
-        *,
-        pacientes(id, nombre, apellido),
-        especialistas(id, nombre, apellido),
-        especialidades(id, nombre)
-      `)
-      .order("fecha_turno");
-
+    const { data, error } = await this.turnoSrv.obtenerTurnosEntreFechas('1900-01-01', '2100-01-01'); // <-- ejemplo usando servicio
     if (!error) {
-      this.turnos = data;
-      this.turnosFiltrados = data;
+      this.turnos = data || [];
+      this.turnosFiltrados = data || [];
     }
   }
 
   aplicarFiltro() {
     const f = this.filtro.toLowerCase();
-
     this.turnosFiltrados = this.turnos.filter(t =>
-      t.especialidades.nombre.toLowerCase().includes(f) ||
-      `${t.especialistas.nombre} ${t.especialistas.apellido}`.toLowerCase().includes(f)
+      t.especialidades?.nombre?.toLowerCase().includes(f) ||
+      `${t.especialistas?.nombre || ''} ${t.especialistas?.apellido || ''}`.toLowerCase().includes(f)
     );
   }
 
- puedeCancelar(t: any): boolean {
-  const estado = t.estado?.toLowerCase().trim();
-  const puede = estado !== 'aceptado' &&
-                estado !== 'realizado' &&
-                estado !== 'rechazado' &&
-                estado !== 'cancelado';
-  
-  console.log(`Turno ${t.id} - Estado: ${estado} - Puede cancelar: ${puede}`);
-  return puede;
-}
+  puedeCancelar(t: any): boolean {
+    const estado = t.estado?.toLowerCase().trim();
+    return !['aceptado', 'realizado', 'rechazado', 'cancelado'].includes(estado);
+  }
+
   abrirCancelar(turno: any) {
     this.turnoSeleccionado = turno;
     this.modalCancelar = true;
@@ -79,20 +67,11 @@ export class TurnosAdminComponent implements OnInit {
     this.error = null;
 
     try {
-      const { error } = await supabase
-        .from('turnos')
-        .update({
-          estado: 'cancelado',
-          comentario_cancelacion: this.comentarioCancelacion
-        })
-        .eq('id', this.turnoSeleccionado.id);
-
+      const { error } = await this.turnoSrv.cancelarTurno(this.turnoSeleccionado.id, this.comentarioCancelacion);
       if (error) throw error;
-
       this.cerrarModal(true);
-      
-    } catch (error: any) {
-      this.error = error.message || 'Error al cancelar el turno';
+    } catch (err: any) {
+      this.error = err.message || 'Error al cancelar el turno';
     } finally {
       this.guardando = false;
     }

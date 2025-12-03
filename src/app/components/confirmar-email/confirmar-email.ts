@@ -1,48 +1,59 @@
-// src/app/components/confirm-email/confirm-email.component.ts
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-confirm-email',
+  selector: 'app-confirmar-email',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './confirmar-email.html',
   styleUrls: ['./confirmar-email.scss']
 })
-export class ConfirmEmailComponent implements OnInit {
+export class ConfirmarEmailComponent implements OnInit {
+
   cargando = true;
   confirmacionExitosa = false;
   mensajeError = '';
 
   constructor(
-    private route: ActivatedRoute,
+    private ruta: ActivatedRoute,
     private router: Router,
-    private auth: AuthService
+    private authService: AuthService
   ) {}
 
-  async ngOnInit() {
-    await this.procesarConfirmacion();
+  ngOnInit() {
+    this.confirmarEmail();
   }
 
-  async procesarConfirmacion() {
-    try {
-      const token = this.route.snapshot.queryParams['token'];
-      const type = this.route.snapshot.queryParams['type'];
+  async confirmarEmail() {
+    this.cargando = true;
+    this.confirmacionExitosa = false;
+    this.mensajeError = '';
 
-      if (!token || type !== 'signup') throw new Error('Link de confirmación inválido.');
+    const token = this.ruta.snapshot.queryParams['token'];
+    const tipo = this.ruta.snapshot.queryParams['type'];
 
-      const { error } = await this.auth.confirmarEmail(token);
-      if (error) throw error;
-
-      this.confirmacionExitosa = true;
-    } catch (err: any) {
-      this.confirmacionExitosa = false;
-      this.mensajeError = err.message || 'Error desconocido.';
-    } finally {
+    if (!token || tipo !== 'signup') {
+      this.mensajeError = 'Link de confirmación inválido.';
       this.cargando = false;
+      return;
     }
+
+    try {
+      const resultado = await this.authService.confirmarEmail(token);
+      if (resultado.error) {
+        this.mensajeError = resultado.error.message || 'Error desconocido.';
+        this.confirmacionExitosa = false;
+      } else {
+        this.confirmacionExitosa = true;
+      }
+    } catch (error: any) {
+      this.mensajeError = error.message || 'Error desconocido.';
+      this.confirmacionExitosa = false;
+    }
+
+    this.cargando = false;
   }
 
   irALogin() {

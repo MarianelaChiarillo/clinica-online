@@ -1,49 +1,80 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TurnosService } from '../../../services/turnos.service';
-import { ModalService } from '../../../services/modal.service';
 import { TurnoExtendido } from '../../../models/turno';
-import { ModalContainerComponent } from '../../componentes/modales/modal-container/modal-container.component';
+import { ModalContainerComponent } from '../../componentes/modales/modal-container.component';
 import supabase from '../../../services/supabase.client';
 import { HistoriaClinicaService } from '../../../services/usuarios/historia-clinica.service';
 import { AuthService } from '../../../services/auth.service';
-import { FiltroService } from '../../../services/usuarios/filtro.service';
+import { UtilsService } from '../../../services/utils.service';
 import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
 import { MenuComponent } from '../../componentes/menu/menu.component';
 import { EstadoEtiquetaPipe } from '../../../pipes/estadoEtiqueta.pipe';
+import { ModalService } from '../../../services/modal.service';
+import { TurnoService } from '../../../services/turnos.service';
+import { EspecialistaService } from '../../../services/usuarios/especialista.service';
+import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
+
+
 @Component({
   selector: 'app-turnos-especialista',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalContainerComponent, FiltroGeneralComponent, MenuComponent,EstadoEtiquetaPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ModalContainerComponent,
+    FiltroGeneralComponent,
+    MenuComponent,
+    EstadoEtiquetaPipe,
+    FechaFormatoPipe
+  ],
   templateUrl: './turnos-especialista.component.html',
   styleUrls: ['./turnos-especialista.component.scss'],
 })
 export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   turnos: TurnoExtendido[] = [];
   turnosFiltrados: TurnoExtendido[] = [];
-
   loading = false;
   error: string | null = null;
-
   private canalRealtime: any;
 
   constructor(
-    private turnosService: TurnosService,
+    private turnosService: TurnoService,
     private modalService: ModalService,
     private historiaClinicaService: HistoriaClinicaService,
     private authService: AuthService,
-    private filtroService: FiltroService
+    private utilsService: UtilsService,
+    private especialistaService: EspecialistaService
   ) {}
 
-  async ngOnInit() {
-    await this.cargarTurnos();
-    this.suscribirRealtime();
-  }
+ async ngOnInit() {
+  await this.esperarSesion();
+  await this.cargarTurnos();
+  this.suscribirRealtime();
+}
+
 
   ngOnDestroy() {
     if (this.canalRealtime) this.canalRealtime.unsubscribe();
   }
+
+
+private async esperarSesion() {
+  return new Promise<void>(async resolve => {
+    const sesion = await supabase.auth.getSession();
+
+    // Versión correcta
+    if (sesion.data?.session?.user) {
+      resolve();
+      return;
+    }
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) resolve();
+    });
+  });
+}
+
 
   suscribirRealtime() {
     this.canalRealtime = supabase
@@ -67,31 +98,20 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     this.error = null;
 
     try {
-      console.log('🔄 Cargando turnos del especialista...');
-      const turnosBase = await this.turnosService.obtenerTurnosDelEspecialistaActual();
-      
-      // Inicializar turnos con estructura extendida
-      this.turnos = turnosBase.map(turno => ({
+      const especialista = await this.especialistaService.obtenerEspecialistaActual();
+      if (!especialista) throw new Error('No se encontró el especialista actual');
+
+      const turnosBase = await this.turnosService.obtenerTurnosDeEspecialista(especialista.id);
+
+      this.turnos = (turnosBase.data || []).map(turno => ({
         ...turno,
         historia_clinica: undefined,
         coincidencias: []
       })) as TurnoExtendido[];
-      
-      console.log('📦 TODOS LOS TURNOS OBTENIDOS DEL SERVICIO:');
-      this.turnos.forEach((turno, index) => {
-        console.log(`Turno ${index}:`, {
-          id: turno.id,
-          estado: turno.estado,
-          paciente: `${turno.pacientes?.nombre} ${turno.pacientes?.apellido}`,
-          fecha: turno.fecha_turno,
-          especialidad: turno.especialidades?.nombre
-        });
-      });
 
       await this.cargarHistoriasClinicas();
-      
       this.turnosFiltrados = [...this.turnos];
-      
+
     } catch (err) {
       console.error('❌ Error cargando turnos:', err);
       this.error = 'Error al cargar los turnos';
@@ -103,53 +123,23 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   private async cargarHistoriasClinicas(): Promise<void> {
     const turnosRealizados = this.turnos.filter(t => t.estado === 'realizado');
     
-    console.log('🔍 TURNOS REALIZADOS QUE DEBERÍAN TENER HC:', 
-      turnosRealizados.map(t => ({ 
-        id: t.id, 
-        paciente: `${t.pacientes?.nombre} ${t.pacientes?.apellido}`,
-        fecha: t.fecha_turno 
-      }))
-    );
-    
-    const promesas = turnosRealizados.map(async (turno) => {
+    const promesas = turnosRealizados.map(async turno => {
       try {
-        console.log(`🔍 [TURNO ${turno.id}] Cargando historia clínica...`);
         const historia = await this.historiaClinicaService.obtenerHistoriaClinicaPorTurno(turno.id);
-        
-        if (historia) {
-          console.log(`✅ [TURNO ${turno.id}] HC ENCONTRADA:`, {
-            hcId: historia.id,
-            turnoId: historia.turno_id,
-            datosDinamicosCount: historia.datos_dinamicos?.length || 0
-          });
-        } else {
-          console.log(`❌ [TURNO ${turno.id}] NO SE ENCONTRÓ HC EN LA BD`);
-        }
-        
-        turno.historia_clinica = historia;
-        
-      } catch (error) {
-        console.error(`💥 [TURNO ${turno.id}] ERROR:`, error);
+        turno.historia_clinica = historia || null;
+      } catch {
         turno.historia_clinica = null;
       }
     });
 
     await Promise.all(promesas);
-    
-    console.log('📊 RESUMEN FINAL DE CARGA HC:');
-    turnosRealizados.forEach(t => {
-      console.log(`- Turno ${t.id} (${t.pacientes?.nombre} ${t.pacientes?.apellido}): ${t.historia_clinica ? '✅ CON HC' : '❌ SIN HC'}`);
-    });
   }
 
-  // Método llamado cuando el filtro general emite turnos filtrados
   onTurnosFiltradosChange(turnosFiltrados: TurnoExtendido[]) {
     this.turnosFiltrados = turnosFiltrados;
   }
 
-  // Método opcional si necesitas el texto del filtro
   onFiltroChange(filtroTexto: string) {
-    // Puedes usar esto para mostrar info del filtro si lo necesitas
     console.log('Filtro aplicado:', filtroTexto);
   }
 
@@ -157,38 +147,21 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     const estado = t.estado?.toLowerCase().trim();
     const acciones: string[] = [];
 
-    if (estado === 'solicitado') {
-      acciones.push('aceptar', 'rechazar', 'cancelar');
-    }
-    if (estado === 'aceptado') {
-      acciones.push('finalizar');
-    }
+    if (estado === 'solicitado') acciones.push('aceptar', 'rechazar', 'cancelar');
+    if (estado === 'aceptado') acciones.push('finalizar');
+    if (t.comentario_especialista) acciones.push('ver_resena');
 
-    if (t.comentario_especialista) {
-      acciones.push('ver_resena');
-    }
     return acciones;
   }
 
   async ejecutarAccion(accion: string, turno: TurnoExtendido) {
     let prom: any;
-
     switch (accion) {
-      case 'aceptar':
-        prom = this.modalService.abrirAceptarTurno(turno);
-        break;
-      case 'rechazar':
-        prom = this.modalService.abrirRechazarTurno(turno);
-        break;
-      case 'cancelar':
-        prom = this.modalService.abrirCancelarTurno(turno);
-        break;
-      case 'finalizar':
-        prom = this.modalService.abrirFinalizarTurno(turno);
-        break;
-      case 'ver_resena':
-        this.modalService.abrirComentarioTurno(turno);
-        return;
+      case 'aceptar': prom = this.modalService.abrirAceptarTurno(turno); break;
+      case 'rechazar': prom = this.modalService.abrirRechazarTurno(turno); break;
+      case 'cancelar': prom = this.modalService.abrirCancelarTurno(turno); break;
+      case 'finalizar': prom = this.modalService.abrirFinalizarTurno(turno); break;
+      case 'ver_resena': this.modalService.abrirComentarioTurno(turno); return;
     }
 
     const turnoActualizado = await prom;
@@ -203,14 +176,7 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos públicos para el template
-  formatearFecha(fecha: string): string {
-    return this.filtroService.formatearFecha(fecha);
-  }
 
-  formatearHora(hora: string): string {
-    return this.filtroService.formatearHora(hora);
-  }
 
   obtenerColorEstado(estado: string) {
     const map: any = {
@@ -224,7 +190,7 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   }
 
   obtenerTextoEstado(estado: string) {
-    return this.filtroService.formatearEstado(estado);
+    return this.utilsService.formatearEstadoParaMostrar(estado);
   }
 
   limpiarError() {

@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MenuComponent } from './../componentes/menu/menu.component';
-import { LayoutComponent } from './../componentes/layout/layout.component';
 
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [CommonModule, MenuComponent, LayoutComponent, RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.scss',
 })

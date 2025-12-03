@@ -109,4 +109,25 @@ export class UsuarioService {
 
     return usuario;
   }
+
+
+  async obtenerPorEmail(email: string) {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    return { data, error };
+  }
+
+    async obtenerTodos(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('*');
+  if (error) throw error;
+  return data || [];
+}
+
+
 }

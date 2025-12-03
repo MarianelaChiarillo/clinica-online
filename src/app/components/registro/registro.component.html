@@ -1,22 +1,30 @@
 <div class="background-container">
-  @if (!estaEnFormulario) {
-  <a routerLink="/login" class="enlace-volver"> ← Volver</a>
-  <h1>Seleccione que usuario desea registrar</h1>
 
-  <div class="opciones-container fade-in">
-    <button (click)="router.navigate(['paciente'], { relativeTo: route })" class="button-paciente">
-      <img src="../../../assets/images/pacientes-registro.png" alt="Paciente" />
-      <span class="btn-text">Soy Paciente</span>
-    </button>
+  <ng-container *ngIf="!estaEnFormulario">
+    <a routerLink="/login" class="enlace-volver"> ← Volver</a>
+    <h1>Seleccione qué usuario desea registrar</h1>
 
-    <button
-      (click)="router.navigate(['especialista'], { relativeTo: route })"
-      class="button-especialista"
-    >
-      <img src="../../../assets/images/medicos-registro.png" alt="Especialista" />
-      <span class="btn-text">Soy Especialista</span>
-    </button>
-  </div>
-  }
+    <div class="opciones-container fade-in">
+
+      <button 
+        (click)="router.navigate(['paciente'], { relativeTo: route })"
+        class="button-paciente"
+      >
+        <img src="../../../assets/images/pacientes-registro.png" alt="Paciente" />
+        <span class="btn-text">Soy Paciente</span>
+      </button>
+
+      <button
+        (click)="router.navigate(['especialista'], { relativeTo: route })"
+        class="button-especialista"
+      >
+        <img src="../../../assets/images/medicos-registro.png" alt="Especialista" />
+        <span class="btn-text">Soy Especialista</span>
+      </button>
+
+    </div>
+  </ng-container>
+
   <router-outlet></router-outlet>
+
 </div>

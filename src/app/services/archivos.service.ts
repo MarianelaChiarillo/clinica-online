@@ -107,4 +107,42 @@ export class ArchivosService {
   obtenerFechaActual(): string {
     return new Date().toISOString().split('T')[0];
   }
+
+
+  
+  async descargarHistoriaClinicaCompleta(usuario: any, historias: any[], nombreArchivo: string) {
+    if (!historias || historias.length === 0) return;
+
+    const doc = this.crearDocumentoPDF(`Historia clínica completa de ${usuario.nombre} ${usuario.apellido}`);
+
+    historias.forEach((h, i) => {
+      doc.text(`Historia #${i + 1} - Turno: ${h.turno?.fecha_turno || 'N/A'}`, 10, 25 + i * 10);
+      const datos = h.datos_dinamicos?.map((d: any) => ({ Clave: d.clave, Valor: d.valor })) || [];
+      this.agregarTablaPDF(doc, datos, [{ key: 'Clave', header: 'Clave' }, { key: 'Valor', header: 'Valor' }]);
+    });
+
+    this.guardarPDF(doc, nombreArchivo);
+  }
+
+  async descargarHistoriaClinicaIndividual(usuario: any, historia: any, nombreArchivo: string) {
+    const doc = this.crearDocumentoPDF(`Historia clínica de ${usuario.nombre} ${usuario.apellido}`);
+    doc.text(`Turno: ${historia.turno?.fecha_turno || 'N/A'}`, 10, 25);
+
+    const datos = historia.datos_dinamicos?.map((d: any) => ({ Clave: d.clave, Valor: d.valor })) || [];
+    this.agregarTablaPDF(doc, datos, [{ key: 'Clave', header: 'Clave' }, { key: 'Valor', header: 'Valor' }]);
+
+    this.guardarPDF(doc, nombreArchivo);
+  }
+
+  generarExcelUsuariosGeneral(usuarios: any[]) {
+    const datos = this.formatearUsuarios(usuarios);
+    this.exportarExcel(datos, 'usuarios_general');
+  }
+
+  async generarExcelTurnosPaciente(usuario: any) {
+    const turnos = usuario.turnos || await this.obtenerTurnosPaciente(usuario.id);
+    const datos = this.formatearTurnos(turnos);
+    this.exportarExcel(datos, `turnos_${usuario.nombre}`);
+  }
+
 }

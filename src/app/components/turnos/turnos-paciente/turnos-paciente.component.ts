@@ -1,16 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
-import { ModalContainerComponent } from '../../componentes/modales/modal-container/modal-container.component';
+import { ModalContainerComponent } from '../../componentes/modales/modal-container.component';
 import { EncuestaModalComponent } from '../../encuesta/encuesta.component';
 import { ModalService } from '../../../services/modal.service';
-import { TurnosService } from '../../../services/turnos.service';
+import { TurnoService } from '../../../services/turnos.service';
 import supabase from '../../../services/supabase.client';
 import { MenuComponent } from '../../componentes/menu/menu.component';
 import { HistoriaClinicaService } from '../../../services/usuarios/historia-clinica.service';
 import { TurnoExtendido } from '../../../models/turno';
-import { FiltroService } from '../../../services/usuarios/filtro.service';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
+import { PacienteService } from '../../../services/usuarios/paciente.service';
+import { UtilsService } from '../../../services/utils.service';
+import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
+import { AuthService } from '../../../services/auth.service';
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-turnos-paciente',
   standalone: true,
@@ -21,6 +26,7 @@ import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
     EncuestaModalComponent,
     MenuComponent,
     SpinnerComponent,
+    FechaFormatoPipe
   ],
   templateUrl: './turnos-paciente.component.html',
   styleUrls: ['./turnos-paciente.component.scss'],
@@ -34,23 +40,45 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
   turnoSeleccionado: any = null;
 
   private canalRealtime: any;
+  private authSubscription: Subscription | null = null;
 
   constructor(
     private modalService: ModalService,
-    private turnosService: TurnosService,
+    private turnosService: TurnoService,
     private historiaClinicaService: HistoriaClinicaService,
-    private filtroService: FiltroService
+    private pacienteService: PacienteService,
+    private utilsService: UtilsService,
+    private authService: AuthService
   ) {}
 
-  async ngOnInit() {
+  ngOnInit() {
     this.cargando = true;
-    await this.obtenerTurnos();
-    this.escucharRealtime();
-    this.cargando = false;
+
+    this.authSubscription = this.authService.usuarioActual$.subscribe(async (usuario) => {
+      if (usuario) {
+        const paciente = await this.pacienteService.obtenerPacienteActual();
+        if (!paciente) {
+          console.warn('No hay paciente actual aún');
+          this.turnos = [];
+          this.turnosFiltrados = [];
+          this.cargando = false;
+          return;
+        }
+
+        await this.obtenerTurnos(paciente.id);
+        this.escucharRealtime();
+        this.cargando = false;
+      } else {
+        this.turnos = [];
+        this.turnosFiltrados = [];
+        this.cargando = false;
+      }
+    });
   }
 
   ngOnDestroy() {
     if (this.canalRealtime) this.canalRealtime.unsubscribe();
+    if (this.authSubscription) this.authSubscription.unsubscribe();
   }
 
   escucharRealtime() {
@@ -63,27 +91,39 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
           schema: 'public',
           table: 'turnos',
         },
-        async (payload) => {
-          await this.obtenerTurnos();
+        async () => {
+          const paciente = await this.pacienteService.obtenerPacienteActual();
+          if (paciente) await this.obtenerTurnos(paciente.id);
         }
       )
       .subscribe();
   }
 
-  async obtenerTurnos() {
+  async obtenerTurnos(pacienteId: number) {
     this.cargando = true;
-    const turnosBase = await this.turnosService.obtenerTurnosDelPacienteActual();
+    try {
+      if (!pacienteId) return;
 
-    this.turnos = turnosBase.map((turno) => ({
-      ...turno,
-      historia_clinica: undefined,
-      coincidencias: [],
-    })) as TurnoExtendido[];
+      const { data: turnosConDatos, error } = await this.turnosService.obtenerTurnosDePacienteConDatos(pacienteId);
+      if (error) throw error;
 
-    await this.cargarHistoriasClinicas();
+      this.turnos = (turnosConDatos || []).map((turno) => ({
+        ...turno,
+        historia_clinica: undefined,
+        coincidencias: [],
+        especialista: turno.especialista ?? null,
+        especialidad: turno.especialidad ?? null,
+      })) as TurnoExtendido[];
 
-    this.turnosFiltrados = [...this.turnos];
-    this.cargando = false;
+  
+      await this.cargarHistoriasClinicas();
+      this.turnosFiltrados = [...this.turnos];
+
+    } catch (error) {
+      console.error('Error cargando turnos:', error);
+    } finally {
+      this.cargando = false;
+    }
   }
 
   private async cargarHistoriasClinicas(): Promise<void> {
@@ -106,9 +146,7 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     this.turnosFiltrados = turnosFiltrados;
   }
 
-  onFiltroChange(filtroTexto: string) {
-    console.log('Filtro aplicado:', filtroTexto);
-  }
+  onFiltroChange(filtroTexto: string) {}
 
   acciones(t: TurnoExtendido): string[] {
     const acciones = [];
@@ -129,7 +167,6 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
       }
     }
 
-    console.log('Turno', t.id, '- Acciones:', acciones, '- Encuestas:', t.encuestas);
     return acciones;
   }
 
@@ -152,7 +189,10 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     }
 
     const res = await prom;
-    if (res) await this.obtenerTurnos();
+    if (res) {
+      const paciente = await this.pacienteService.obtenerPacienteActual();
+      if (paciente) await this.obtenerTurnos(paciente.id);
+    }
   }
 
   abrirEncuestaModal(turno: TurnoExtendido) {
@@ -165,7 +205,9 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     this.turnoSeleccionado = null;
 
     if (encuestaCompletada) {
-      this.obtenerTurnos();
+      this.pacienteService.obtenerPacienteActual().then((paciente) => {
+        if (paciente) this.obtenerTurnos(paciente.id);
+      });
     }
   }
 
@@ -179,16 +221,7 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     return textos[accion] || accion;
   }
 
-  // Métodos públicos para el template
   formatearEstado(estado: string): string {
-    return this.filtroService.formatearEstado(estado);
-  }
-
-  formatearFecha(fecha: string): string {
-    return this.filtroService.formatearFecha(fecha);
-  }
-
-  formatearHora(hora: string): string {
-    return this.filtroService.formatearHora(hora);
+    return this.utilsService.formatearEstadoParaMostrar(estado);
   }
 }

@@ -25,6 +25,8 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/assets/images",
+              "src/assets/perfiles",
+
               {
                 "glob": "**/*",
                 "input": "public"

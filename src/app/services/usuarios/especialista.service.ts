@@ -1,17 +1,15 @@
 import { Injectable } from '@angular/core';
 import { UsuarioService } from './usuario.service';
 import { Especialista } from '../../models/user-data';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { AuthService } from '../auth.service';
+import supabase from '../../services/supabase.client';
 
 @Injectable({ providedIn: 'root' })
 export class EspecialistaService {
-
   constructor(
     private usuarioService: UsuarioService,
-    private supabase: SupabaseClient,
     private auth: AuthService
-  ) {}
+  ) { }
 
   async guardar(especialista: Especialista, authId: string, especialidadesIds: number[]) {
     const usuarioRespuesta = await this.usuarioService.crear({
@@ -51,17 +49,13 @@ export class EspecialistaService {
 
     if (especialidadesIds && especialidadesIds.length > 0) {
       const relaciones = [];
-
       for (const id of especialidadesIds) {
         relaciones.push({
           especialista_id: especialistaRespuesta.data.id,
           especialidad_id: id
         });
       }
-
-      await this.supabase
-        .from('especialista_especialidad')
-        .insert(relaciones);
+      await supabase.from('especialista_especialidad').insert(relaciones);
     }
 
     return {
@@ -69,6 +63,33 @@ export class EspecialistaService {
       especialista: especialistaRespuesta.data
     };
   }
+
+
+  async obtenerEspecialistaActual() {
+  // 1) Obtener sesión real de Supabase
+  const { data: session } = await supabase.auth.getSession();
+
+  const user = session?.session?.user;
+  if (!user) return null;
+
+  // 2) Buscar usuario interno
+  const { data: usuarioData } = await supabase
+    .from('usuarios')
+    .select('id')
+    .eq('auth_id', user.id)
+    .single();
+
+  if (!usuarioData) return null;
+
+  // 3) Buscar especialista
+  const { data: especialistaData } = await supabase
+    .from('especialistas')
+    .select('*')
+    .eq('usuario_id', usuarioData.id)
+    .single();
+
+  return especialistaData || null;
+}
 
   actualizarDatos(usuarioId: number, datos: any) {
     return this.usuarioService.actualizarRelacionado('especialistas', usuarioId, datos);
@@ -78,77 +99,96 @@ export class EspecialistaService {
     return this.usuarioService.obtenerRelacionado('especialistas', usuarioId);
   }
 
-  async obtenerEspecialistaActual() {
-    const authUser = await this.auth.getUsuarioActual();
-
-    if (!authUser) {
-      return null;
-    }
-
-    const respuesta = await this.supabase
-      .from('especialistas')
-      .select('*')
-      .eq('usuario_id', authUser.id)
-      .single();
-
-    if (respuesta.error) {
-      throw respuesta.error;
-    }
-
-    return respuesta.data;
-  }
 
   async obtenerEspecialistaPorUsuario(usuarioId: number) {
-    const respuesta = await this.supabase
+    const respuesta = await supabase
       .from('especialistas')
       .select('*')
       .eq('usuario_id', usuarioId)
-      .single();
+      .maybeSingle();
 
-    if (respuesta.error) {
-      throw respuesta.error;
-    }
-
+    if (respuesta.error) throw respuesta.error;
     return respuesta.data;
   }
 
   async obtenerEspecialidades() {
-    const respuesta = await this.supabase
-      .from('especialidades')
-      .select('*');
-
-    if (respuesta.error) {
-      throw respuesta.error;
-    }
-
+    const respuesta = await supabase.from('especialidades').select('*');
+    if (respuesta.error) throw respuesta.error;
     return respuesta.data;
   }
 
   async obtenerEspecialidadesDeEspecialista(especialistaId: number) {
-    const relacionRespuesta = await this.supabase
+    const { data: relaciones, error: relError } = await supabase
       .from('especialista_especialidad')
       .select('especialidad_id')
       .eq('especialista_id', especialistaId);
 
-    if (relacionRespuesta.error) {
-      return [];
-    }
+    if (relError) return [];
+    if (!relaciones || relaciones.length === 0) return [];
 
-    if (!relacionRespuesta.data) {
-      return [];
-    }
-
-    const ids = relacionRespuesta.data.map(item => item.especialidad_id);
-
-    const especialidadesRespuesta = await this.supabase
+    const ids = relaciones.map(item => item.especialidad_id);
+    const { data: especialidades, error: espError } = await supabase
       .from('especialidades')
-      .select('id, nombre')
+      .select('*')
       .in('id', ids);
 
-    if (!especialidadesRespuesta.data) {
+    if (espError) return [];
+    return especialidades || [];
+  }
+
+
+
+  async obtenerTodosEspecialistas(): Promise<any[]> {
+    try {
+      // 1. Obtener todos los especialistas
+      const { data: especialistasData, error: especialistasError } = await supabase
+        .from('especialistas')
+        .select('*');
+
+      if (especialistasError || !especialistasData) {
+        console.error('Error obteniendo especialistas:', especialistasError);
+        return [];
+      }
+
+      if (especialistasData.length === 0) {
+        console.log('No hay especialistas registrados');
+        return [];
+      }
+
+      // 2. Obtener usuarios correspondientes
+      const usuarioIds = especialistasData.map(esp => esp.usuario_id);
+      const { data: usuariosData } = await supabase
+        .from('usuarios')
+        .select('id, email, imagen_perfil, estado')
+        .in('id', usuarioIds);
+
+      // 3. Combinar datos
+      return especialistasData.map(esp => {
+        const usuario = usuariosData?.find(u => u.id === esp.usuario_id);
+
+        // Limpiar imagen_perfil
+        let imagenPerfil = usuario?.imagen_perfil;
+        if (imagenPerfil === 'undefined' || imagenPerfil === 'null') {
+          imagenPerfil = null;
+        }
+
+        return {
+          id: esp.id,
+          usuario_id: esp.usuario_id,
+          nombre: esp.nombre || '',
+          apellido: esp.apellido || '',
+          email: usuario?.email || '',
+          imagen_perfil: imagenPerfil,
+          estado: usuario?.estado || 'inactivo',
+          tipo_usuario: 'especialista',
+          edad: esp.edad || 0,
+          dni: esp.dni || '',
+        };
+      });
+
+    } catch (error) {
+      console.error('Error obteniendo especialistas:', error);
       return [];
     }
-
-    return especialidadesRespuesta.data;
   }
 }

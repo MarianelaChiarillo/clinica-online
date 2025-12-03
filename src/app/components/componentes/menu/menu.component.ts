@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SpinnerComponent } from '../spinner/spinner.component';
 import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2';
 import { Usuario } from '../../../models/user-data';
 import { RouterModule } from '@angular/router';
 
@@ -19,13 +19,13 @@ export class MenuComponent implements OnInit, OnDestroy {
   cargando: boolean = false;
   logueado: boolean = false;
   rolUsuario: 'paciente' | 'especialista' | 'administrador' | null = null;
-  
+
   private suscripcionAuth!: Subscription;
 
   constructor(
     private router: Router,
     private servicioAuth: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.suscripcionAuth = this.servicioAuth.usuarioActual$.subscribe(
@@ -46,7 +46,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   private obtenerRol(): void {
     const usuarioJson = localStorage.getItem('usuario');
-    
+
     if (this.logueado && usuarioJson) {
       try {
         const usuario: Usuario = JSON.parse(usuarioJson);
@@ -87,8 +87,8 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.cargando = true;
       try {
         await this.servicioAuth.cerrarSesion();
-        this.rolUsuario = null; 
-        localStorage.removeItem('usuario'); 
+        this.rolUsuario = null;
+        localStorage.removeItem('usuario');
         this.router.navigate(['/login']);
       } catch (error) {
         console.error('Error al cerrar sesión:', error);

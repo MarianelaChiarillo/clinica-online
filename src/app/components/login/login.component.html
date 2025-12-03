@@ -11,55 +11,36 @@
         <div class="campo-formulario">
           <label class="label-inicio" for="usuario">Ingrese su correo electrónico: </label>
           <div class="input-con-icono">
-            <input
-              type="email"
-              id="usuario"
-              class="input-inicio"
-              placeholder="Ingresa tu email"
-              formControlName="usuario"
-              [class.input-error]="usuario?.touched && usuario?.invalid"
-            />
+            <input type="email" id="usuario" class="input-inicio" placeholder="Ingresa tu email"
+              formControlName="usuario" [class.input-error]="usuario.touched && usuario.invalid" />
             <i class="fas fa-envelope icono-input"></i>
           </div>
-          @if (usuario?.touched && usuario?.invalid) {
-            <div class="contenedor-errores">
-              <small class="texto-error">{{ erroresUsuario }}</small>
-            </div>
-          }
+          <div class="contenedor-errores" *ngIf="usuario.touched && usuario.invalid">
+            <small class="texto-error">{{ erroresUsuario }}</small>
+          </div>
         </div>
 
         <div class="campo-formulario">
           <label class="label-inicio" for="clave">Ingrese su contraseña: </label>
           <div class="contenedor-password input-con-icono">
-            <input
-              [type]="verClave ? 'text' : 'password'"
-              id="clave"
-              class="input-password input-inicio"
-              placeholder="Ingresa tu contraseña"
-              formControlName="clave"
-              [class.input-error]="clave?.touched && clave?.invalid"
-            />
+            <input [type]="verClave ? 'text' : 'password'" id="clave" class="input-password input-inicio"
+              placeholder="Ingresa tu contraseña" formControlName="clave"
+              [class.input-error]="clave.touched && clave.invalid" />
             <i class="fas fa-lock icono-input"></i>
-            <button
-              type="button"
-              class="boton-ver-clave"
-              (click)="verClave = !verClave"
-              title="Mostrar/Ocultar contraseña"
-            >
+            <button type="button" class="boton-ver-clave" (click)="verClave = !verClave"
+              title="Mostrar/Ocultar contraseña">
               <i class="fas" [class.fa-eye]="!verClave" [class.fa-eye-slash]="verClave"></i>
             </button>
           </div>
-          @if (clave?.touched && clave?.invalid) {
-            <div class="contenedor-errores">
-              <small class="texto-error">{{ erroresClave }}</small>
-            </div>
-          }
+          <div class="contenedor-errores" *ngIf="clave.touched && clave.invalid">
+            <small class="texto-error">{{ erroresClave }}</small>
+          </div>
         </div>
 
         <a routerLink="/registro" class="enlace-registro"> ¿No tenés cuenta? ¡Registrate! </a>
 
         <button type="submit" class="boton-principal">
-          @if (cargando) { INGRESANDO... } @else { INGRESAR }
+          {{ cargando ? 'INGRESANDO...' : 'INGRESAR' }}
         </button>
       </form>
     </div>
@@ -67,32 +48,20 @@
     <div class="accesos-rapidos-container">
       <h3 class="titulo-accesos">Accesos Rápidos</h3>
       <div class="lista-accesos">
-        @for (user of accesos; track user.alt) {
-          <div class="item-acceso">
-            <button
-              class="boton-acceso-rapido {{ user.rol?.toLowerCase() }}"
-              [title]="user.alt + ' - ' + user.rol"
-              (click)="completarYAcceder(user.email, user.pass)"
-            >
-              <img [src]="user.src" [alt]="user.alt" class="imagen-acceso" />
-            </button>
-            <span class="rol-usuario">{{ user.rol }}</span>
-          </div>
-        }
+        <div class="item-acceso" *ngFor="let user of accesos; trackBy: userTrackBy">
+          <button class="boton-acceso-rapido {{ user.rol.toLowerCase() }}" [title]="user.alt + ' - ' + user.rol"
+            (click)="completarYAcceder(user.email, user.pass)">
+            <img [src]="user.src" [alt]="user.alt" class="imagen-acceso" />
+          </button>
+          <span class="rol-usuario">{{ user.rol }}</span>
+        </div>
       </div>
     </div>
   </div>
 
-  @if (mensaje) {
-    <app-mensaje
-      [titulo]="mensaje.titulo"
-      [mensaje]="mensaje.texto"
-      [tipo]="mensaje.tipo"
-      (cerrar)="mensaje = null"
-    />
-  }
+  <app-mensaje *ngIf="mensaje" [titulo]="mensaje.titulo" [mensaje]="mensaje.texto" [tipo]="mensaje.tipo"
+    (cerrar)="mensaje = null"></app-mensaje>
 
-  @if (cargando) {
-    <app-spinner />
-  }
+  <app-spinner *ngIf="cargando"></app-spinner>
+
 </div>

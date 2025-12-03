@@ -1,177 +1,201 @@
 import { Injectable } from '@angular/core';
-import { SupabaseClient } from '@supabase/supabase-js';
+import supabase from './../services/supabase.client';
 import { EspecialistaService } from './usuarios/especialista.service';
 import { TurnoService } from './turnos.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class DisponibilidadService {
 
+  // Subject único para emitir horarios libres
+  private _horarios$ = new BehaviorSubject<string[] | null>(null);
+  public horariosDisponibles$ = this._horarios$.asObservable();
+
+  private canalTurnos: any = null;
+
   constructor(
-    private supabase: SupabaseClient,
-    private especialistaServicio: EspecialistaService,
-    private turnoServicio: TurnoService
+    private especialistaSrv: EspecialistaService,
+    private turnoSrv: TurnoService
   ) {}
 
-  async obtenerHorariosPorEspecialista(especialistaId: number) {
-    const respuesta = await this.supabase
+  // --------------------------------------------------------------------
+  // 📌 CARGA DE HORARIOS
+  // --------------------------------------------------------------------
+
+  async obtenerHorariosPorEspecialista(id: number) {
+    const { data, error } = await supabase
       .from('disponibilidad_especialista')
       .select('*')
-      .eq('especialista_id', especialistaId)
+      .eq('especialista_id', id)
       .order('dia_semana', { ascending: true });
 
-    if (respuesta.error) throw respuesta.error;
+    if (error) throw error;
+    return data ?? [];
+  }
 
-    if (respuesta.data) {
-      return respuesta.data;
-    } else {
+  async obtenerMisHorarios() {
+    const esp = await this.especialistaSrv.obtenerEspecialistaActual();
+    return esp ? this.obtenerHorariosPorEspecialista(esp.id) : [];
+  }
+
+  async generarHorariosDisponibles(especialistaId: number, fecha: string) {
+    try {
+      const diaJs = this.obtenerDiaDeFecha(fecha);
+      const diaBd = diaJs === 0 ? 7 : diaJs;
+
+      const horarios = await this.obtenerHorariosPorEspecialista(especialistaId);
+      const unicos = this.filtrarDuplicados(horarios);
+
+      const delDia = unicos.filter(h => h.activo && h.dia_semana === diaBd);
+      if (delDia.length === 0) return [];
+
+      const turnos = await this.turnoSrv.obtenerTurnosPorEspecialistaYFecha(especialistaId, fecha);
+      const ocupadas = turnos.data?.map(t => t.hora_inicio?.substring(0, 5)) ?? [];
+
+      const slots = new Set<string>();
+
+      for (const h of delDia) {
+        const bloques = this.generarSlots(h.hora_inicio, h.hora_fin, h.duracion_consulta);
+        const libres = this.filtrarLibres(bloques, ocupadas);
+        libres.forEach(s => slots.add(s));
+      }
+
+      return Array.from(slots).sort();
+
+    } catch (e) {
+      console.error('Error generando horarios:', e);
       return [];
     }
   }
 
-  async obtenerMisHorarios() {
-    const especialista = await this.especialistaServicio.obtenerEspecialistaActual();
-    if (!especialista) return [];
-    return this.obtenerHorariosPorEspecialista(especialista.id);
+  // --------------------------------------------------------------------
+  // 🔄 REALTIME
+  // --------------------------------------------------------------------
+
+  async actualizarHorariosRealtime(espId: number, fecha: string) {
+    const nuevos = await this.generarHorariosDisponibles(espId, fecha);
+    this._horarios$.next(nuevos);
   }
 
-  async agregarHorario(especialistaId: number, especialidadId: number, diaSemana: number, horaInicio: string, horaFin: string, duracionConsulta: number = 30) {
-    const respuesta = await this.supabase
+  suscribirseATurnos(espId: number, fecha: string) {
+    if (this.canalTurnos) supabase.removeChannel(this.canalTurnos);
+
+    this.canalTurnos = supabase
+      .channel(`rt-turnos-${espId}-${fecha}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'turnos', filter: `especialista_id=eq.${espId}` },
+        async () => this.actualizarHorariosRealtime(espId, fecha)
+      )
+      .subscribe();
+  }
+
+  limpiarSuscripcion() {
+    if (this.canalTurnos) supabase.removeChannel(this.canalTurnos);
+    this.canalTurnos = null;
+    this._horarios$.next(null);
+  }
+
+  // --------------------------------------------------------------------
+  // 🧱 CRUD HORARIOS
+  // --------------------------------------------------------------------
+
+  async agregarHorarioSimple(h: any) {
+    return this.agregarHorario(
+      h.especialistaId,
+      h.especialidadId,
+      h.diaSemana,
+      h.horaInicio,
+      h.horaFin,
+      h.duracionConsulta ?? 30
+    );
+  }
+
+  async agregarHorario(
+    espId: number,
+    espCid: number,
+    dia: number,
+    ini: string,
+    fin: string,
+    dur: number
+  ) {
+    const { data, error } = await supabase
       .from('disponibilidad_especialista')
       .insert([{
-        especialista_id: especialistaId,
-        especialidad_id: especialidadId,
-        dia_semana: diaSemana,
-        hora_inicio: horaInicio,
-        hora_fin: horaFin,
-        duracion_consulta: duracionConsulta,
+        especialista_id: espId,
+        especialidad_id: espCid,
+        dia_semana: dia,
+        hora_inicio: ini,
+        hora_fin: fin,
+        duracion_consulta: dur,
         activo: true
       }])
       .select();
 
-    if (respuesta.error) throw respuesta.error;
-
-    if (respuesta.data) {
-      return respuesta.data;
-    } else {
-      return [];
-    }
+    if (error) throw error;
+    return data ?? [];
   }
 
   async eliminarHorario(id: number) {
-    const respuesta = await this.supabase
+    const { error } = await supabase
       .from('disponibilidad_especialista')
       .delete()
       .eq('id', id);
 
-    if (respuesta.error) throw respuesta.error;
+    if (error) throw error;
   }
 
   async cambiarEstado(id: number, activo: boolean) {
-    const respuesta = await this.supabase
+    const { error } = await supabase
       .from('disponibilidad_especialista')
-      .update({ activo: activo })
+      .update({ activo })
       .eq('id', id);
 
-    if (respuesta.error) throw respuesta.error;
+    if (error) throw error;
   }
 
-  async obtenerHorariosDisponibles(especialistaId: number, fecha: string) {
-    const fechaObjeto = new Date(fecha);
-    const diaDeLaSemana = fechaObjeto.getDay();
+  // --------------------------------------------------------------------
+  // ⛏ UTILIDADES
+  // --------------------------------------------------------------------
 
-    const todosHorarios = await this.obtenerHorariosPorEspecialista(especialistaId);
-
-    const horariosDelDia: any[] = [];
-    for (let i = 0; i < todosHorarios.length; i++) {
-      if (todosHorarios[i].activo === true && todosHorarios[i].dia_semana === diaDeLaSemana) {
-        horariosDelDia.push(todosHorarios[i]);
-      }
-    }
-
-    if (horariosDelDia.length === 0) return [];
-
-    const turnos = await this.turnoServicio.obtenerTurnosPorEspecialistaYFecha(especialistaId, fecha);
-
-    const horasOcupadas: string[] = [];
-    if (turnos.data) {
-      for (let i = 0; i < turnos.data.length; i++) {
-        let hora = turnos.data[i].hora_inicio;
-        if (hora) {
-          horasOcupadas.push(hora.substring(0, 5));
-        }
-      }
-    }
-
-    const horariosDisponibles: string[] = [];
-    for (let i = 0; i < horariosDelDia.length; i++) {
-      const slots = this.generarSlotsBasico(
-        horariosDelDia[i].hora_inicio,
-        horariosDelDia[i].hora_fin,
-        horariosDelDia[i].duracion_consulta
-      );
-
-      const slotsLibres = this.filtrarHorasDisponibles(slots, horasOcupadas);
-      for (let j = 0; j < slotsLibres.length; j++) {
-        horariosDisponibles.push(slotsLibres[j]);
-      }
-    }
-
-    return horariosDisponibles;
+  private obtenerDiaDeFecha(f: string) {
+    const [y, m, d] = f.split('-').map(Number);
+    return new Date(y, m - 1, d, 12).getDay();
   }
 
-  private generarSlotsBasico(horaInicio: string, horaFin: string, duracion: number) {
-    const slots: string[] = [];
-
-    let horas = parseInt(horaInicio.substring(0, 2));
-    let minutos = parseInt(horaInicio.substring(3, 5));
-    const horasFin = parseInt(horaFin.substring(0, 2));
-    const minutosFin = parseInt(horaFin.substring(3, 5));
-
-    while (horas < horasFin || (horas === horasFin && minutos < minutosFin)) {
-      let horasTexto = '' + horas;
-      let minutosTexto = '' + minutos;
-
-      if (horas < 10) horasTexto = '0' + horasTexto;
-      if (minutos < 10) minutosTexto = '0' + minutosTexto;
-
-      slots.push(horasTexto + ':' + minutosTexto);
-
-      minutos = minutos + duracion;
-      if (minutos >= 60) {
-        horas = horas + 1;
-        minutos = minutos - 60;
-      }
+  private filtrarDuplicados(horarios: any[]) {
+    const map = new Map();
+    for (const h of horarios) {
+      const k = `${h.dia_semana}-${h.hora_inicio}-${h.hora_fin}`;
+      if (!map.has(k)) map.set(k, h);
     }
-
-    return slots;
+    return Array.from(map.values());
   }
 
-  private filtrarHorasDisponibles(todasHoras: string[], horasOcupadas: string[]) {
-    const horasLibres: string[] = [];
-    for (let i = 0; i < todasHoras.length; i++) {
-      let estaOcupada = false;
-      for (let j = 0; j < horasOcupadas.length; j++) {
-        if (todasHoras[i] === horasOcupadas[j]) {
-          estaOcupada = true;
-          break;
-        }
-      }
-      if (!estaOcupada) {
-        horasLibres.push(todasHoras[i]);
+  private generarSlots(ini: string, fin: string, dur: number) {
+    const res: string[] = [];
+
+    let h = parseInt(ini.slice(0, 2));
+    let m = parseInt(ini.slice(3));
+    const hf = parseInt(fin.slice(0, 2));
+    const mf = parseInt(fin.slice(3));
+
+    while (h < hf || (h === hf && m < mf)) {
+      const hh = h.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+      res.push(`${hh}:${mm}`);
+
+      m += dur;
+      if (m >= 60) {
+        h++;
+        m -= 60;
       }
     }
-    return horasLibres;
+
+    return res;
   }
 
-  async especialistaTrabajaDia(especialistaId: number, diaSemana: number) {
-    const todosHorarios = await this.obtenerHorariosPorEspecialista(especialistaId);
-
-    for (let i = 0; i < todosHorarios.length; i++) {
-      if (todosHorarios[i].dia_semana === diaSemana && todosHorarios[i].activo === true) {
-        return true;
-      }
-    }
-
-    return false;
+  private filtrarLibres(todas: string[], ocupadas: string[]) {
+    return todas.filter(h => !ocupadas.includes(h));
   }
 }

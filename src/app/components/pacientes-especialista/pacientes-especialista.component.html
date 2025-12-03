@@ -1,55 +1,60 @@
 <div class="pacientes-container">
   <h2>Mis Pacientes Atendidos</h2>
 
-  <!-- Lista de pacientes -->
   <div *ngIf="!pacienteSeleccionado" class="pacientes-grid">
-    <div *ngFor="let paciente of pacientes" 
-         class="paciente-card"
-         (click)="seleccionarPaciente(paciente)">
-      
-      <!-- Fav Button Redondo -->
+
+    <div 
+      *ngFor="let paciente of pacientes" 
+      class="paciente-card"
+      (click)="seleccionarPaciente(paciente)"
+    >
+
       <button class="fav-button" (click)="$event.stopPropagation(); toggleFavorito(paciente)">
         <span *ngIf="esFavorito(paciente.id)">⭐</span>
         <span *ngIf="!esFavorito(paciente.id)">☆</span>
       </button>
-      
-      <!-- Imagen del paciente -->
+
       <div class="paciente-imagen">
-        <img [src]="paciente.imagen_perfil || 'assets/default-avatar.png'" 
-             [alt]="paciente.nombre"
-             class="imagen-perfil">
+        <img 
+          [src]="paciente.imagen_perfil || 'assets/default-avatar.png'"
+          [alt]="paciente.nombre"
+          class="imagen-perfil"
+        />
       </div>
-      
-      <!-- Info del paciente -->
+
       <div class="paciente-info">
         <h3>{{ paciente.nombre }} {{ paciente.apellido }}</h3>
         <p>DNI: {{ paciente.dni }}</p>
         <small>{{ paciente.cantidadTurnos }} turno(s)</small>
       </div>
+
     </div>
 
     <div *ngIf="pacientes.length === 0 && !cargando" class="sin-pacientes">
       <p>No has atendido pacientes aún</p>
     </div>
+
   </div>
 
-  <!-- Detalle del paciente seleccionado -->
   <div *ngIf="pacienteSeleccionado" class="detalle-paciente">
-    <!-- Header de volver -->
+
     <div class="header-detalle">
       <button class="btn-volver" (click)="volverALista()">← Volver a la lista</button>
+
       <button class="fav-button-detalle" (click)="toggleFavorito(pacienteSeleccionado)">
         <span *ngIf="esFavorito(pacienteSeleccionado.id)">⭐</span>
         <span *ngIf="!esFavorito(pacienteSeleccionado.id)">☆</span>
       </button>
     </div>
-    
-    <!-- Información del paciente -->
+
     <div class="paciente-header">
-      <img [src]="pacienteSeleccionado.imagen_perfil || 'assets/default-avatar.png'" 
-           class="imagen-grande">
+      <img 
+        [src]="pacienteSeleccionado.imagen_perfil || 'assets/default-avatar.png'"
+        class="imagen-grande"
+      />
       <div class="info-basica">
         <h2>{{ pacienteSeleccionado.nombre }} {{ pacienteSeleccionado.apellido }}</h2>
+
         <div class="datos-paciente">
           <p><strong>DNI:</strong> {{ pacienteSeleccionado.dni }}</p>
           <p><strong>Edad:</strong> {{ pacienteSeleccionado.edad }} años</p>
@@ -58,52 +63,47 @@
       </div>
     </div>
 
-    <!-- Turnos del paciente -->
     <div class="turnos-section">
       <h3>Historial de Turnos ({{ turnosDelPaciente.length }})</h3>
-      
+
       <div *ngIf="turnosDelPaciente.length === 0" class="sin-turnos">
         <p>No hay turnos registrados con este paciente</p>
       </div>
 
       <div *ngFor="let turno of turnosDelPaciente" class="turno-card">
+
         <div class="turno-header">
           <h4>
-            {{ turno.fecha_turno | date:'dd/MM/yyyy' }} - 
+            {{ turno.fecha_turno | date:'dd/MM/yyyy' }} – 
             {{ turno.especialidades?.nombre || 'Sin especialidad' }}
           </h4>
           <span class="estado-badge" [class]="turno.estado">{{ turno.estado }}</span>
         </div>
-        
+
         <div class="turno-info-detalle">
           <p><strong>Fecha:</strong> {{ turno.fecha_turno | date:'dd/MM/yyyy' }}</p>
-          <p><strong>Hora:</strong> {{ turno.hora_inicio }} - {{ turno.hora_fin }}</p>
+          <p><strong>Hora:</strong> {{ turno.hora_inicio }} – {{ turno.hora_fin }}</p>
           <p><strong>Especialidad:</strong> {{ turno.especialidades?.nombre }}</p>
         </div>
 
-        <!-- Historia Clínica del turno -->
         <div *ngIf="turno.historia_clinica" class="historia-clinica-detalle">
+
           <div class="seccion-header" (click)="toggleSeccion('historia-' + turno.id)">
-            <h5>📋 Historia Clínica</h5>
-            <span class="toggle-icon">{{ esSeccionVisible('historia-' + turno.id) ? '−' : '+' }}</span>
+            <h5> Historia Clínica</h5>
+            <span class="toggle-icon">
+              {{ esSeccionVisible('historia-' + turno.id) ? '−' : '+' }}
+            </span>
           </div>
-          
+
           <div *ngIf="esSeccionVisible('historia-' + turno.id)" class="seccion-contenido">
+
             <div class="datos-fijos-grid">
-              <div class="dato-item">
-                <strong>Altura:</strong> {{ turno.historia_clinica.altura || 'No registrada' }} cm
-              </div>
-              <div class="dato-item">
-                <strong>Peso:</strong> {{ turno.historia_clinica.peso || 'No registrado' }} kg
-              </div>
-              <div class="dato-item">
-                <strong>Temperatura:</strong> {{ turno.historia_clinica.temperatura || 'No registrada' }} °C
-              </div>
-              <div class="dato-item">
-                <strong>Presión:</strong> {{ turno.historia_clinica.presion || 'No registrada' }}
-              </div>
+              <div class="dato-item"><strong>Altura:</strong> {{ turno.historia_clinica.altura || 'No registrada' }} cm</div>
+              <div class="dato-item"><strong>Peso:</strong> {{ turno.historia_clinica.peso || 'No registrado' }} kg</div>
+              <div class="dato-item"><strong>Temperatura:</strong> {{ turno.historia_clinica.temperatura || 'No registrada' }} °C</div>
+              <div class="dato-item"><strong>Presión:</strong> {{ turno.historia_clinica.presion || 'No registrada' }}</div>
             </div>
-            
+
             <div *ngIf="turno.historia_clinica.datos_dinamicos?.length" class="datos-dinamicos">
               <h6>Datos Adicionales:</h6>
               <div class="datos-grid">
@@ -112,26 +112,31 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
-        <!-- Reseña de la consulta -->
         <div *ngIf="turno.comentario_especialista" class="resena-detalle">
+
           <div class="seccion-header" (click)="toggleSeccion('resena-' + turno.id)">
-            <h5>📝 Reseña de la Consulta</h5>
-            <span class="toggle-icon">{{ esSeccionVisible('resena-' + turno.id) ? '−' : '+' }}</span>
+            <h5>Reseña de la Consulta</h5>
+            <span class="toggle-icon">
+              {{ esSeccionVisible('resena-' + turno.id) ? '−' : '+' }}
+            </span>
           </div>
-          
+
           <div *ngIf="esSeccionVisible('resena-' + turno.id)" class="seccion-contenido">
             <p class="resena-texto">{{ turno.comentario_especialista }}</p>
           </div>
+
         </div>
 
-        <!-- Sin datos adicionales -->
         <div *ngIf="!turno.historia_clinica && !turno.comentario_especialista" class="sin-datos-adicionales">
           <p>No hay historia clínica ni reseña registrada para este turno</p>
         </div>
+
       </div>
+
     </div>
   </div>
 </div>

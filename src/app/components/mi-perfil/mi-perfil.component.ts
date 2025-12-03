@@ -4,10 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { UsuarioService } from '../../services/usuarios/usuario.service';
+import { PacienteService } from '../../services/usuarios/paciente.service';
 import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica.service';
-import { PdfService } from '../../services/pdf.service';
+import { ArchivosService } from '../../services/archivos.service';
 import { MenuComponent } from './../componentes/menu/menu.component';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
+
 @Component({
   selector: 'app-mi-perfil',
   standalone: true,
@@ -20,41 +23,36 @@ export class MiPerfilComponent implements OnInit {
   perfil: any = null;
   cargando = true;
 
-  // Historia clínica
   historiaClinica: any[] = [];
   historiaFiltrada: any[] = [];
 
-  // Filtro especialistas
   especialistasAtendidos: any[] = [];
   especialistaSeleccionado: string = "todos";
 
   constructor(
     private authService: AuthService,
+    private usuarioService: UsuarioService,
+    private pacienteService: PacienteService,
     private historiaClinicaService: HistoriaClinicaService,
-    private pdfService: PdfService,
+    private archivoService: ArchivosService,
     private router: Router
   ) {}
 
-  // ============================================================
-  // INIT
-  // ============================================================
-// En mi-perfil.component.ts - temporalmente
-async ngOnInit() {
-  this.cargando = true;
-  await this.cargarPerfil();
-
-  if (this.esPaciente()) {
-    await this.cargarHistoriaClinica();
-  }
-
-  this.cargando= false;
-}
-  // ============================================================
-  // PERFIL
-  // ============================================================
-  async cargarPerfil() {
+  async ngOnInit() {
     this.cargando = true;
-    this.perfil = await this.authService.obtenerPerfilCompleto();
+
+    const usuarioActual = await this.authService.getUsuarioActual();
+    if (!usuarioActual) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.perfil = await this.usuarioService.obtenerPerfilCompleto(usuarioActual.id);
+
+    if (this.esPaciente()) {
+      await this.cargarHistoriaClinica();
+    }
+
     this.cargando = false;
   }
 
@@ -62,74 +60,69 @@ async ngOnInit() {
     return this.perfil?.tipo_usuario === 'paciente';
   }
 
-  // ============================================================
-  // HISTORIA CLÍNICA COMPLETA CON TURNOS Y ESPECIALISTAS
-  // ============================================================
+  esEspecialista(): boolean {
+    return this.perfil?.tipo_usuario === 'especialista';
+  }
 
   async cargarHistoriaClinica() {
-  const usuarioId = this.perfil.usuario_id ?? this.perfil.id;
-
-  this.historiaClinica =
-    await this.historiaClinicaService.obtenerHistoriaClinicaDePaciente(usuarioId);
-
-  this.historiaFiltrada = [...this.historiaClinica];
-
-  /// extraer especialistas
-  const map = new Map();
-
-  this.historiaClinica.forEach(h => {
-    const esp = h.turno?.especialista;
-    if (esp && !map.has(esp.id)) {
-      map.set(esp.id, esp);
-    }
-  });
-
-  this.especialistasAtendidos = Array.from(map.values());
-
-        console.log("HISTORIA CLÍNICA:", this.historiaClinica);
-console.log("ESPECIALISTAS ATENDIDOS:", this.especialistasAtendidos);
-
-}
-
-
-  // ============================================================
-  // FILTRAR HISTORIA POR ESPECIALISTA
-  // ============================================================
- // En mi-perfil.component.ts - MÉTODO MEJORADO
-filtrarPorEspecialista() {
-  console.log('🔍 Filtrando por especialista:', this.especialistaSeleccionado);
-  
-  if (this.especialistaSeleccionado === 'todos') {
+    const usuarioId = this.perfil.usuario_id ?? this.perfil.id;
+    this.historiaClinica = await this.historiaClinicaService.obtenerPorPaciente(usuarioId);
     this.historiaFiltrada = [...this.historiaClinica];
-  } else {
-    this.historiaFiltrada = this.historiaClinica.filter(
-      h => h.turno?.especialista?.id?.toString() === this.especialistaSeleccionado.toString()
-    );
+
+    const map = new Map();
+    this.historiaClinica.forEach(h => {
+      const esp = h.turno?.especialista;
+      if (esp && !map.has(esp.id)) map.set(esp.id, esp);
+    });
+
+    this.especialistasAtendidos = Array.from(map.values());
   }
-  
-  console.log('✅ Resultados filtrados:', this.historiaFiltrada.length);
-}
+
+  filtrarPorEspecialista() {
+    if (this.especialistaSeleccionado === 'todos') {
+      this.historiaFiltrada = [...this.historiaClinica];
+    } else {
+      this.historiaFiltrada = this.historiaClinica.filter(
+        h => h.turno?.especialista?.id?.toString() === this.especialistaSeleccionado.toString()
+      );
+    }
+  }
 
   contarHistoriasPorEspecialista(id: string): number {
-    return this.historiaClinica.filter(
-      h => h.turno?.especialista?.id === id
-    ).length;
+    return this.historiaClinica.filter(h => h.turno?.especialista?.id === id).length;
   }
 
-  // ============================================================
-  // DESCARGAR PDF
-  // ============================================================
-  descargarPDF() {
-    this.pdfService.descargarHistoriaClinicaCompleta(
-      this.perfil,
-      this.historiaFiltrada,
-      `HistoriaClinica-${this.perfil.apellido}.pdf`
-    );
-  }
 
-  // ============================================================
-  // GETTERS
-  // ============================================================
+descargarPDF() {
+  const columnas = [
+    { key: 'fecha_turno', header: 'Fecha' },
+    { key: 'especialidad', header: 'Especialidad' },
+    { key: 'especialista', header: 'Especialista' },
+    { key: 'altura', header: 'Altura' },
+    { key: 'peso', header: 'Peso' },
+    { key: 'temperatura', header: 'Temperatura' },
+    { key: 'presion', header: 'Presión' },
+  ];
+
+  const datos = this.historiaFiltrada.map(h => ({
+    fecha_turno: h.turno?.fecha_turno || '',
+    especialidad: h.turno?.especialidad?.nombre || '',
+    especialista: h.turno?.especialista ? `${h.turno.especialista.nombre} ${h.turno.especialista.apellido}` : '',
+    altura: h.altura,
+    peso: h.peso,
+    temperatura: h.temperatura,
+    presion: h.presion
+  }));
+
+  this.archivoService.exportarPDF(
+    `Historia Clínica - ${this.perfil.nombre} ${this.perfil.apellido}`,
+    datos,
+    columnas,
+    `HistoriaClinica-${this.perfil.apellido}`
+  );
+}
+
+
   getTipoUsuarioTexto(): string {
     switch (this.perfil?.tipo_usuario) {
       case 'paciente': return 'Paciente';
@@ -147,11 +140,8 @@ filtrarPorEspecialista() {
       default: return this.perfil?.estado || '';
     }
   }
- navegarAHorarios() {
-  this.router.navigate(['/horarios']);
-}
 
-esEspecialista(): boolean {
-  return this.perfil?.tipo_usuario === 'especialista';
-}
+  navegarAHorarios() {
+    this.router.navigate(['/horarios']);
+  }
 }

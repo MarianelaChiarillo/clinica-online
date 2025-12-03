@@ -22,31 +22,31 @@ export class MensajeComponent {
     }
   }
 
-mostrarSweetAlert() {
-  const iconoValido: 'success' | 'error' | 'info' | 'warning' | 'question' =
-    this.tipo === 'confirm' ? 'info' : this.tipo;
+  mostrarSweetAlert() {
+    const iconoValido: 'success' | 'error' | 'info' | 'warning' | 'question' =
+      this.tipo === 'confirm' ? 'info' : this.tipo;
 
-  Swal.fire({
-    title: `<span class="text">${this.titulo}</span>`,
-    html: `<span class="text">${this.mensaje}</span>`,
-    icon: iconoValido,
-    color: '#312b2bff',
-    confirmButtonText: 'Aceptar',
-    customClass: {
-      popup: 'alert-sala',
-      icon: 'alert-icono',
-      confirmButton: 'text boton-sala',
-    },
-    showClass: {
-      popup: 'animate__animated animate__fadeInDown',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutUp',
-    },
-  }).then(() => {
-    this.cerrar.emit();
-  });
-}
+    Swal.fire({
+      title: `<span class="text">${this.titulo}</span>`,
+      html: `<span class="text">${this.mensaje}</span>`,
+      icon: iconoValido,
+      color: '#312b2bff',
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        popup: 'alert-sala',
+        icon: 'alert-icono',
+        confirmButton: 'text boton-sala',
+      },
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown',
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp',
+      },
+    }).then(() => {
+      this.cerrar.emit();
+    });
+  }
 
 
   mostrarConfirmAlert() {
@@ -72,8 +72,8 @@ mostrarSweetAlert() {
     });
   }
 
-   static async confirm(
-    titulo: string, 
+  static async confirm(
+    titulo: string,
     mensaje: string
   ): Promise<boolean> {
     const result = await Swal.fire({
@@ -101,19 +101,18 @@ mostrarSweetAlert() {
     return result.isConfirmed;
   }
 
-  static show({ titulo, mensaje, tipo }: {titulo: string, mensaje: string, tipo: any}) {
-  Swal.fire({
-    title: `<span class="text">${titulo}</span>`,
-    html: `<span class="text">${mensaje}</span>`,
-    icon: tipo,
-    confirmButtonText: 'Aceptar',
-    customClass: {
-      popup: 'alert-sala',
-      icon: 'alert-icono',
-      confirmButton: 'text boton-sala',
-    }
-  });
-}
-
+  static show({ titulo, mensaje, tipo }: { titulo: string, mensaje: string, tipo: any }) {
+    Swal.fire({
+      title: `<span class="text">${titulo}</span>`,
+      html: `<span class="text">${mensaje}</span>`,
+      icon: tipo,
+      confirmButtonText: 'Aceptar',
+      customClass: {
+        popup: 'alert-sala',
+        icon: 'alert-icono',
+        confirmButton: 'text boton-sala',
+      }
+    });
+  }
 }
 

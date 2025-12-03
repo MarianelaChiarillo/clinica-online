@@ -5,13 +5,13 @@
   </div>
 
   <div *ngIf="!cargando && confirmacionExitosa" class="success">
-    <h2>✅ ¡Email confirmado exitosamente!</h2>
+    <h2>¡Email confirmado exitosamente!</h2>
     <p>Tu cuenta ha sido verificada. Ahora podés iniciar sesión.</p>
     <button (click)="irALogin()" class="btn btn-primary">Ir al Login</button>
   </div>
 
   <div *ngIf="!cargando && !confirmacionExitosa" class="error">
-    <h2>❌ Error al confirmar email</h2>
+    <h2>Error al confirmar email</h2>
     <p>{{ mensajeError }}</p>
     <button (click)="irALogin()" class="btn btn-secondary">Volver al Login</button>
   </div>

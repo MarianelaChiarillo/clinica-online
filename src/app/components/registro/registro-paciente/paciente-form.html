@@ -1,11 +1,13 @@
 <div class="background-container">
   <a routerLink="/registro" class="enlace-volver"> ← Volver</a>
+
   <div class="registro-container scrollable-form">
     <h1 class="fade-in title">Registro de paciente</h1>
     <p class="subtexto">Completa con tus datos para poder iniciar sesión</p>
 
     <form [formGroup]="form" (ngSubmit)="registrar()" class="login-form">
       <div class="form-columns">
+
         <div class="columna">
           <h3 class="seccion-titulo">Datos personales:</h3>
 
@@ -17,9 +19,10 @@
             [class.input-error]="form.get('nombre')?.touched && form.get('nombre')?.invalid"
             placeholder="Ingresa tu nombre"
           />
-          @if (form.get('nombre')?.touched && form.get('nombre')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('nombre') }}</small>
-          }
+          <small *ngIf="form.get('nombre')?.touched && form.get('nombre')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('nombre') }}
+          </small>
 
           <label for="apellido">Ingrese su apellido:</label>
           <input
@@ -29,20 +32,23 @@
             [class.input-error]="form.get('apellido')?.touched && form.get('apellido')?.invalid"
             placeholder="Ingresa tu apellido"
           />
-          @if (form.get('apellido')?.touched && form.get('apellido')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('apellido') }}</small>
-          }
+          <small *ngIf="form.get('apellido')?.touched && form.get('apellido')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('apellido') }}
+          </small>
+
           <label for="edad">Ingrese su edad:</label>
           <input
             id="edad"
             formControlName="edad"
             class="input-inicio"
-             [class.input-error]="form.get('edad')?.touched && form.get('edad')?.invalid"
+            [class.input-error]="form.get('edad')?.touched && form.get('edad')?.invalid"
             placeholder="Ingresa tu edad"
           />
-          @if (getError('edad')) {
-          <small class="text-danger fade-in textito">{{ getError('edad') }}</small>
-          }
+          <small *ngIf="getError('edad')" class="text-danger fade-in textito">
+            {{ getError('edad') }}
+          </small>
+
           <label for="dni">Ingrese su DNI:</label>
           <input
             id="dni"
@@ -51,9 +57,10 @@
             [class.input-error]="form.get('dni')?.touched && form.get('dni')?.invalid"
             placeholder="Ingresa tu dni"
           />
-          @if (form.get('dni')?.touched && form.get('dni')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('dni') }}</small>
-          }
+          <small *ngIf="form.get('dni')?.touched && form.get('dni')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('dni') }}
+          </small>
 
           <label for="obraSocial">Ingrese su obra social:</label>
           <input
@@ -63,9 +70,10 @@
             [class.input-error]="form.get('obraSocial')?.touched && form.get('obraSocial')?.invalid"
             placeholder="Ingresa tu obra social"
           />
-          @if (form.get('obraSocial')?.touched && form.get('obraSocial')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('obraSocial') }}</small>
-          }
+          <small *ngIf="form.get('obraSocial')?.touched && form.get('obraSocial')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('obraSocial') }}
+          </small>
         </div>
 
         <div class="columna">
@@ -79,9 +87,10 @@
             [class.input-error]="form.get('email')?.touched && form.get('email')?.invalid"
             placeholder="Ingresa tu email"
           />
-          @if (form.get('email')?.touched && form.get('email')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('email') }}</small>
-          }
+          <small *ngIf="form.get('email')?.touched && form.get('email')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('email') }}
+          </small>
 
           <label for="clave">Ingrese una contraseña:</label>
           <div class="clave-container">
@@ -97,12 +106,13 @@
               (click)="toggleVerClave()"
               class="iconito fas"
               [class.fa-eye]="!verClave"
-              [class.fa-eye-slash]="verClave"
-            ></i>
+              [class.fa-eye-slash]="verClave">
+            </i>
           </div>
-          @if (form.get('clave')?.touched && form.get('clave')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('clave') }}</small>
-          }
+          <small *ngIf="form.get('clave')?.touched && form.get('clave')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('clave') }}
+          </small>
 
           <label for="repiteClave">Repetir contraseña:</label>
           <div class="clave-container">
@@ -120,12 +130,13 @@
               (click)="toggleVerClaveR()"
               class="iconito fas"
               [class.fa-eye]="!verClaveR"
-              [class.fa-eye-slash]="verClaveR"
-            ></i>
+              [class.fa-eye-slash]="verClaveR">
+            </i>
           </div>
-          @if (form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid) {
-          <small class="text-danger fade-in textito">{{ getError('repiteClave') }}</small>
-          }
+          <small *ngIf="form.get('repiteClave')?.touched && form.get('repiteClave')?.invalid"
+                 class="text-danger fade-in textito">
+            {{ getError('repiteClave') }}
+          </small>
 
           <div class="files-container">
             <div class="file-group">
@@ -133,10 +144,19 @@
               <div class="custom-file-upload" (click)="fileInput1.click()">
                 <i class="fas fa-upload"></i> Subir imagen
               </div>
-              <input #fileInput1 type="file" hidden (change)="onFileSelect($event, 'imagen1')" />
-              @if (fileName1) {
-              <p class="file-name">{{ fileName1 }}</p>
-              }
+
+              <input
+                #fileInput1
+                type="file"
+                hidden
+                (change)="onFileSelect($event, 'imagen1')"
+              />
+
+              <p *ngIf="nombreArchivo1" class="file-name">{{ nombreArchivo1 }}</p>
+
+              <small *ngIf="getError('imagen1')" class="text-danger fade-in textito">
+                {{ getError('imagen1') }}
+              </small>
             </div>
 
             <div class="file-group">
@@ -144,10 +164,19 @@
               <div class="custom-file-upload" (click)="fileInput2.click()">
                 <i class="fas fa-upload"></i> Subir imagen
               </div>
-              <input #fileInput2 type="file" hidden (change)="onFileSelect($event, 'imagen2')" />
-              @if (fileName2) {
-              <p class="file-name">{{ fileName2 }}</p>
-              }
+
+              <input
+                #fileInput2
+                type="file"
+                hidden
+                (change)="onFileSelect($event, 'imagen2')"
+              />
+
+              <p *ngIf="nombreArchivo2" class="file-name">{{ nombreArchivo2 }}</p>
+
+              <small *ngIf="getError('imagen2')" class="text-danger fade-in textito">
+                {{ getError('imagen2') }}
+              </small>
             </div>
           </div>
         </div>
@@ -157,21 +186,24 @@
         <app-captcha></app-captcha>
       </div>
 
-      <a routerLink="/login" class="fade-in enlace-cuenta">¿Ya tenés cuenta? Iniciá sesión</a>
+      <a routerLink="/login" class="fade-in enlace-cuenta">
+        ¿Ya tenés cuenta? Iniciá sesión
+      </a>
+
       <button type="submit" class="submit-button">
-        @if (cargando) { Registrando... } @else { INICIAR SESIÓN }
+        <span *ngIf="cargando">Registrando...</span>
+        <span *ngIf="!cargando">INICIAR SESIÓN</span>
       </button>
     </form>
   </div>
 </div>
 
-@if (mensaje) {
 <app-mensaje
+  *ngIf="mensaje"
   [titulo]="mensaje.titulo"
   [mensaje]="mensaje.texto"
   [tipo]="mensaje.tipo"
   (cerrar)="mensaje = null"
-/>
-} @if (cargando) {
-<app-spinner />
-}
+></app-mensaje>
+
+<app-spinner *ngIf="cargando"></app-spinner>

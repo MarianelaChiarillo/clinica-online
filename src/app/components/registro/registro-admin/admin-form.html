@@ -1,4 +1,4 @@
-<app-layout [titulo]="'Registrar Administrador'" tamano="registro">
+
   <h1 class="fade-in title">Registrar nuevo administrador</h1>
 
   <div class="login-container register fade-in scrollable-form">
@@ -7,12 +7,16 @@
       (ngSubmit)="registrar()"
       class="pequeno formulario login-form"
     >
+
       <label for="nombre">Nombre</label>
       <input
         id="nombre"
         formControlName="nombre"
         class="input-bordered small-input"
       />
+      <div class="error" *ngIf="registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' })">
+        {{ registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' }) }}
+      </div>
 
       <label for="apellido">Apellido</label>
       <input
@@ -20,6 +24,9 @@
         formControlName="apellido"
         class="input-bordered small-input"
       />
+      <div class="error" *ngIf="registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' })">
+        {{ registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' }) }}
+      </div>
 
       <label for="email">Email</label>
       <input
@@ -27,6 +34,9 @@
         formControlName="email"
         class="input-bordered small-input"
       />
+      <div class="error" *ngIf="registroValidators.getRegistroError('email', form, { email: 'Email' })">
+        {{ registroValidators.getRegistroError('email', form, { email: 'Email' }) }}
+      </div>
 
       <label for="dni">DNI</label>
       <input
@@ -34,6 +44,9 @@
         formControlName="dni"
         class="input-bordered small-input"
       />
+      <div class="error" *ngIf="registroValidators.getRegistroError('dni', form, { dni: 'DNI' })">
+        {{ registroValidators.getRegistroError('dni', form, { dni: 'DNI' }) }}
+      </div>
 
       <label for="edad">Edad</label>
       <input
@@ -42,6 +55,9 @@
         formControlName="edad"
         class="input-bordered small-input"
       />
+      <div class="error" *ngIf="registroValidators.getRegistroError('edad', form, { edad: 'Edad' })">
+        {{ registroValidators.getRegistroError('edad', form, { edad: 'Edad' }) }}
+      </div>
 
       <label for="clave">Contraseña</label>
       <div class="clave-container">
@@ -52,8 +68,11 @@
           class="input-bordered small-input"
         />
         <span (click)="toggleVerClave()" class="iconito">
-          @if (verClave) { 🫣 } @else { 👁️ }
+          {{ verClave ? '🫣' : '👁️' }}
         </span>
+      </div>
+      <div class="error" *ngIf="registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' })">
+        {{ registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' }) }}
       </div>
 
       <label for="repiteClave">Repetir contraseña</label>
@@ -65,8 +84,11 @@
           class="input-bordered small-input"
         />
         <span (click)="toggleVerClaveR()" class="iconito">
-          @if (verClaveR) { 🫣 } @else { 👁️ }
+          {{ verClaveR ? '🫣' : '👁️' }}
         </span>
+      </div>
+      <div class="error" *ngIf="registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' })">
+        {{ registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' }) }}
       </div>
 
       <label for="imagen">Imagen de perfil</label>
@@ -91,7 +113,7 @@
       ></app-captcha>
 
       <button type="submit" class="submit-button">
-        @if (cargando) { Registrando... } @else { Registrar administrador }
+        {{ cargando ? 'Registrando...' : 'Registrar administrador' }}
       </button>
     </form>
   </div>
@@ -103,4 +125,3 @@
     [tipo]="mensaje.tipo"
   />
   <app-spinner *ngIf="cargando" />
-</app-layout>

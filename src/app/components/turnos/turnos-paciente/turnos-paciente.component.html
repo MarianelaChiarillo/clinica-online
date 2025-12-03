@@ -14,30 +14,42 @@
     [turnos]="turnos"
     (filtroChange)="onFiltroChange($event)"
     (turnosFiltradosChange)="onTurnosFiltradosChange($event)"
-  >
-  </app-filtro-general>
-  <div *ngIf="cargando" class="loading">< <app-spinner /> ></div>
+  ></app-filtro-general>
+
+  <div *ngIf="cargando" class="loading">
+    <app-spinner />
+  </div>
 
   <div *ngIf="!cargando" class="turnos-list">
     <div *ngFor="let turno of turnosFiltrados" class="turno-card">
       <div class="turno-header">
-        <h2>{{ turno.especialidades?.nombre }}</h2>
-        <span class="estado" [class]="turno.estado">{{ formatearEstado(turno.estado) }}</span>
+<h2>{{ turno.especialidad?.nombre }}</h2>
+
+        <span class="estado" [class]="turno.estado">
+          {{ formatearEstado(turno.estado) }}
+        </span>
       </div>
 
       <div class="turno-info">
-        <p class="p-class">
-          Especialista: {{ turno.especialistas?.nombre }} {{ turno.especialistas?.apellido }}
-        </p>
-        <p>Fecha: {{ formatearFecha(turno.fecha_turno) }}</p>
-        <p>Horario: {{ formatearHora(turno.hora_inicio) }} - {{ formatearHora(turno.hora_fin) }}</p>
+       <p>
+  Especialista:
+  {{ turno.especialista?.nombre }} {{ turno.especialista?.apellido }}
+</p>
 
-        <div *ngIf="turno.coincidencias && turno.coincidencias.length > 0" class="coincidencias">
+        <p>Fecha: {{ turno.fecha_turno | fechaFormato }}</p>
+
+        <p>
+          Horario:
+          {{ turno.hora_inicio }}
+          -
+          {{ turno.hora_fin}}
+        </p>
+
+<div *ngIf="turno.coincidencias && turno.coincidencias.length > 0" class="coincidencias">
           <div *ngFor="let coincidencia of turno.coincidencias" class="coincidencia-badge">
             <small class="text-success">
               <i class="bi bi-check-circle-fill me-1"></i>
-              {{ coincidencia.campo }}:
-              {{ coincidencia.valor }}
+              {{ coincidencia.campo }}: {{ coincidencia.valor }}
             </small>
           </div>
         </div>
@@ -54,7 +66,7 @@
       </div>
     </div>
 
-    <div *ngIf="turnosFiltrados.length === 0 && !cargando" class="no-turnos">
+    <div *ngIf="turnosFiltrados.length === 0" class="no-turnos">
       No se encontraron turnos
     </div>
   </div>

@@ -2,24 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
-  Validators,
   ReactiveFormsModule,
   FormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
-import { MenuComponent } from '../../componentes/menu/menu.component';
-import { LayoutComponent } from '../../componentes/layout/layout.component';
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
 import { CaptchaComponent } from '../../componentes/captcha/captcha.component';
 
-import { FormUtilsService } from '../../../services/forms.utils.service';
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';
 import { AdministradorService } from '../../../services/usuarios/administrador.service';
 import { EspecialidadService } from '../../../services/usuarios/especialidad.service';
+import { RegistroValidatorsService } from '../../../validators/registro.validator';
+import { UtilsService } from '../../../services/utils.service';
 
 @Component({
   selector: 'app-administrador-form',
@@ -28,9 +26,6 @@ import { EspecialidadService } from '../../../services/usuarios/especialidad.ser
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    RouterLink,
-    MenuComponent,
-    LayoutComponent,
     MensajeComponent,
     SpinnerComponent,
     CaptchaComponent,
@@ -49,17 +44,17 @@ export class AdministradorFormComponent implements OnInit {
   verClave = false;
   verClaveR = false;
 
-  // ✅ Lista de especialidades (aunque los admins no las usan, evita errores en el template)
   especialidades: any[] = [];
 
   constructor(
     private fb: FormBuilder,
-    private formUtils: FormUtilsService,
     private authSrv: AuthService,
     private storage: StorageService,
     private router: Router,
     private adminSrv: AdministradorService,
-    private especialidadSrv: EspecialidadService
+    private especialidadSrv: EspecialidadService,
+    public registroValidators: RegistroValidatorsService,
+    private formUtils: UtilsService
   ) {}
 
   ngOnInit(): void {
@@ -67,30 +62,18 @@ export class AdministradorFormComponent implements OnInit {
   }
 
   private initForm(): void {
-    this.form = this.fb.group(
-      {
-        nombre: ['', [Validators.required, Validators.minLength(2)]],
-        apellido: ['', [Validators.required, Validators.minLength(2)]],
-        email: ['', [Validators.required, Validators.email]],
-        dni: ['', [Validators.required, Validators.minLength(7)]],
-        edad: ['', [Validators.required, Validators.min(18)]],
-        clave: ['', [Validators.required, Validators.minLength(6)]],
-        repiteClave: ['', Validators.required],
-        imagen: [null],
-        recaptcha: [''],
-      },
-      { validators: this.confirmarClaveValidator }
-    );
+    this.form = this.fb.group({
+      nombre: ['', this.registroValidators.getNombreValidators()],
+      apellido: ['', this.registroValidators.getApellidoValidators()],
+      email: ['', this.registroValidators.getEmailValidators()],
+      dni: ['', this.registroValidators.getDniValidators()],
+      edad: ['', this.registroValidators.getEdadEspecialistaValidators()],
+      clave: ['', this.registroValidators.getClaveValidators()],
+      repiteClave: ['', this.registroValidators.getConfirmarClaveValidator('clave')],
+      imagen: [null, this.registroValidators.getImagenValidators()],
+      recaptcha: ['']
+    });
   }
-
-  private confirmarClaveValidator(form: FormGroup) {
-    const clave = form.get('clave')?.value;
-    const repite = form.get('repiteClave')?.value;
-    return clave === repite ? null : { clavesNoCoinciden: true };
-  }
-
-
-
 
   onCaptchaResolved(event: any): void {
     const token = typeof event === 'string' ? event : event?.token;
@@ -127,7 +110,7 @@ export class AdministradorFormComponent implements OnInit {
   }
 
   quitarArchivo(): void {
-    this.formUtils.quitarArchivo(this.form, 'imagen', 'imagen');
+    this.formUtils.quitarArchivo(this.form, 'imagen');
     this.nombreArchivo = null;
     this.archivoSeleccionado = null;
   }
@@ -146,7 +129,6 @@ export class AdministradorFormComponent implements OnInit {
     try {
       const valores = this.form.value;
 
-      // ✅ Registrar en Supabase Auth
       const { user, error: authError } = await this.authSrv.registrar(
         valores.email,
         valores.clave
@@ -155,12 +137,10 @@ export class AdministradorFormComponent implements OnInit {
       if (authError || !user)
         throw new Error(authError?.message || 'Error al registrar usuario.');
 
-      // ✅ Subir imagen (si hay)
       const imagenUrl = this.archivoSeleccionado
         ? await this.storage.subirImagen(this.archivoSeleccionado)
         : undefined;
 
-      // ✅ Crear registro en la tabla administradores
       await this.adminSrv.crearAdministrador({
         nombre: valores.nombre,
         apellido: valores.apellido,

@@ -1,14 +1,14 @@
 <div class="historia-clinica-form">
   <form [formGroup]="historiaForm" (ngSubmit)="onSubmit()" class="form-container">
 
-    <!-- DATOS FIJOS -->
     <div class="seccion card">
-      <h3>📋 Datos Fijos</h3>
+      <h3> Datos Fijos</h3>
       <div class="campos-fijos">
+
         <div class="form-group" [class.error]="mostrarError('altura')">
           <label>Altura (cm) *</label>
           <input type="number" formControlName="altura" step="0.1" placeholder="Ej: 170" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('altura')">Altura requerida (50-250 cm)</div>
+          <div class="error-message" *ngIf="mostrarError('altura')">Altura requerida (0-250 cm)</div>
         </div>
 
         <div class="form-group" [class.error]="mostrarError('peso')">
@@ -20,52 +20,76 @@
         <div class="form-group" [class.error]="mostrarError('temperatura')">
           <label>Temperatura (°C) *</label>
           <input type="number" formControlName="temperatura" step="0.1" placeholder="Ej: 36.5" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('temperatura')">Temperatura requerida (35-45°C)</div>
+          <div class="error-message" *ngIf="mostrarError('temperatura')">Temperatura requerida (0-100°C)</div>
         </div>
 
         <div class="form-group" [class.error]="mostrarError('presion')">
           <label>Presión Arterial *</label>
           <input type="text" formControlName="presion" placeholder="Ej: 120/80" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('presion')">Formato: 120/80</div>
+          <div class="error-message" *ngIf="mostrarError('presion')">Formato válido: 120/80</div>
         </div>
+
       </div>
     </div>
 
-    <!-- DATOS DINÁMICOS -->
     <div class="seccion card">
-      <h3>🎯 Datos Dinámicos (Máximo 3)</h3>
+      <h3> Datos Dinámicos (Máximo 3)</h3>
+
       <div formArrayName="datosDinamicos" class="datos-dinamicos-container">
+
         <div *ngFor="let dato of datosDinamicos.controls; let i = index" [formGroupName]="i" class="dato-dinamico">
+
           <div class="campos-dinamicos">
+
             <div class="form-group" [class.error]="mostrarErrorDatoDinamico(i, 'clave')">
-              <input type="text" formControlName="clave" placeholder="Clave (ej: caries, glucosa, etc.)" class="form-control">
+              <input type="text" formControlName="clave" placeholder="Clave (ej: glucosa, caries)" class="form-control">
               <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'clave')">Clave requerida</div>
             </div>
 
             <div class="form-group" [class.error]="mostrarErrorDatoDinamico(i, 'valor')">
-              <input type="text" formControlName="valor" placeholder="Valor (ej: 4, 120mg/dl, etc.)" class="form-control">
+              <input type="text" formControlName="valor" placeholder="Valor (ej: 120mg/dl, 3)" class="form-control">
               <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'valor')">Valor requerido</div>
             </div>
 
-            <button type="button" (click)="removerDatoDinamico(i)" class="btn-remover" [disabled]="datosDinamicos.length <= 2">❌</button>
+            <button type="button"
+                    class="btn-remover"
+                    (click)="removerDatoDinamico(i)"
+                    [disabled]="datosDinamicos.length <= 1">
+              ❌
+            </button>
+
           </div>
+
         </div>
+
       </div>
+
+      <button type="button"
+              class="btn-agregar"
+              (click)="agregarDatoDinamico()"
+              [disabled]="datosDinamicos.length >= 3">
+        ➕ Agregar dato
+      </button>
 
     </div>
 
     <!-- COMENTARIO -->
     <div class="form-group card">
       <label>Reseña para el paciente</label>
-      <textarea formControlName="comentario" rows="3" placeholder="Diagnóstico o comentario final" class="form-control"></textarea>
+      <textarea formControlName="comentario"
+                rows="3"
+                placeholder="Diagnóstico o comentario final"
+                class="form-control"></textarea>
     </div>
 
-    <!-- ERROR GENERAL -->
     <div class="error-general" *ngIf="error">{{ error }}</div>
 
-    <!-- BOTÓN ENVIAR -->
     <div class="acciones">
-      <button type="submit" class="btn-enviar" [disabled]="procesando">{{ procesando ? '🔄 Guardando...' : '💾 Guardar Historia Clínica' }}</button>
+      <button type="submit"
+              class="btn-enviar"
+              [disabled]="procesando">
+        {{ procesando ? ' Guardando...' : 'Guardar Historia Clínica' }}
+      </button>
     </div>
 
   </form>

@@ -5,14 +5,21 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class FechaFormatoPipe implements PipeTransform {
-  transform(fecha: string): string {
+  transform(fecha: string | null | undefined): string {
     if (!fecha) return '';
-
-    const date = new Date(fecha + 'T00:00:00');
-
-    const dia = date.getDate();
-    const mes = date.toLocaleString('es-AR', { month: 'long' });
-
-    return `${dia} de ${mes}`;
+    
+    try {
+      const date = new Date(fecha);
+      if (isNaN(date.getTime())) return '';
+      
+      return date.toLocaleDateString('es-AR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return '';
+    }
   }
 }

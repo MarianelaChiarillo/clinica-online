@@ -1,45 +1,42 @@
 <div class="navbar">
-    <div class="navbar__izquierda">
-        <img src="../../../../../assets/images/icon.png" class="logo-izquierda" alt="Logo" />
-        <p>Clinica Salud</p>
-    </div>
+  <div class="navbar__izquierda">
+    <img src="../../../../../assets/images/icon.png" class="logo-izquierda" alt="Logo" />
+    <p>Clinica Salud</p>
+  </div>
 
-@if (logueado) {
-    <div class="navbar__centro"> 
-                
-        @if (rolUsuario === 'paciente') {
-            <a routerLink="/home/paciente" class="text">Inicio</a>
-            <a routerLink="/turnos/paciente" routerLinkActive="active" class="text">Mis Turnos</a>
-            <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
-            <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
-        }
-        @if (rolUsuario === 'especialista') {
-            <a routerLink="/home/especialista" class="text">Inicio</a>
-            <a routerLink="/turnos/especialista" routerLinkActive="active" class="text">Mis Turnos</a>
-            <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
-            <a routerLink="/pacientes" routerLinkActive="active" class="text">Pacientes</a>
-        }
-        @if (rolUsuario === 'administrador') {
-            <a routerLink="/home/administrador" class="text">Inicio</a>
-            <a routerLink="/usuarios" routerLinkActive="active" class="text"> Usuarios</a>
-            <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
-            <a routerLink="/turnos/administrador" routerLinkActive="active" class="text">Turnos</a>
-            <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
-                        <a routerLink="/estadisticas-admin" routerLinkActive="active" class="text">Estadisticas</a>
+  <div class="navbar__centro" *ngIf="logueado">
 
-        }
+    <ng-container *ngIf="rolUsuario === 'paciente'">
+      <a routerLink="/home/paciente" class="text">Inicio</a>
+      <a routerLink="/turnos/paciente" routerLinkActive="active" class="text">Mis Turnos</a>
+      <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
+      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+    </ng-container>
 
-    </div>
-}
+    <ng-container *ngIf="rolUsuario === 'especialista'">
+      <a routerLink="/home/especialista" class="text">Inicio</a>
+      <a routerLink="/turnos/especialista" routerLinkActive="active" class="text">Mis Turnos</a>
+      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+      <a routerLink="/pacientes" routerLinkActive="active" class="text">Pacientes</a>
+    </ng-container>
 
-<div class="navbar__derecha">
-    @if (!logueado) {
-        <button (click)="navegarALogin()" class="button-inicio">Iniciar sesión</button>
-        <button (click)="navegarARegistro()" class="button-registro">Registrarse</button>
-    } @if (logueado) {
-        <button (click)="cerrarSesion()" class="button-registro">Salir</button>
-    }
+    <ng-container *ngIf="rolUsuario === 'administrador'">
+      <a routerLink="/home/administrador" class="text">Inicio</a>
+      <a routerLink="/usuarios" routerLinkActive="active" class="text">Usuarios</a>
+      <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
+      <a routerLink="/turnos/administrador" routerLinkActive="active" class="text">Turnos</a>
+      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+      <a routerLink="/estadisticas-admin" routerLinkActive="active" class="text">Estadísticas</a>
+    </ng-container>
+
+  </div>
+
+  <div class="navbar__derecha">
+    <button *ngIf="!logueado" (click)="navegarALogin()" class="button-inicio">Iniciar sesión</button>
+    <button *ngIf="!logueado" (click)="navegarARegistro()" class="button-registro">Registrarse</button>
+
+    <button *ngIf="logueado" (click)="cerrarSesion()" class="button-registro">Salir</button>
+  </div>
+
+  <app-spinner *ngIf="cargando"></app-spinner>
 </div>
-@if (cargando) {
-    <app-spinner />
-}

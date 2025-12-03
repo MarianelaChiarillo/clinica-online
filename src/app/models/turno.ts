@@ -39,8 +39,11 @@ export interface Coincidencia {
 
 export interface TurnoExtendido extends Turno {
   historia_clinica?: any;
-  coincidencias?: Coincidencia[];
+  coincidencias?: any[];
+  especialista?: { id: number; nombre: string; apellido: string } | null;
+  especialidad?: { id: number; nombre: string } | null;
 }
+
 
 export interface LogIngreso {
   id: number;

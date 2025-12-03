@@ -22,6 +22,9 @@ export class AuthService {
   }
 
   async registrar(email: string, password: string) {
+    email = email.trim();
+    password = password.trim();
+
     const siteUrl = window.location.origin;
 
     const { data, error } = await supabase.auth.signUp({
@@ -41,6 +44,13 @@ export class AuthService {
   }
 
   async iniciarSesion(email: string, password: string) {
+    email = email.trim();
+    password = password.trim();
+
+    if (!email || !password) {
+      return { user: null, error: { message: 'Email o contraseña vacíos' } };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -55,6 +65,19 @@ export class AuthService {
   }
 
   async getUsuarioActual() {
-    return this.usuarioActual.getValue();
+    const actual = this.usuarioActual.getValue();
+    if (actual) return actual;
+
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.user) {
+      this.usuarioActual.next(data.session.user);
+      return data.session.user;
+    }
+
+    return new Promise<User | null>(resolve => {
+      supabase.auth.onAuthStateChange((_event, session) => {
+        resolve(session?.user || null);
+      });
+    });
   }
 }
