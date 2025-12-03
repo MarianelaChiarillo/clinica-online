@@ -12,7 +12,6 @@ import { TurnoExtendido } from '../../../models/turno';
   styleUrls: ['./filtro-general.component.scss'],
 })
 export class FiltroGeneralComponent {
-  
   @Input() placeholder: string = 'Buscar...';
   @Input() tipoUsuario: 'paciente' | 'especialista' = 'paciente';
   @Input() turnos: TurnoExtendido[] = [];

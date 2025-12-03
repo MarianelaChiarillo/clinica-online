@@ -10,6 +10,7 @@ import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica
 import { ArchivosService } from '../../services/archivos.service';
 import { MenuComponent } from './../componentes/menu/menu.component';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-mi-perfil',
@@ -35,26 +36,37 @@ export class MiPerfilComponent implements OnInit {
     private pacienteService: PacienteService,
     private historiaClinicaService: HistoriaClinicaService,
     private archivoService: ArchivosService,
-    private router: Router
+    private router: Router,
+      private route: ActivatedRoute,
+
   ) {}
 
-  async ngOnInit() {
-    this.cargando = true;
+async ngOnInit() {
+  this.cargando = true;
 
-    const usuarioActual = await this.authService.getUsuarioActual();
-    if (!usuarioActual) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    this.perfil = await this.usuarioService.obtenerPerfilCompleto(usuarioActual.id);
-
-    if (this.esPaciente()) {
-      await this.cargarHistoriaClinica();
-    }
-
-    this.cargando = false;
+  const usuarioActual = await this.authService.getUsuarioActual();
+  if (!usuarioActual) {
+    this.router.navigate(['/login']);
+    return;
   }
+
+  // Primero cargamos el perfil completo
+  this.perfil = await this.usuarioService.obtenerPerfilCompleto(usuarioActual.id);
+
+  // Ahora sí podemos comparar con el rol de la ruta
+  const rolRuta = this.route.snapshot.data['rol']; // 'paciente', 'especialista' o 'administrador'
+  if (rolRuta && this.perfil?.tipo_usuario !== rolRuta) {
+    // Redirigir si no coincide
+    this.router.navigate(['/home/' + this.perfil.tipo_usuario]);
+    return;
+  }
+
+  if (this.esPaciente()) {
+    await this.cargarHistoriaClinica();
+  }
+
+  this.cargando = false;
+}
 
   esPaciente(): boolean {
     return this.perfil?.tipo_usuario === 'paciente';

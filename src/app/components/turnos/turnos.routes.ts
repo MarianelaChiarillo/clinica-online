@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from '../../guards/auth.guard';
+import { RoleGuard } from '../../guards/role.guard';
 
 export const Turnos: Routes = [
   {
@@ -7,6 +9,8 @@ export const Turnos: Routes = [
       import('./turnos-paciente/turnos-paciente.component').then(
         (m) => m.PacienteMisTurnosComponent
       ),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { rol: 'paciente' },
   },
   {
     path: 'especialista',
@@ -14,6 +18,8 @@ export const Turnos: Routes = [
       import('./turnos-especialista/turnos-especialista.component').then(
         (m) => m.TurnosEspecialistaComponent
       ),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { rol: 'especialista' },
   },
   {
     path: 'administrador',
@@ -21,5 +27,7 @@ export const Turnos: Routes = [
       import('./turnos-admin/turnos-admin.component').then(
         (m) => m.TurnosAdminComponent
       ),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { rol: 'administrador' },
   },
 ];

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SpinnerComponent } from '../spinner/spinner.component';
@@ -16,26 +16,28 @@ import { RouterModule } from '@angular/router';
   styleUrl: './menu.component.scss',
 })
 export class MenuComponent implements OnInit, OnDestroy {
+  @Input() rol: 'paciente' | 'especialista' | 'administrador' | null = null;
+
   cargando: boolean = false;
   logueado: boolean = false;
   rolUsuario: 'paciente' | 'especialista' | 'administrador' | null = null;
 
   private suscripcionAuth!: Subscription;
 
-  constructor(
-    private router: Router,
-    private servicioAuth: AuthService
-  ) { }
+  constructor(private router: Router, private servicioAuth: AuthService) {}
 
   ngOnInit() {
-    this.suscripcionAuth = this.servicioAuth.usuarioActual$.subscribe(
-      (usuario) => {
-        this.logueado = !!usuario;
+    if (this.rol) {
+      this.rolUsuario = this.rol;
+    }
+
+    this.suscripcionAuth = this.servicioAuth.usuarioActual$.subscribe((usuario) => {
+      this.logueado = !!usuario;
+      if (!this.rol) {
         this.obtenerRol();
-        console.log('Estado de autenticación:', this.logueado);
       }
-    );
-    this.obtenerRol();
+      console.log('Estado de autenticación:', this.logueado);
+    });
   }
 
   ngOnDestroy() {

@@ -9,24 +9,24 @@
     <ng-container *ngIf="rolUsuario === 'paciente'">
       <a routerLink="/home/paciente" class="text">Inicio</a>
       <a routerLink="/turnos/paciente" routerLinkActive="active" class="text">Mis Turnos</a>
-      <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
-      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+  <a routerLink="/solicitar-turno/paciente" routerLinkActive="active" class="text">Solicitar Turno</a>
+      <a routerLink="/mi-perfil/paciente" routerLinkActive="active" class="text">Mi Perfil</a>
     </ng-container>
 
     <ng-container *ngIf="rolUsuario === 'especialista'">
       <a routerLink="/home/especialista" class="text">Inicio</a>
       <a routerLink="/turnos/especialista" routerLinkActive="active" class="text">Mis Turnos</a>
-      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
+      <a routerLink="/mi-perfil/especialista" routerLinkActive="active" class="text">Mi Perfil</a>
       <a routerLink="/pacientes" routerLinkActive="active" class="text">Pacientes</a>
     </ng-container>
 
     <ng-container *ngIf="rolUsuario === 'administrador'">
       <a routerLink="/home/administrador" class="text">Inicio</a>
-      <a routerLink="/usuarios" routerLinkActive="active" class="text">Usuarios</a>
-      <a routerLink="/solicitar-turno" routerLinkActive="active" class="text">Solicitar Turno</a>
+      <a routerLink="/usuarios/administrador" routerLinkActive="active" class="text">Usuarios</a>
+      <a routerLink="/solicitar-turno/administrador" routerLinkActive="active" class="text">Solicitar Turno</a>
       <a routerLink="/turnos/administrador" routerLinkActive="active" class="text">Turnos</a>
-      <a routerLink="/mi-perfil" routerLinkActive="active" class="text">Mi Perfil</a>
-      <a routerLink="/estadisticas-admin" routerLinkActive="active" class="text">Estadísticas</a>
+      <a routerLink="/mi-perfil/administrador" routerLinkActive="active" class="text">Mi Perfil</a>
+      <a routerLink="/estadisticas/administrador" routerLinkActive="active" class="text">Estadísticas</a>
     </ng-container>
 
   </div>

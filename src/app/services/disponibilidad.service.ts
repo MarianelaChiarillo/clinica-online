@@ -38,36 +38,7 @@ export class DisponibilidadService {
     return esp ? this.obtenerHorariosPorEspecialista(esp.id) : [];
   }
 
-  async generarHorariosDisponibles(especialistaId: number, fecha: string) {
-    try {
-      const diaJs = this.obtenerDiaDeFecha(fecha);
-      const diaBd = diaJs === 0 ? 7 : diaJs;
-
-      const horarios = await this.obtenerHorariosPorEspecialista(especialistaId);
-      const unicos = this.filtrarDuplicados(horarios);
-
-      const delDia = unicos.filter(h => h.activo && h.dia_semana === diaBd);
-      if (delDia.length === 0) return [];
-
-      const turnos = await this.turnoSrv.obtenerTurnosPorEspecialistaYFecha(especialistaId, fecha);
-      const ocupadas = turnos.data?.map(t => t.hora_inicio?.substring(0, 5)) ?? [];
-
-      const slots = new Set<string>();
-
-      for (const h of delDia) {
-        const bloques = this.generarSlots(h.hora_inicio, h.hora_fin, h.duracion_consulta);
-        const libres = this.filtrarLibres(bloques, ocupadas);
-        libres.forEach(s => slots.add(s));
-      }
-
-      return Array.from(slots).sort();
-
-    } catch (e) {
-      console.error('Error generando horarios:', e);
-      return [];
-    }
-  }
-
+  
   // --------------------------------------------------------------------
   // 🔄 REALTIME
   // --------------------------------------------------------------------
@@ -198,4 +169,70 @@ export class DisponibilidadService {
   private filtrarLibres(todas: string[], ocupadas: string[]) {
     return todas.filter(h => !ocupadas.includes(h));
   }
+
+
+
+  async generarHorariosDisponibles(especialistaId: number, fecha: string) {
+  try {
+    const diaJs = this.obtenerDiaDeFecha(fecha);
+    const diaBd = diaJs === 0 ? 7 : diaJs;
+
+    const horarios = await this.obtenerHorariosPorEspecialista(especialistaId);
+    const unicos = this.filtrarDuplicados(horarios);
+
+    const delDia = unicos.filter(h => h.activo && h.dia_semana === diaBd);
+    if (delDia.length === 0) return [];
+
+    const turnos = await this.turnoSrv.obtenerTurnosPorEspecialistaYFecha(especialistaId, fecha);
+    const ocupadas = turnos.data?.map(t => t.hora_inicio?.substring(0, 5)) ?? [];
+
+    const slots = new Set<string>();
+    const hoy = new Date();
+    const esHoy = this.esFechaHoy(fecha);
+
+    for (const h of delDia) {
+      const bloques = this.generarSlots(h.hora_inicio, h.hora_fin, h.duracion_consulta);
+      
+      // Si es hoy, filtrar horas pasadas
+      let libres = this.filtrarLibres(bloques, ocupadas);
+      
+      if (esHoy) {
+        libres = this.filtrarHorasPasadas(libres, hoy);
+      }
+      
+      libres.forEach(s => slots.add(s));
+    }
+
+    return Array.from(slots).sort();
+
+  } catch (e) {
+    console.error('Error generando horarios:', e);
+    return [];
+  }
+}
+
+// --------------------------------------------------------------------
+// 🕐 NUEVO: FILTRAR HORAS PASADAS
+// --------------------------------------------------------------------
+
+private esFechaHoy(fecha: string): boolean {
+  const hoy = new Date();
+  const hoyStr = hoy.toISOString().split('T')[0];
+  return fecha === hoyStr;
+}
+
+private filtrarHorasPasadas(horarios: string[], horaActual: Date): string[] {
+  const horaActualStr = this.formatearHoraActual(horaActual);
+  
+  return horarios.filter(horario => {
+    // Comparar HH:MM
+    return horario > horaActualStr;
+  });
+}
+
+private formatearHoraActual(fecha: Date): string {
+  const horas = fecha.getHours().toString().padStart(2, '0');
+  const minutos = fecha.getMinutes().toString().padStart(2, '0');
+  return `${horas}:${minutos}`;
+}
 }

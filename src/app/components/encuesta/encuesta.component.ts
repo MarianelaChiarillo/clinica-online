@@ -22,7 +22,7 @@ export class EncuestaModalComponent {
   constructor(private turnosService: TurnoService) {}
 
   @Input() turno: any;
-  @Output() onClose = new EventEmitter<boolean>();
+@Output() cerrar = new EventEmitter<boolean>(); // ✅ Ahora se llama "cerrar"
 
   preguntas = [
     { campo: 'instalaciones' as const, texto: '¿Cómo calificarías las instalaciones?', pista: '1 a 5' },
@@ -70,7 +70,7 @@ export class EncuestaModalComponent {
         this.turno.id,
         this.respuestas
       );
-      this.onClose.emit(true);
+      this.cerrar.emit(true);
 
     } catch (error: any) {
       this.error = error.message || 'Ocurrió un error al enviar la encuesta';
@@ -80,6 +80,6 @@ export class EncuestaModalComponent {
   }
 
   cerrarModal() {
-    this.onClose.emit(false);
+    this.cerrar.emit(false);
   }
 }

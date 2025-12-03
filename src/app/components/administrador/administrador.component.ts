@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-especialista',
+  selector: 'app-administrador',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './especialista.component.html',
-  styleUrls: ['./especialista.component.scss'], 
+  templateUrl: './administrador.component.html',
+  styleUrls: ['./administrador.component.scss'], 
 })
-export class EspecialistaComponent {
+export class AdministradorComponent {
   constructor(private router: Router) {}
 }

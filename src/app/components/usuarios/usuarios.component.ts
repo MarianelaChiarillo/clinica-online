@@ -14,6 +14,7 @@ import { StorageService } from '../../services/storage.service';
 import { TurnoService } from '../../services/turnos.service';
 import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica.service';
 import { ArchivosService } from '../../services/archivos.service';
+
 @Component({
   selector: 'app-usuario',
   standalone: true,
@@ -24,7 +25,8 @@ import { ArchivosService } from '../../services/archivos.service';
     MensajeComponent,
     MenuComponent,
     SpinnerComponent,
-    FiltroGeneralComponent
+    FiltroGeneralComponent,
+    MenuComponent
   ],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
@@ -81,32 +83,32 @@ export class UsuarioComponente implements OnInit {
 async cargarUsuarios(): Promise<void> {
   try {
     this.usuarios = await this.usuarioSrv.obtenerTodos();
+    console.log('Usuarios crudos desde DB:', this.usuarios);
 
-    // Asignar la imagen de perfil directamente desde la DB o fallback
     this.usuarios.forEach(u => {
-      u.imagen_perfil_url = u.imagen_url || './assets/user-default.png';
+      u.imagen_perfil_url = u.imagen_perfil || './assets/user-default.png';
     });
 
-    // Cargar turnos e historias
     for (const usuario of this.usuarios) {
       if (usuario.tipo_usuario === 'paciente') {
-        usuario.turnos = (await this.turnosService.obtenerTurnosDePaciente(usuario.id)).data || [];
+        const turnosData = await this.turnosService.obtenerTurnosDePaciente(usuario.id);
+        usuario.turnos = turnosData.data || [];
         usuario.historiasClinicas = await this.historiaClinicaService.obtenerPorPaciente(usuario.id);
       } else if (usuario.tipo_usuario === 'especialista') {
-        usuario.turnos = (await this.turnosService.obtenerTurnosDeEspecialista(usuario.id)).data || [];
+        const turnosData = await this.turnosService.obtenerTurnosDeEspecialista(usuario.id);
+        usuario.turnos = turnosData.data || [];
         usuario.historiasClinicas = [];
       } else {
         usuario.turnos = [];
         usuario.historiasClinicas = [];
       }
     }
-
     this.aplicarFiltro();
   } catch (error) {
-    console.error(error);
     this.mostrarMensaje('Error', 'No se pudieron cargar los usuarios.', 'error');
   }
 }
+
 
 
   // ================== FILTRO ==================
@@ -198,6 +200,8 @@ async cargarUsuarios(): Promise<void> {
   }
 
   abrirModalAdmin() {
+      console.log('Abriendo modal de administrador...');
+  console.log('Estado mostrarModalAdmin antes:', this.mostrarModalAdmin);
     this.mostrarModalAdmin = true;
     this.formAdmin.reset();
     this.archivoSeleccionado = null;
@@ -340,7 +344,6 @@ async cargarUsuarios(): Promise<void> {
     const nuevoEstado = usuario.estado === 'activo' ? 'inactivo' : 'activo';
 
     try {
-      // actualizar solo estado
       await this.especialistaSrv.actualizarDatos(usuario.auth_id, { estado: nuevoEstado });
       usuario.estado = nuevoEstado;
       this.mostrarMensaje('Actualizado', `El especialista ${usuario.nombre} ahora está ${nuevoEstado}.`, 'success');

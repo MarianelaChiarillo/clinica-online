@@ -58,6 +58,29 @@ limpiarSuscripcion() {
   }
 }
 
+async obtenerTurnosEntreFechasConJoin(fechaDesde: string, fechaHasta: string) {
+ const { data, error } = await supabase
+  .from('turnos')
+  .select(`
+    *,
+    pacientes:paciente_id (nombre, apellido),
+    especialistas:especialista_id (nombre, apellido),
+    especialidades:especialidad_id (nombre)
+  `)
+  .gte('fecha_turno', fechaDesde)
+  .lte('fecha_turno', fechaHasta)
+  .order('fecha_turno', { ascending: true });
+
+  if (error) {
+    console.error('Error Supabase join:', error);
+    return { data: [], error };
+  }
+
+  return { data, error: null };
+}
+
+
+
   async obtenerTurnosPorEspecialistaYFecha(especialistaId: number, fecha: string) {
     try {
       const { data, error } = await supabase
@@ -261,9 +284,9 @@ async finalizarTurno(idTurno: number, comentario: string) {
     const resultado = await supabase
       .from('turnos')
       .select('*')
-      .gte('fecha', fechaDesde)
-      .lte('fecha', fechaHasta)
-      .order('fecha', { ascending: true });
+      .gte('fecha_turno', fechaDesde)
+      .lte('fecha_turno', fechaHasta)
+      .order('fecha_turno', { ascending: true });
 
     return { data: resultado.data, error: resultado.error };
   }

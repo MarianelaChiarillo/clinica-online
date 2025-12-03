@@ -285,3 +285,92 @@ h1 {
   background: #1d8fa8;
   margin: 10px 0 20px 0;
 }
+
+
+/* En turnos-paciente.component.scss */
+.termino-activo {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.termino-chip {
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  color: #1565c0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-limpiar {
+  background: none;
+  border: none;
+  color: #1565c0;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.btn-limpiar:hover {
+  color: #d32f2f;
+}
+
+.resultados-info {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Para las coincidencias */
+.coincidencias-header {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.coincidencia-badge {
+  background-color: #ffc107;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.coincidencia-item {
+  background-color: #e9ecef;
+  padding: 4px 8px;
+  margin: 2px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+/* Mensaje sin resultados */
+.sin-resultados {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.btn-limpiar-busqueda {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-limpiar-busqueda:hover {
+  background-color: #e9ecef;
+}

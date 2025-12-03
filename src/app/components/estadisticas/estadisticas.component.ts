@@ -13,8 +13,8 @@ import { EspecialidadService } from '../../services/usuarios/especialidad.servic
 @Component({
   selector: 'app-estadisticas-admin',
   imports: [DatePipe, FormsModule, CommonModule],
-  templateUrl: './estadisticas-admin.component.html',
-  styleUrls: ['./estadisticas-admin.component.scss']
+  templateUrl: './estadisticas.component.html',
+  styleUrls: ['./estadisticas.component.scss']
 })
 export class EstadisticasAdminComponent implements OnInit, OnDestroy {
 

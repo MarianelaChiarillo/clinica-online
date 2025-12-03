@@ -1,65 +1,45 @@
-<app-menu/>
+<div class="turnos-admin-wrapper">
+  <app-menu></app-menu>
 
-<div class="w-full bg-white shadow rounded-xl p-4">
+  <div class="filtro-container">
+    <input
+      type="text"
+      [(ngModel)]="filtro"
+      (input)="aplicarFiltro()"
+      placeholder="Filtrar por especialidad o especialista..."
+      class="filtro-input"
+    />
+  </div>
 
-  <h2 class="text-2xl font-bold mb-4">Turnos de la Clínica</h2>
-
-  <input
-    type="text"
-    class="w-full p-2 border rounded mb-4"
-    placeholder="Filtrar por especialidad o especialista..."
-    [(ngModel)]="filtro"
-    (input)="aplicarFiltro()"
-  />
-
-  <table class="min-w-full">
-    <thead>
-      <tr class="bg-gray-100">
-        <th class="p-3 border-b">Paciente</th>
-        <th class="p-3 border-b">Especialista</th>
-        <th class="p-3 border-b">Especialidad</th>
-        <th class="p-3 border-b">Fecha</th>
-        <th class="p-3 border-b">Estado</th>
-        <th class="p-3 border-b text-center">Acción</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr *ngFor="let t of turnosFiltrados" class="hover:bg-gray-50">
-
-        <td class="p-3 border-b">
-          {{ t.pacientes.nombre }} {{ t.pacientes.apellido }}
-        </td>
-
-        <td class="p-3 border-b">
-          {{ t.especialistas.nombre }} {{ t.especialistas.apellido }}
-        </td>
-
-        <td class="p-3 border-b">
-          {{ t.especialidades.nombre }}
-        </td>
-
-        <td class="p-3 border-b">
-          {{ t.fecha_turno | date }}
-        </td>
-
-        <td class="p-3 border-b">
-          {{ t.estado | titlecase }}
-        </td>
-
-        <td class="p-3 border-b text-center">
-          <button
-            *ngIf="puedeCancelar(t)"
-            (click)="abrirCancelar(t)"
-            class="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
-          >
-            Cancelar
-          </button>
-        </td>
-
-      </tr>
-    </tbody>
-  </table>
+  <div class="turnos-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Paciente</th>
+          <th>Especialista</th>
+          <th>Especialidad</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of turnosFiltrados">
+          <td>{{ t.paciente?.nombre || '' }} {{ t.paciente?.apellido || '' }}</td>
+          <td>{{ t.especialista?.nombre || '' }} {{ t.especialista?.apellido || '' }}</td>
+          <td>{{ t.especialidad?.nombre || '' }}</td>
+          <td>{{ t.fecha_turno | date:'dd/MM/yyyy' }}</td>
+          <td>{{ t.estado | titlecase }}</td>
+          <td>
+            <button *ngIf="puedeCancelar(t)" (click)="abrirCancelar(t)">Cancelar</button>
+          </td>
+        </tr>
+        <tr *ngIf="turnosFiltrados.length === 0">
+          <td colspan="6" class="text-center">No hay turnos para mostrar</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="modal-backdrop" *ngIf="modalCancelar" (click)="cerrarModal()">
@@ -70,16 +50,16 @@
     </div>
 
     <div class="modal-content">
-      <p><strong>Paciente:</strong> {{ turnoSeleccionado?.pacientes?.nombre }} {{ turnoSeleccionado?.pacientes?.apellido }}</p>
-      <p><strong>Especialista:</strong> {{ turnoSeleccionado?.especialistas?.nombre }} {{ turnoSeleccionado?.especialistas?.apellido }}</p>
-      <p><strong>Especialidad:</strong> {{ turnoSeleccionado?.especialidades?.nombre }}</p>
-      <p><strong>Fecha:</strong> {{ turnoSeleccionado?.fecha_turno | date:'dd/MM/yyyy' }} {{ turnoSeleccionado?.hora_inicio }}</p>
+      <p><strong>Paciente:</strong> {{ turnoSeleccionado?.paciente?.nombre || '' }} {{ turnoSeleccionado?.paciente?.apellido || '' }}</p>
+      <p><strong>Especialista:</strong> {{ turnoSeleccionado?.especialista?.nombre || '' }} {{ turnoSeleccionado?.especialista?.apellido || '' }}</p>
+      <p><strong>Especialidad:</strong> {{ turnoSeleccionado?.especialidad?.nombre || '' }}</p>
+      <p><strong>Fecha:</strong> {{ turnoSeleccionado?.fecha_turno | date:'dd/MM/yyyy' }} {{ turnoSeleccionado?.hora_inicio || '' }}</p>
 
       <div class="form-group">
         <label>Motivo de cancelación:</label>
-        <textarea 
-          [(ngModel)]="comentarioCancelacion" 
-          rows="4" 
+        <textarea
+          [(ngModel)]="comentarioCancelacion"
+          rows="4"
           placeholder="Ingresá el motivo de la cancelación..."
           class="input-textarea"
           [disabled]="guardando"
@@ -90,18 +70,8 @@
     </div>
 
     <div class="modal-actions">
-      <button 
-        class="btn btn-cancelar" 
-        (click)="cerrarModal()" 
-        [disabled]="guardando"
-      >
-        Cancelar
-      </button>
-      <button 
-        class="btn btn-confirmar" 
-        (click)="confirmarCancelacion()" 
-        [disabled]="guardando || !comentarioCancelacion.trim()"
-      >
+      <button class="btn btn-cancelar" (click)="cerrarModal()" [disabled]="guardando">Cancelar</button>
+      <button class="btn btn-confirmar" (click)="confirmarCancelacion()" [disabled]="guardando || !comentarioCancelacion.trim()">
         {{ guardando ? 'Cancelando...' : 'Confirmar Cancelación' }}
       </button>
     </div>

@@ -78,4 +78,59 @@ export class PacienteService {
     if (error) throw error;
     return data || [];
   }
+  // paciente.service.ts
+async obtenerTodosPacientes(): Promise<any[]> {
+  try {
+    // 1. Obtener todos los usuarios pacientes
+    const { data: usuarios, error: usuariosError } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('tipo_usuario', 'paciente');
+
+    if (usuariosError) throw usuariosError;
+    if (!usuarios || usuarios.length === 0) return [];
+
+    console.log('👥 Usuarios pacientes:', usuarios);
+
+    // 2. Obtener IDs de usuarios
+    const usuarioIds = usuarios.map(u => u.id);
+
+    // 3. Obtener datos de pacientes usando los usuario_ids
+    const { data: pacientesData, error: pacientesError } = await supabase
+      .from('pacientes')
+      .select('*')
+      .in('usuario_id', usuarioIds);
+
+    if (pacientesError) throw pacientesError;
+
+    console.log('🏥 Datos de pacientes:', pacientesData);
+
+    // 4. Combinar los datos
+    const pacientesCombinados = usuarios.map(usuario => {
+      // Buscar los datos del paciente correspondiente
+      const datosPaciente = pacientesData?.find(p => p.usuario_id === usuario.id);
+
+      return {
+        id: usuario.id,
+        auth_id: usuario.auth_id,
+        email: usuario.email,
+        tipo_usuario: usuario.tipo_usuario,
+        estado: usuario.estado,
+        imagen_perfil: usuario.imagen_perfil,
+        nombre: datosPaciente?.nombre || '',
+        apellido: datosPaciente?.apellido || '',
+        dni: datosPaciente?.dni || '',
+        edad: datosPaciente?.edad || 0,
+        obra_social: datosPaciente?.obra_social || ''
+      };
+    });
+
+    console.log('✅ Pacientes combinados:', pacientesCombinados);
+    return pacientesCombinados;
+
+  } catch (error) {
+    console.error('❌ Error obteniendo pacientes:', error);
+    return [];
+  }
+}
 }

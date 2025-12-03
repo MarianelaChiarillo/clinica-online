@@ -1,48 +1,82 @@
 <app-menu></app-menu>
 
 <div class="contenedor-turno">
-  <div *ngIf="cargando" class="loading"><app-spinner></app-spinner></div>
+  <!-- Spinner de carga -->
+  <div *ngIf="cargando" class="loading">
+    <app-spinner></app-spinner>
+  </div>
+
+  <!-- Mensajes -->
+  <app-mensaje
+    *ngIf="mensaje"
+    [titulo]="mensaje.titulo"
+    [mensaje]="mensaje.texto"
+    [tipo]="mensaje.tipo"
+    (cerrar)="mensaje = null">
+  </app-mensaje>
 
   <h1 class="titulo-turno">Solicitá tu turno</h1>
   <div class="linea"></div>
 
   <div class="grid-especialidades-compact">
 
-    <!-- Selección de paciente para admin -->
+    <!-- ========== PARA ADMIN: SELECCIÓN DE PACIENTE ========== -->
     <ng-container *ngIf="esAdmin && !pacienteSeleccionado">
       <div class="paso">
         <h3>Seleccionar paciente</h3>
-        <app-filtro-general placeholder="Buscar paciente por nombre, apellido o DNI..." 
-                            (filtroChange)="filtrarPacientes($event)">
+        <app-filtro-general 
+          placeholder="Buscar paciente por nombre, apellido o DNI..." 
+          (filtroChange)="filtrarPacientes($event)">
         </app-filtro-general>
+        
         <div class="lista-pacientes">
           <div *ngFor="let p of pacientesFiltrados; trackBy: trackByPaciente" 
                class="opcion-paciente" 
                (click)="seleccionarPaciente(p)">
-            {{ p.nombre }} {{ p.apellido }}
-            <span *ngIf="p.dni">(DNI {{ p.dni }})</span>
+            <div class="paciente-info">
+              <strong>{{ p.nombre }} {{ p.apellido }}</strong>
+              <div class="paciente-datos">
+                <small>DNI: {{ p.dni || 'Sin DNI' }}</small>
+                <small>Email: {{ p.email }}</small>
+              </div>
+            </div>
           </div>
-          <p *ngIf="pacientesFiltrados.length === 0" class="sin-resultados">No se encontraron pacientes.</p>
+          
+          <div *ngIf="pacientesFiltrados.length === 0" class="sin-resultados">
+            <p *ngIf="textoFiltroPaciente">
+              No se encontraron pacientes para "{{ textoFiltroPaciente }}"
+            </p>
+            <p *ngIf="!textoFiltroPaciente && pacientes.length === 0">
+              No hay pacientes registrados en el sistema.
+            </p>
+            <p *ngIf="!textoFiltroPaciente && pacientes.length > 0">
+              Mostrando todos los pacientes ({{ pacientes.length }})
+            </p>
+          </div>
         </div>
       </div>
     </ng-container>
 
+    <!-- ========== PACIENTE SELECCIONADO (solo admin) ========== -->
     <div *ngIf="esAdmin && pacienteSeleccionado" class="paciente-seleccionado">
       <p>📌 Turno para: <strong>{{ pacienteSeleccionado.apellido }}, {{ pacienteSeleccionado.nombre }}</strong></p>
-      <button (click)="pacienteSeleccionado = null">Cambiar paciente</button>
+      <button (click)="pacienteSeleccionado = null; turnoData.pacienteId = null;">Cambiar paciente</button>
     </div>
 
-    <!-- Paso 1: Selección de especialidad -->
-    <div *ngIf="pasoActual === 1" class="paso-container">
+    <!-- ========== PASO 1: SELECCIÓN DE ESPECIALIDAD ========== -->
+    <div *ngIf="pasoActual === 1 && (!esAdmin || (esAdmin && pacienteSeleccionado))" class="paso-container">
       <h2>Selecciona una especialidad</h2>
-      <div *ngIf="cargando" class="text-center"><app-spinner></app-spinner></div>
+      
+      <div *ngIf="cargando" class="text-center">
+        <app-spinner></app-spinner>
+      </div>
+      
       <div *ngIf="!cargando" class="especialidades-grid">
         <div *ngFor="let esp of especialidades; trackBy: trackByEspecialidad" 
              class="especialidad-card" 
              (click)="seleccionarEspecialidad(esp)">
           <div class="especialidad-imagen">
-            <img [src]="esp.imagen_url" 
-                 />
+            <img [src]="esp.imagen_url" [alt]="esp.nombre" />
           </div>
           <div class="especialidad-info">
             <h4>{{ esp.nombre }}</h4>
@@ -50,32 +84,39 @@
           </div>
         </div>
       </div>
+      
+      <div *ngIf="!cargando && especialidades.length === 0" class="sin-resultados">
+        <p>No hay especialidades disponibles en este momento.</p>
+      </div>
     </div>
 
-    <!-- Paso 2: Selección de especialista -->
+    <!-- ========== PASO 2: SELECCIÓN DE ESPECIALISTA ========== -->
     <div *ngIf="pasoActual === 2" class="paso">
       <h3 class="titulo-seccion">Seleccionar especialista</h3>
+      
       <div class="grid-especialista">
         <button *ngFor="let e of especialistas; trackBy: trackByEspecialista" 
                 class="boton-especialista" 
                 [class.inactivo]="e.estado !== 'activo'" 
                 [disabled]="e.estado !== 'activo'" 
                 (click)="seleccionarEspecialista(e)">
+          <img [src]="e.imagen_perfil" [alt]="e.nombre" />
           <span class="nombre-especialista">{{ e.nombre }} {{ e.apellido }}</span>
-          <img [src]="e.imagen_perfil" 
-                />
           <span *ngIf="e.estado !== 'activo'" class="estado-especialista">({{ e.estado }})</span>
         </button>
       </div>
+      
       <div *ngIf="especialistas.length === 0" class="sin-resultados">
-        No hay especialistas disponibles para esta especialidad.
+        <p>No hay especialistas disponibles para esta especialidad.</p>
       </div>
+      
       <button class="btn-atras" (click)="volverPasoAnterior()">Atrás</button>
     </div>
 
-    <!-- Paso 3: Selección de fecha -->
+    <!-- ========== PASO 3: SELECCIÓN DE FECHA ========== -->
     <div *ngIf="pasoActual === 3" class="paso">
       <h2>Seleccionar fecha</h2>
+      
       <div *ngIf="fechasDisponibles.length > 0">
         <div class="grid-fechas">
           <button *ngFor="let f of fechasDisponibles" 
@@ -86,17 +127,20 @@
           </button>
         </div>
       </div>
+      
       <div *ngIf="fechasDisponibles.length === 0" class="sin-resultados">
         <h3>⚠️ No hay turnos disponibles</h3>
         <p>El especialista no tiene horarios configurados para los próximos 15 días.</p>
         <p><strong>Días configurados:</strong> {{ getNombresDiasConfigurados() }}</p>
       </div>
+      
       <button class="btn-atras" (click)="volverPasoAnterior()">Atrás</button>
     </div>
 
-    <!-- Paso 4: Selección de horario -->
+    <!-- ========== PASO 4: SELECCIÓN DE HORARIO ========== -->
     <div *ngIf="pasoActual === 4" class="paso">
       <h2>Seleccionar horario</h2>
+      
       <div class="grid-horarios">
         <button *ngFor="let h of horariosDisponibles" 
                 class="boton-horario" 
@@ -108,9 +152,33 @@
           <span *ngIf="esHorarioOcupado(h)" class="texto-ocupado">Ocupado</span>
         </button>
       </div>
+      
       <div *ngIf="horariosDisponibles.length === 0" class="sin-resultados">
-        No hay horarios disponibles para esta fecha.
+        <p>No hay horarios disponibles para esta fecha.</p>
       </div>
+      
+      <!-- Resumen del turno seleccionado -->
+      <div *ngIf="turnoData.hora" class="resumen-turno">
+        <h3>📋 Resumen del turno</h3>
+        <div class="resumen-item">
+          <strong>Paciente:</strong> 
+          <span *ngIf="esAdmin">{{ pacienteSeleccionado?.nombre }} {{ pacienteSeleccionado?.apellido }}</span>
+          <span *ngIf="!esAdmin">{{ usuarioLogueado?.nombre }} {{ usuarioLogueado?.apellido }}</span>
+        </div>
+        <div class="resumen-item">
+          <strong>Especialista:</strong> {{ especialistaSeleccionado?.nombre }} {{ especialistaSeleccionado?.apellido }}
+        </div>
+        <div class="resumen-item">
+          <strong>Fecha:</strong> {{ turnoData.fecha | fechaFormato }}
+        </div>
+        <div class="resumen-item">
+          <strong>Horario:</strong> {{ turnoData.hora | horaFormato }}
+        </div>
+        <div class="resumen-item">
+          <strong>Duración:</strong> {{ turnoData.duracion }} minutos
+        </div>
+      </div>
+      
       <div class="acciones">
         <button class="btn-atras" (click)="volverPasoAnterior()">Atrás</button>
         <button class="btn-confirmar" 
@@ -118,6 +186,15 @@
                 (click)="solicitarTurno()">
           {{ procesando ? 'Procesando...' : 'Confirmar turno' }}
         </button>
+      </div>
+    </div>
+
+    <!-- ========== INFORMACIÓN PARA PACIENTES NO-ADMIN ========== -->
+    <div *ngIf="!esAdmin && pasoActual === 1 && !cargando" class="info-paciente">
+      <p>📋 Estás solicitando un turno para ti mismo:</p>
+      <div class="datos-paciente">
+        <strong>{{ usuarioLogueado?.nombre }} {{ usuarioLogueado?.apellido }}</strong>
+        <small>DNI: {{ usuarioLogueado?.dni || 'No registrado' }}</small>
       </div>
     </div>
 

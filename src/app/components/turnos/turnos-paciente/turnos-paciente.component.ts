@@ -38,6 +38,7 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
 
   mostrarEncuestaModal = false;
   turnoSeleccionado: any = null;
+  textoFiltro: string = '';
 
   private canalRealtime: any;
   private authSubscription: Subscription | null = null;
@@ -146,7 +147,44 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     this.turnosFiltrados = turnosFiltrados;
   }
 
-  onFiltroChange(filtroTexto: string) {}
+  onFiltroChange(filtroTexto: string) {
+    this.textoFiltro = filtroTexto;
+  }
+
+  limpiarFiltro() {
+    this.textoFiltro = '';
+    this.turnosFiltrados = [...this.turnos];
+    
+    // Si tu componente FiltroGeneral tiene un método para limpiar, también deberías llamarlo
+    // Podrías emitir un evento o usar ViewChild para acceder al componente directamente
+  }
+
+  // Añade esta función que falta
+  getCoincidenciasTurno(turno: TurnoExtendido): string[] {
+    if (!turno.coincidencias || turno.coincidencias.length === 0) {
+      return [];
+    }
+    
+    return turno.coincidencias.map(coincidencia => {
+      return `${coincidencia.campo}: ${coincidencia.valor}`;
+    });
+  }
+
+  // Función para resaltar texto (opcional)
+  resaltarTexto(texto: string, termino: string): string {
+    if (!texto || !termino) return texto;
+    
+    const regex = new RegExp(`(${termino})`, 'gi');
+    return texto.replace(regex, '<mark class="texto-resaltado">$1</mark>');
+  }
+
+  // Verificar si un campo tiene coincidencias (opcional)
+  campoTieneCoincidencia(turno: TurnoExtendido, campo: string): boolean {
+    if (!turno.coincidencias) return false;
+    return turno.coincidencias.some(coincidencia => 
+      coincidencia.campo.toLowerCase().includes(campo.toLowerCase())
+    );
+  }
 
   acciones(t: TurnoExtendido): string[] {
     const acciones = [];

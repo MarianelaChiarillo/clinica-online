@@ -3,54 +3,43 @@ import { Router, RouterModule } from '@angular/router';
 import { MenuComponent } from '../componentes/menu/menu.component';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuarios/usuario.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterModule, MenuComponent],
+  imports: [CommonModule, RouterModule, MenuComponent],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.scss',
+  styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
   cargando = true;
-  
+  usuario: any;
+
   constructor(
     private router: Router,
-    private authSrv: AuthService,
-    private usuarioSrv: UsuarioService
+    private autenticacionService: AuthService,
+    private usuarioService: UsuarioService
   ) {}
 
   async ngOnInit(): Promise<void> {
     try {
-      const user = await this.authSrv.getUsuarioActual();
-      
+      const user = await this.autenticacionService.getUsuarioActual();
+
       if (!user) {
         this.router.navigate(['/home/bienvenida']);
         return;
       }
-      
-      const resp = await this.usuarioSrv.obtenerPorAuthId(user.id);
-      
+
+      const resp = await this.usuarioService.obtenerPorAuthId(user.id);
       if (resp && resp.data) {
-        const usuario = resp.data;
-        
-        switch(usuario.tipo_usuario) {
-          case 'paciente':
-            this.router.navigate(['/home/paciente']);
-            break;
-          case 'especialista':
-            this.router.navigate(['/home/especialista']);
-            break;
-          case 'administrador':
-            this.router.navigate(['/usuarios']);
-            break;
-          default:
-            this.router.navigate(['/home/bienvenida']);
-        }
+        this.usuario = resp.data;
+
+        const tipo = this.usuario.tipo_usuario;
+        this.router.navigate([`/home/${tipo}`]);
       } else {
         this.router.navigate(['/home/bienvenida']);
       }
-      
     } catch (error) {
       console.error('Error al determinar redirección:', error);
       this.router.navigate(['/home/bienvenida']);

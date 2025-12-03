@@ -1,6 +1,7 @@
 <div class="historia-clinica-form">
   <form [formGroup]="historiaForm" (ngSubmit)="onSubmit()" class="form-container">
 
+    <!-- Datos Fijos -->
     <div class="seccion card">
       <h3> Datos Fijos</h3>
       <div class="campos-fijos">
@@ -32,48 +33,129 @@
       </div>
     </div>
 
+    <!-- Datos Dinámicos -->
     <div class="seccion card">
       <h3> Datos Dinámicos (Máximo 3)</h3>
+      
+      <div *ngIf="datosDinamicos.errors?.['clavesDuplicadas']" class="alert alert-danger">
+        ❌ No pueden haber claves duplicadas en los datos dinámicos
+      </div>
 
       <div formArrayName="datosDinamicos" class="datos-dinamicos-container">
-
-        <div *ngFor="let dato of datosDinamicos.controls; let i = index" [formGroupName]="i" class="dato-dinamico">
-
-          <div class="campos-dinamicos">
-
-            <div class="form-group" [class.error]="mostrarErrorDatoDinamico(i, 'clave')">
-              <input type="text" formControlName="clave" placeholder="Clave (ej: glucosa, caries)" class="form-control">
-              <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'clave')">Clave requerida</div>
+        <div *ngFor="let dato of datosDinamicos.controls; let i = index" [formGroupName]="i" class="dato-dinamico card">
+          
+          <!-- Encabezado -->
+          <div class="encabezado-dinamico">
+            <div class="form-group clave-container" [class.error]="mostrarErrorDatoDinamico(i, 'clave')">
+              <input type="text" formControlName="clave" 
+                     placeholder="Clave (ej: Glucosa, Dolor)" 
+                     class="form-control clave">
+              <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'clave')">
+                Clave requerida
+              </div>
             </div>
-
-            <div class="form-group" [class.error]="mostrarErrorDatoDinamico(i, 'valor')">
-              <input type="text" formControlName="valor" placeholder="Valor (ej: 120mg/dl, 3)" class="form-control">
-              <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'valor')">Valor requerido</div>
+            
+            <!-- Tipo de control - CORREGIDO -->
+            <div class="form-group tipo-container">
+              <select formControlName="tipo_control" 
+                      (change)="cambiarTipoControl(i, tipoSelect.value)"
+                      class="form-control tipo-control"
+                      #tipoSelect>
+                <option value="texto">Texto libre</option>
+                <option value="rango">Rango (0-100%)</option>
+                <option value="numerico">Número</option>
+                <option value="switch">Sí/No</option>
+              </select>
             </div>
-
-            <button type="button"
-                    class="btn-remover"
-                    (click)="removerDatoDinamico(i)"
-                    [disabled]="datosDinamicos.length <= 1">
+            
+            <button type="button" 
+                    class="btn-remover" 
+                    (click)="removerDatoDinamico(i)" 
+                    [disabled]="datosDinamicos.length <= 1"
+                    title="Eliminar este dato">
               ❌
             </button>
+          </div>
+
+          <!-- Controles según tipo -->
+          <div class="control-dinamico">
+            
+            <!-- Texto libre -->
+            <div *ngIf="!dato.get('tipo_control')?.value || dato.get('tipo_control')?.value === 'texto'" 
+                 class="form-group"
+                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['textoRequerido']">
+              <input type="text" formControlName="valor_texto" 
+                     placeholder="Valor (ej: 120 mg/dl, dolor moderado)" 
+                     class="form-control">
+              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['textoRequerido']">
+                {{ getMensajeErrorDatoDinamico(i) }}
+              </div>
+            </div>
+
+            <!-- Rango -->
+            <div *ngIf="dato.get('tipo_control')?.value === 'rango'" 
+                 class="form-group rango-group"
+                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['rangoRequerido']">
+              <label>Nivel: {{ dato.get('valor_rango')?.value || 50 }}%</label>
+              <input type="range" formControlName="valor_rango" 
+                     min="0" max="100" step="1" 
+                     class="form-control-range">
+              <div class="rango-labels">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['rangoRequerido']">
+                {{ getMensajeErrorDatoDinamico(i) }}
+              </div>
+            </div>
+
+            <!-- Numérico -->
+            <div *ngIf="dato.get('tipo_control')?.value === 'numerico'" 
+                 class="form-group"
+                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['numeroRequerido']">
+              <input type="number" formControlName="valor_numerico" 
+                     step="0.01" 
+                     placeholder="Ej: 120.5" 
+                     class="form-control">
+              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['numeroRequerido']">
+                {{ getMensajeErrorDatoDinamico(i) }}
+              </div>
+            </div>
+
+            <!-- Switch Sí/No -->
+            <div *ngIf="dato.get('tipo_control')?.value === 'switch'" class="form-group switch-group">
+              <div class="switch-container">
+                <label class="switch-label">
+                  {{ dato.get('valor_switch')?.value ? 'Sí' : 'No' }}
+                </label>
+                <label class="switch">
+                  <input type="checkbox" formControlName="valor_switch">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
 
           </div>
 
-        </div>
+          <!-- Error general -->
+          <div *ngIf="tieneErrorDatoDinamico(i)" class="error-dato-general">
+            {{ getMensajeErrorDatoDinamico(i) }}
+          </div>
 
+        </div>
       </div>
 
       <button type="button"
               class="btn-agregar"
               (click)="agregarDatoDinamico()"
               [disabled]="datosDinamicos.length >= 3">
-        ➕ Agregar dato
+        ➕ Agregar dato dinámico
       </button>
 
     </div>
 
-    <!-- COMENTARIO -->
+    <!-- Comentario -->
     <div class="form-group card">
       <label>Reseña para el paciente</label>
       <textarea formControlName="comentario"
