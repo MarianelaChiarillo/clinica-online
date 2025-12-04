@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -17,7 +17,8 @@ import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
 import { CaptchaComponent } from '../../componentes/captcha/captcha.component';
 import { RegistroValidatorsService } from '../../../validators/registro.validator';
 import { UtilsService } from '../../../services/utils.service';
-
+import { CaptchaWrapperComponent } from '../../componentes/captchaC/captcha-wrapper.component';
+import { CaptchaDirectiva } from '../../../directives/captcha.directive';
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
@@ -29,11 +30,16 @@ import { UtilsService } from '../../../services/utils.service';
     MensajeComponent,
     SpinnerComponent,
     CaptchaComponent,
+    CaptchaWrapperComponent,
+       CaptchaDirectiva
   ],
   templateUrl: './paciente-form.html',
   styleUrls: ['./paciente-form.scss'],
 })
+
 export class PacienteForm implements OnInit {
+    @ViewChild('captchaWrapper') captchaWrapper!: CaptchaWrapperComponent;
+
   form!: FormGroup;
   cargando = false;
   verClave = false;
@@ -44,6 +50,8 @@ export class PacienteForm implements OnInit {
   archivoSeleccionado1: File | null = null;
   archivoSeleccionado2: File | null = null;
   captchaResuelto = false;
+captchaPassed = false;
+captchaEnabled = true;
 
   constructor(
     private fb: FormBuilder,
@@ -56,8 +64,14 @@ export class PacienteForm implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
-  }
+  this.initForm();
+  this.cargarCaptchaPersistente();
+}
+
+ngOnDestroy(): void {
+  this.captchaWrapper?.limpiarCaptchaCompleto();
+}
+
 
   private initForm(): void {
     this.form = this.fb.group({
@@ -91,6 +105,15 @@ export class PacienteForm implements OnInit {
     return this.validators.getRegistroError(campo, this.form, etiquetas);
   }
 
+onToggleCaptcha() {
+  if (!this.captchaEnabled) {
+    this.captchaPassed = true;
+  } else {
+    this.captchaPassed = false;
+  }
+  this.captchaWrapper?.toggleCaptcha();
+}
+
   toggleVerClave(): void { this.verClave = !this.verClave; }
   toggleVerClaveR(): void { this.verClaveR = !this.verClaveR; }
 
@@ -105,6 +128,45 @@ export class PacienteForm implements OnInit {
     }
   }
 
+
+
+
+
+
+async cargarCaptchaPersistente() {
+  if (!this.captchaWrapper) return;
+  const tokenGuardado = localStorage.getItem('captcha_token');
+  if (tokenGuardado) {
+    const captchaData = await this.captchaWrapper.recuperarCaptcha(tokenGuardado);
+    if (captchaData) return;
+  }
+  await this.captchaWrapper.generarNuevoCaptchaWrapper();
+}
+
+onCaptchaSolved(esValido: boolean) { this.captchaPassed = esValido; }
+
+
+
+async registrar() {
+  this.formUtils.markAllAsTouched(this.form);
+  if (this.form.invalid) return;
+  if (this.captchaEnabled && !this.captchaPassed) return alert('Captcha requerido');
+
+  this.cargando = true;
+  try {
+    await this.procesarRegistro();
+    this.mostrarExito();
+    setTimeout(() => this.router.navigate(['/login']), 3000);
+  } catch (error: any) {
+    this.mostrarError(error.message || 'No se pudo completar el registro.');
+  } finally { this.cargando = false; }
+}
+
+
+
+
+
+
   quitarArchivo(campo: 'imagen1' | 'imagen2'): void {
     this.formUtils.quitarArchivo(this.form, campo);
     if (campo === 'imagen1') {
@@ -114,10 +176,11 @@ export class PacienteForm implements OnInit {
       this.nombreArchivo2 = null;
       this.archivoSeleccionado2 = null;
     }
-  }
+  
 
-  // Captcha
-  onCaptchaResolved(token: string): void {
+
+
+  }  onCaptchaResolved(token: string): void {
     this.captchaResuelto = true;
     this.form.patchValue({ recaptcha: token });
     this.form.get('recaptcha')?.setErrors(null);
@@ -134,27 +197,8 @@ export class PacienteForm implements OnInit {
     this.form.get('recaptcha')?.setErrors({ required: true });
   }
 
-  async registrar(): Promise<void> {
-    this.formUtils.markAllAsTouched(this.form);
+  
 
-    if (this.form.invalid) {
-      this.mostrarError('Por favor corregí los errores antes de continuar.');
-      return;
-    }
-
-    this.cargando = true;
-    this.mensaje = null;
-
-    try {
-      await this.procesarRegistro();
-      this.mostrarExito();
-      setTimeout(() => this.router.navigate(['/login']), 3000);
-    } catch (error: any) {
-      this.mostrarError(error.message || 'No se pudo completar el registro.');
-    } finally {
-      this.cargando = false;
-    }
-  }
 
   private async procesarRegistro(): Promise<void> {
     const valores = this.form.value;

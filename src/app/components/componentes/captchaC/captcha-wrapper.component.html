@@ -1,0 +1,66 @@
+<!-- Switch dinámico -->
+<div class="captcha-toggle">
+  <label>
+    <input type="checkbox" [(ngModel)]="captchaEnabled" (change)="onToggleCaptcha()" />
+    {{ captchaEnabled ? 'Deshabilitar CAPTCHA' : 'Habilitar CAPTCHA' }}
+  </label>
+</div>
+
+<!-- Botón para mostrar el captcha -->
+<div *ngIf="captchaEnabled && !captchaVisible" class="captcha-show-btn">
+  <button (click)="mostrarCaptcha()">Completar CAPTCHA</button>
+</div>
+
+<!-- Contenedor de captcha -->
+<div *ngIf="captchaVisible && captchaEnabled" class="captcha-container">
+  <div appCaptcha
+       [enabled]="captchaEnabled"
+       [captchaValido]="captchaValido"
+       [imagenes]="imagenes"
+       (seleccionToggled)="onSeleccionToggled($event)"
+       (verificarSolicitado)="onVerificarSolicitado()">
+    
+    <!-- Mensaje si ya está validado -->
+    <div *ngIf="captchaValido" class="captcha-success">
+      <div class="success-icon">✓</div>
+      <p>¡Captcha validado correctamente!</p>
+    </div>
+
+    <!-- Mostrar captcha si no está validado -->
+    <ng-container *ngIf="!captchaValido">
+      <div class="instructions">
+        <p *ngIf="objetivo">
+          Selecciona todas las imágenes de: <strong>{{ objetivo }}</strong>
+        </p>
+      </div>
+
+      <div class="images" *ngIf="!cargando && imagenes.length > 0">
+        <div *ngFor="let img of imagenes"
+             class="image-item"
+             [class.selected]="seleccionadas.includes(img.id)"
+             (click)="onSeleccionToggled(img.id)">
+          <img [src]="img.src" alt="Imagen captcha" />
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="!cargando">
+        <button (click)="onVerificarSolicitado()" 
+                [disabled]="seleccionadas.length === 0">
+          Verificar
+        </button>
+        <button (click)="generarNuevoCaptcha()">
+          Recargar
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Mensaje si captcha está deshabilitado -->
+<div *ngIf="!captchaEnabled" class="captcha-disabled">
+  <div class="disabled-icon">✓</div>
+  <p>CAPTCHA deshabilitado</p>
+</div>
+
+<!-- Botón de registro -->
+<button type="submit" [disabled]="!captchaPassed || cargando">Registrar</button>

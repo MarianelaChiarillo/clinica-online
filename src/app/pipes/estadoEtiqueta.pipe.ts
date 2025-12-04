@@ -5,23 +5,15 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class EstadoEtiquetaPipe implements PipeTransform {
-  transform(estado: string, idioma: 'es' | 'en' = 'es'): string {
-    if (!estado) return '';
-    const es: Record<string, string> = {
-      pendiente: 'Pendiente',
-      aceptado: 'Aceptado',
-      realizado: 'Realizado',
-      cancelado: 'Cancelado',
-      rechazado: 'Rechazado'
-    };
-    const en: Record<string, string> = {
-      pendiente: 'Pending',
-      aceptado: 'Accepted',
-      realizado: 'Completed',
-      cancelado: 'Canceled',
-      rechazado: 'Rejected'
-    };
-    const map = idioma === 'en' ? en : es;
-    return map[estado?.toLowerCase()] ?? estado;
+  transform(value: string): string {
+    if (!value) return '';
+    const estado = value.toLowerCase().trim();
+
+    if (estado === 'solicitado') return 'Solicitado';
+    if (estado === 'aceptado') return 'Aceptado';
+    if (estado === 'realizado') return 'Realizado';
+    if (estado === 'cancelado') return 'Cancelado';
+    if (estado === 'rechazado') return 'Rechazado';
+    return value;
   }
 }
