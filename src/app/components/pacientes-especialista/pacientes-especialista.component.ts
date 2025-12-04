@@ -5,10 +5,11 @@ import { TurnoService } from '../../services/turnos.service';
 import supabase from '../../services/supabase.client';
 import { PacienteService } from '../../services/usuarios/paciente.service';
 import { EspecialistaService } from '../../services/usuarios/especialista.service';
+import { MenuComponent } from '../componentes/menu/menu.component';
 @Component({
   selector: 'app-pacientes-atendidos',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MenuComponent],
   templateUrl: './pacientes-especialista.component.html',
   styleUrls: ['./pacientes-especialista.component.scss']
 })

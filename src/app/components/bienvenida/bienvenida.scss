@@ -1,38 +1,42 @@
 .bienvenida {
   width: 100%;
   min-height: 100vh;
-    background: linear-gradient(#95e4f6, #e9fbff);
-
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(#95e4f6, #e9fbff);
+  padding: 2rem;
 }
 
 .bienvenida__imagen {
   flex: 1;
   display: flex;
-  justify-content: left;
-  img {
-    width: 38rem;
-    margin-top: 18.5rem;
-    margin-left: 6rem;
-  }
+  justify-content: flex-start;
+}
+
+.bienvenida__imagen img {
+  width: 30rem;
+  margin-top: 5rem;
 }
 
 .bienvenida__mensaje {
-  width: 18rem;
-  height: 30rem;
+  flex: 1;
+  max-width: 60rem;
   background: #09607a;
   color: #fff;
-  margin-top: 15rem;
   border-radius: 1rem;
-  flex: 1;
-  margin-left: 4rem;
-  justify-content: flex-end;
-  text-align: left;
   padding: 7rem;
-  font-size: 7rem;
-  line-height: 1;
+  font-size: 5rem;
+  line-height: 1.2;
+  text-align: left;
+  margin-bottom: 1rem;
+  align-self: flex-end;
+  margin-right: 0;
+  margin-left: 6rem;
 }
 
 .bienvenida__subtitulo {
   color: #cdf7ff;
-  font-size: 4rem;
+  font-size: 2rem;
+  margin-top: 1rem;
 }

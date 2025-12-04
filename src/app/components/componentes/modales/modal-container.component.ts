@@ -61,6 +61,14 @@ export class ModalContainerComponent implements OnInit {
     this.encuestaRespuestas = { pregunta1: '', pregunta2: '', pregunta3: '', observaciones: '' };
   }
 
+  contarPalabras(texto: string): number {
+    if (!texto) {
+      return 0;
+    }
+    const palabras = texto.trim().split(/\s+/);
+    return palabras.length;
+  }
+
   async guardarHistoriaClinica(resultado: any) {
     if (!resultado.success) {
       this.error = resultado.error;
@@ -92,23 +100,28 @@ export class ModalContainerComponent implements OnInit {
   }
 
   botonHabilitado(): boolean {
-    if (!this.datosModal) return false;
-
-    switch (this.datosModal.tipo) {
-      case 'cancelar':
-      case 'rechazar':
-        return this.comentario.trim().length > 0;
-
-      case 'calificar':
-        return this.calificacion > 0;
-
-      case 'finalizar':
-        return this.comentario.trim().length > 0 || this.crearEncuesta;
-
-      default:
-        return true;
-    }
+  if (!this.datosModal) {
+    return false;
   }
+
+  const limitePalabras = 60;
+
+  if (this.datosModal.tipo === 'cancelar' || this.datosModal.tipo === 'rechazar') {
+    return this.comentario.trim().length > 0 && this.contarPalabras(this.comentario) <= limitePalabras;
+  }
+
+  if (this.datosModal.tipo === 'calificar') {
+    return this.calificacion > 0 && this.contarPalabras(this.comentario) <= limitePalabras;
+  }
+
+  if (this.datosModal.tipo === 'finalizar') {
+    const comentarioValido = this.comentario.trim().length > 0 && this.contarPalabras(this.comentario) <= limitePalabras;
+    return comentarioValido || this.crearEncuesta;
+  }
+
+  return true;
+}
+
 
   textoBoton(): string {
     if (!this.datosModal) return 'Confirmar';

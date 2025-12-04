@@ -106,11 +106,6 @@
         </button>
       </div>
 
-      <app-captcha
-        (resolved)="onCaptchaResolved($event)"
-        (error)="onCaptchaError()"
-        (expired)="onCaptchaExpired()"
-      ></app-captcha>
 
       <button type="submit" class="submit-button">
         {{ cargando ? 'Registrando...' : 'Registrar administrador' }}

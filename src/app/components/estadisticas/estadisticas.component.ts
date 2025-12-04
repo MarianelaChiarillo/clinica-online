@@ -9,10 +9,10 @@ import Chart, { ChartType } from 'chart.js/auto';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EspecialidadService } from '../../services/usuarios/especialidad.service';
-
+import { MenuComponent } from '../componentes/menu/menu.component';
 @Component({
   selector: 'app-estadisticas-admin',
-  imports: [DatePipe, FormsModule, CommonModule],
+  imports: [DatePipe, FormsModule, CommonModule, MenuComponent],
   templateUrl: './estadisticas.component.html',
   styleUrls: ['./estadisticas.component.scss']
 })

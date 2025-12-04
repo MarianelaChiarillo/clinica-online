@@ -6,13 +6,23 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class FechaFormatoPipe implements PipeTransform {
   transform(fecha: string | Date | null | undefined): string {
-    if (!fecha) return '';
+    if (!fecha) {
+      return '';
+    }
 
-    const fechaObj = typeof fecha === 'string' ? new Date(fecha + 'T00:00:00') : new Date(fecha);
-    if (isNaN(fechaObj.getTime())) return '';
+    let fechaObjeto: Date;
+    if (typeof fecha === 'string') {
+      fechaObjeto = new Date(fecha + 'T00:00:00');
+    } else {
+      fechaObjeto = new Date(fecha);
+    }
 
-    const dia = fechaObj.getDate();
-    const mes = fechaObj.toLocaleDateString('es-AR', { month: 'long' });
+    if (isNaN(fechaObjeto.getTime())) {
+      return '';
+    }
+
+    const dia = fechaObjeto.getDate();
+    const mes = fechaObjeto.toLocaleDateString('es-AR', { month: 'long' });
 
     return dia + ' de ' + mes;
   }

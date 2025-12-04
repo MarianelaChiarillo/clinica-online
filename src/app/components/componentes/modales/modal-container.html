@@ -79,7 +79,11 @@
       <ng-container *ngSwitchCase="'cancelar'">
         <div class="form-group">
           <label>Motivo</label>
-          <textarea [(ngModel)]="comentario" rows="4" placeholder="Ingresá el motivo"></textarea>
+<textarea [(ngModel)]="comentario"></textarea>
+<p>{{ contarPalabras(comentario) }} / 50 palabras</p>
+<p *ngIf="contarPalabras(comentario) > 60" class="text-danger">
+  Superaste el límite de palabras permitido.
+</p>
         </div>
       </ng-container>
 

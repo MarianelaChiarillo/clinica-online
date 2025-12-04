@@ -11,11 +11,10 @@ import { DisponibilidadService } from '../../services/disponibilidad.service';
 import { TurnoService } from '../../services/turnos.service';
 import { FiltroGeneralComponent } from '../componentes/filtro-general/filtro-general.component';
 import { FechaFormatoPipe } from '../../pipes/fecha-formato.pipe';
-import { HoraFormatoPipe } from '../../pipes/hora-formato.pipe';
 import { MenuComponent } from './../componentes/menu/menu.component';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
 import { MensajeComponent } from '../componentes/mensaje/mensaje.component';
-
+import { HoraFormatoPipe } from '../../pipes/hora.pipe';
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
@@ -26,10 +25,10 @@ import { MensajeComponent } from '../componentes/mensaje/mensaje.component';
     FormsModule,
     FiltroGeneralComponent,
     FechaFormatoPipe,
-    HoraFormatoPipe,
     MenuComponent,
     SpinnerComponent,
-    MensajeComponent
+    MensajeComponent,
+    HoraFormatoPipe
   ]
 })
 export class SolicitarTurnoComponent implements OnInit, OnDestroy {

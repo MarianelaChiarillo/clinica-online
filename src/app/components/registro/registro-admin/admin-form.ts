@@ -10,7 +10,6 @@ import { Router } from '@angular/router';
 
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
-import { CaptchaComponent } from '../../componentes/captcha/captcha.component';
 
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';
@@ -28,7 +27,6 @@ import { UtilsService } from '../../../services/utils.service';
     FormsModule,
     MensajeComponent,
     SpinnerComponent,
-    CaptchaComponent,
   ],
   templateUrl: './admin-form.html',
   styleUrls: ['./admin-form.scss'],

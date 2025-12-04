@@ -14,7 +14,6 @@ import { StorageService } from '../../../services/storage.service';
 import { PacienteService } from '../../../services/usuarios/paciente.service';
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
-import { CaptchaComponent } from '../../componentes/captcha/captcha.component';
 import { RegistroValidatorsService } from '../../../validators/registro.validator';
 import { UtilsService } from '../../../services/utils.service';
 import { CaptchaWrapperComponent } from '../../componentes/captchaC/captcha-wrapper.component';
@@ -29,7 +28,6 @@ import { CaptchaDirectiva } from '../../../directives/captcha.directive';
     RouterLink,
     MensajeComponent,
     SpinnerComponent,
-    CaptchaComponent,
     CaptchaWrapperComponent,
        CaptchaDirectiva
   ],

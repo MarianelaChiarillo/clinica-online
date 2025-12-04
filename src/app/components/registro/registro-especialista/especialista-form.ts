@@ -12,7 +12,7 @@ import { UtilsService } from '../../../services/utils.service';
 
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
-import { CaptchaComponent } from '../../componentes/captcha/captcha.component';
+import { CaptchaWrapperComponent } from '../../componentes/captchaC/captcha-wrapper.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
@@ -30,7 +30,7 @@ import supabase from '../../../services/supabase.client';
     MatFormFieldModule,
     MatSelectModule,
     MatOptionModule,
-    CaptchaComponent
+    CaptchaWrapperComponent
   ],
   templateUrl: './especialista-form.html',
   styleUrls: ['./especialista-form.scss'],

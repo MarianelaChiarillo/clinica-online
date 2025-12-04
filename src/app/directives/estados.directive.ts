@@ -10,10 +10,9 @@ export class EstadoTurnoDirectiva implements OnChanges {
   constructor(private el: ElementRef, private renderer: Renderer2) {}
 
   ngOnChanges() {
-    const estadoNormalizado = this.estado ? this.estado.toLowerCase() : '';
-
     let clase = '';
     let texto = '';
+    const estadoNormalizado = this.estado ? this.estado.toLowerCase() : '';
 
     if (estadoNormalizado === 'solicitado') {
       clase = 'badge-warning';

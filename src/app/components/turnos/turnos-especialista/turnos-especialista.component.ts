@@ -9,7 +9,6 @@ import { AuthService } from '../../../services/auth.service';
 import { UtilsService } from '../../../services/utils.service';
 import { FiltroGeneralComponent } from '../../componentes/filtro-general/filtro-general.component';
 import { MenuComponent } from '../../componentes/menu/menu.component';
-import { EstadoEtiquetaPipe } from '../../../pipes/estadoEtiqueta.pipe';
 import { ModalService } from '../../../services/modal.service';
 import { TurnoService } from '../../../services/turnos.service';
 import { EspecialistaService } from '../../../services/usuarios/especialista.service';
@@ -25,7 +24,6 @@ import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
     ModalContainerComponent,
     FiltroGeneralComponent,
     MenuComponent,
-    EstadoEtiquetaPipe,
     FechaFormatoPipe
   ],
   templateUrl: './turnos-especialista.component.html',
