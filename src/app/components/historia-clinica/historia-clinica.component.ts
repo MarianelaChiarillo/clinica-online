@@ -1,20 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { 
-  FormBuilder, 
-  FormGroup, 
-  FormArray, 
-  Validators, 
-  ReactiveFormsModule, 
-  AbstractControl, 
-  FormsModule 
-} from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica.service';
 
 @Component({
   selector: 'app-historia-clinica-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './historia-clinica.component.html',
   styleUrls: ['./historia-clinica.component.scss']
 })
@@ -36,313 +28,162 @@ export class HistoriaClinicaFormComponent implements OnInit {
     this.historiaForm = this.crearForm();
   }
 
-  ngOnInit() {
-    // Configurar suscripciones para cambios en tipo_control
-    this.datosDinamicos.controls.forEach((control, index) => {
-      const tipoControl = control.get('tipo_control');
-      if (tipoControl) {
-        tipoControl.valueChanges.subscribe((nuevoTipo: string) => {
-          this.cambiarTipoControl(index, nuevoTipo);
-        });
-      }
-    });
-  }
+  ngOnInit() {}
 
+  // -----------------------------
+  // CREAR FORMULARIO
+  // -----------------------------
   private crearForm(): FormGroup {
     return this.fb.group({
       altura: ['', [Validators.required, Validators.min(0), Validators.max(250)]],
       peso: ['', [Validators.required, Validators.min(1), Validators.max(300)]],
       temperatura: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
       presion: ['', [Validators.required, Validators.pattern(/^\d{2,3}\/\d{2,3}$/)]],
-
-      datosDinamicos: this.fb.array([this.crearDatoDinamico()], {
-        validators: this.validarDatosDinamicos.bind(this)
-      }),
-
-      comentario: ['']
+      datosEspecificos: this.fb.array([
+        this.crearDato('rango', 'Nivel'),
+        this.crearDato('numerico', 'Valor numérico'),
+        this.crearDato('switch', 'Sí / No')
+      ]),
+      datosLibres: this.fb.array([]),
+      comentario: [''],
     });
   }
 
-  private crearDatoDinamico(): FormGroup {
+  private crearDato(tipo: string, claveDefault: string = ''): FormGroup {
     return this.fb.group({
-      clave: ['', [Validators.required]],
-      tipo_control: ['texto'],
-      
-      // Campos para cada tipo
+      clave: [claveDefault, [Validators.required]],
+      tipo_control: [tipo, [Validators.required]],
       valor_texto: [''],
-      valor_rango: [50, [Validators.min(0), Validators.max(100)]],
-      valor_numerico: ['', [Validators.min(0)]],
+      valor_rango: tipo === 'rango' ? 50 : null,
+      valor_numerico: tipo === 'numerico' ? '' : null,
+      valor_switch: tipo === 'switch' ? false : null
+    });
+  }
+
+  private crearDatoLibre(): FormGroup {
+    return this.fb.group({
+      clave: ['', Validators.required],
+      tipo_control: ['texto'],
+      valor_texto: [''],
       valor_switch: [false]
-    }, { validators: this.validarDatoDinamico.bind(this) });
+    });
   }
 
-  // Validador para cada dato dinámico
-  private validarDatoDinamico(group: AbstractControl) {
-    if (!(group instanceof FormGroup)) return null;
-    
-    const tipo = group.get('tipo_control')?.value;
-    
-    if (!tipo || tipo === 'texto') {
-      const texto = group.get('valor_texto')?.value;
-      if (!texto || texto.trim() === '') {
-        return { textoRequerido: true };
-      }
-    } else if (tipo === 'rango') {
-      const rango = group.get('valor_rango')?.value;
-      if (rango === null || rango === undefined) {
-        return { rangoRequerido: true };
-      }
-    } else if (tipo === 'numerico') {
-      const numero = group.get('valor_numerico')?.value;
-      if (!numero || numero === '' || isNaN(numero)) {
-        return { numeroRequerido: true };
-      }
-    }
-    
-    return null;
+  // -----------------------------
+  // GETTERS
+  // -----------------------------
+  get datosLibres(): FormArray {
+    return this.historiaForm.get('datosLibres') as FormArray;
   }
 
-  // Validador para el array completo
-  private validarDatosDinamicos(control: AbstractControl) {
-    if (!(control instanceof FormArray)) {
-      return null;
-    }
-    
-    const array = control as FormArray;
-    
-    // Verificar que no haya claves duplicadas
-    const claves = array.controls.map(c => {
-      if (c instanceof FormGroup) {
-        const claveControl = c.get('clave');
-        return claveControl?.value?.toLowerCase().trim();
-      }
-      return null;
-    }).filter(clave => clave && clave !== '');
-    
-    const clavesUnicas = new Set(claves);
-    
-    if (claves.length !== clavesUnicas.size) {
-      return { clavesDuplicadas: true };
-    }
-    
-    return null;
+  get datosEspecificos(): FormArray {
+    return this.historiaForm.get('datosEspecificos') as FormArray;
   }
 
-  get datosDinamicos(): FormArray {
-    return this.historiaForm.get('datosDinamicos') as FormArray;
+  // -----------------------------
+  // DATOS DINÁMICOS
+  // -----------------------------
+  agregarDatoLibre(): void {
+    if (this.datosLibres.length >= 3) return;
+    this.datosLibres.push(this.crearDatoLibre());
+    console.log('Dato libre agregado. Total datos libres:', this.datosLibres.length);
   }
 
-  agregarDatoDinamico(): void {
-    if (this.datosDinamicos.length < 3) {
-      const nuevoGrupo = this.crearDatoDinamico();
-      this.datosDinamicos.push(nuevoGrupo);
-      
-      // Suscribirse a cambios en el nuevo grupo
-      const tipoControl = nuevoGrupo.get('tipo_control');
-      if (tipoControl) {
-        tipoControl.valueChanges.subscribe((nuevoTipo: string) => {
-          const index = this.datosDinamicos.length - 1;
-          this.cambiarTipoControl(index, nuevoTipo);
-        });
-      }
-    }
+  removerDatoLibre(index: number): void {
+    this.datosLibres.removeAt(index);
+    console.log('Dato libre removido. Total datos libres:', this.datosLibres.length);
   }
 
-  removerDatoDinamico(index: number): void {
-    if (this.datosDinamicos.length > 1) {
-      this.datosDinamicos.removeAt(index);
-    }
-  }
-
-  cambiarTipoControl(index: number, tipo: string) {
-    const grupo = this.datosDinamicos.at(index) as FormGroup;
-    
-    // Resetear valores según el tipo
-    const nuevosValores: any = {
-      tipo_control: tipo
+  cambiarTipoControlLibre(index: number, tipo: string) {
+    const grupo = this.datosLibres.at(index) as FormGroup;
+    const valoresPorTipo: any = {
+      texto: { valor_texto: '', valor_switch: null },
+      switch: { valor_texto: '', valor_switch: false }
     };
-    
-    switch (tipo) {
-      case 'texto':
-        nuevosValores.valor_texto = '';
-        nuevosValores.valor_rango = null;
-        nuevosValores.valor_numerico = null;
-        nuevosValores.valor_switch = null;
-        break;
-      case 'rango':
-        nuevosValores.valor_texto = '';
-        nuevosValores.valor_rango = 50;
-        nuevosValores.valor_numerico = null;
-        nuevosValores.valor_switch = null;
-        break;
-      case 'numerico':
-        nuevosValores.valor_texto = '';
-        nuevosValores.valor_rango = null;
-        nuevosValores.valor_numerico = '';
-        nuevosValores.valor_switch = null;
-        break;
-      case 'switch':
-        nuevosValores.valor_texto = '';
-        nuevosValores.valor_rango = null;
-        nuevosValores.valor_numerico = null;
-        nuevosValores.valor_switch = false;
-        break;
-    }
-    
-    grupo.patchValue(nuevosValores, { emitEvent: false });
-    
-    // Forzar validación
+    grupo.patchValue({ tipo_control: tipo, ...valoresPorTipo[tipo] }, { emitEvent: false });
     grupo.updateValueAndValidity();
+    console.log(`Tipo de dato libre en posición ${index} cambiado a:`, tipo);
   }
 
-  async onSubmit(): Promise<void> {
-    // Marcar todos los controles como tocados
-    this.marcarCamposComoSucios();
-    
-    if (this.historiaForm.valid) {
-      this.procesando = true;
-      this.error = '';
-
-      try {
-        const formValue = this.historiaForm.value;
-        
-        // Preparar datos dinámicos para guardar
-        const datosDinamicosPreparados = this.prepararDatosParaGuardar();
-        
-        console.log('📤 Datos dinámicos preparados:', datosDinamicosPreparados);
-
-        const historiaGuardada = await this.historiaService.crearHistoriaClinicaCompleta(
-          {
-            turno_id: this.turnoId,
-            paciente_id: this.pacienteId,
-            especialista_id: this.especialistaId,
-            especialidad_id: this.especialidadId,
-            altura: parseFloat(formValue.altura),
-            peso: parseFloat(formValue.peso),
-            temperatura: parseFloat(formValue.temperatura),
-            presion: formValue.presion
-          },
-          datosDinamicosPreparados
-        );
-
-        this.guardado.emit({
-          success: true,
-          comentario: formValue.comentario,
-          historia: historiaGuardada
-        });
-
-      } catch (error: any) {
-        console.error('❌ Error al guardar:', error);
-        this.error = error.message || 'Error al guardar la historia clínica';
-        this.guardado.emit({ success: false, error: this.error });
-      } finally {
-        this.procesando = false;
-      }
-    } else {
-      console.log('❌ Formulario inválido');
-      this.mostrarErroresFormulario();
-      
-      if (this.datosDinamicos.errors?.['clavesDuplicadas']) {
-        this.error = 'No pueden haber claves duplicadas en los datos dinámicos';
-      } else {
-        this.error = 'Por favor completá todos los campos requeridos correctamente';
-      }
-    }
-  }
-
-  // Método para debug: mostrar todos los errores
-  private mostrarErroresFormulario() {
-    Object.keys(this.historiaForm.controls).forEach(key => {
-      const control = this.historiaForm.get(key);
-      if (control?.errors) {
-        console.log(`❌ ${key}:`, control.errors);
-      }
-    });
-    
-    this.datosDinamicos.controls.forEach((control, index) => {
-      if (control.errors) {
-        console.log(`❌ Dato dinámico ${index}:`, control.errors);
-      }
-    });
-  }
-
-  private prepararDatosParaGuardar() {
-    return this.datosDinamicos.value.map((dato: any) => {
-      const tipo = dato.tipo_control || 'texto';
-      let valor_texto = '';
-      
-      switch (tipo) {
-        case 'texto':
-          valor_texto = dato.valor_texto || '';
-          break;
-        case 'rango':
-          valor_texto = `${dato.valor_rango || 50}%`;
-          break;
-        case 'numerico':
-          valor_texto = dato.valor_numerico?.toString() || '';
-          break;
-        case 'switch':
-          valor_texto = dato.valor_switch ? 'Sí' : 'No';
-          break;
-        default:
-          valor_texto = dato.valor_texto || '';
-      }
-      
+  // -----------------------------
+  // PREPARAR DATOS PARA GUARDAR
+  // -----------------------------
+  private prepararDatosArray(array: FormArray): any[] {
+    return array.value.map((dato: any, i: any) => {
+      const tipo = dato.tipo_control;
+      let valor = '';
+      if (tipo === 'texto') valor = dato.valor_texto || '';
+      if (tipo === 'rango') valor = `${dato.valor_rango || 50}%`;
+      if (tipo === 'numerico') valor = dato.valor_numerico?.toString() || '';
+      if (tipo === 'switch') valor = dato.valor_switch ? 'Sí' : 'No';
+      console.log('Preparando dato', i, dato);
       return {
         clave: dato.clave,
         tipo_control: tipo,
-        valor_texto: valor_texto,
-        valor_rango: tipo === 'rango' ? (dato.valor_rango || 50) : null,
-        valor_numerico: tipo === 'numerico' ? (dato.valor_numerico || 0) : null,
-        valor_switch: tipo === 'switch' ? (dato.valor_switch || false) : null
+        valor,
+        valor_texto: tipo === 'texto' ? dato.valor_texto : null,
+        valor_rango: tipo === 'rango' ? dato.valor_rango : null,
+        valor_numerico: tipo === 'numerico' ? dato.valor_numerico : null,
+        valor_switch: tipo === 'switch' ? dato.valor_switch : null
       };
     });
   }
 
-  private marcarCamposComoSucios(): void {
-    Object.keys(this.historiaForm.controls).forEach(key => {
-      const control = this.historiaForm.get(key);
-      control?.markAsTouched();
-    });
+  // -----------------------------
+  // GUARDAR
+  // -----------------------------
+  async onSubmit(): Promise<void> {
+  if (this.procesando) return; // evita doble submit
+  this.procesando = true;
+  this.error = '';
+  this.historiaForm.markAllAsTouched();
 
-    this.datosDinamicos.controls.forEach((control: AbstractControl) => {
-      control.markAsTouched();
-      if (control instanceof FormGroup) {
-        Object.keys(control.controls).forEach(key => {
-          control.get(key)?.markAsTouched();
-        });
-      }
-    });
-  }
+  try {
+    const datosDinamicos = [
+      ...this.prepararDatosArray(this.datosEspecificos),
+      ...this.prepararDatosArray(this.datosLibres)
+    ];
 
-  mostrarError(controlName: string): boolean {
-    const control = this.historiaForm.get(controlName);
-    return !!control && control.invalid && (control.dirty || control.touched);
-  }
-
-  mostrarErrorDatoDinamico(index: number, controlName: string): boolean {
-    const control = this.datosDinamicos.at(index).get(controlName);
-    return !!control && control.invalid && (control.dirty || control.touched);
-  }
-
-  tieneErrorDatoDinamico(index: number): boolean {
-    const grupo = this.datosDinamicos.at(index);
-    return grupo.invalid && (grupo.dirty || grupo.touched);
-  }
-
-  getMensajeErrorDatoDinamico(index: number): string {
-    const grupo = this.datosDinamicos.at(index);
-    
-    if (grupo.errors?.['textoRequerido']) {
-      return 'El valor de texto es requerido';
+    // Validar claves duplicadas
+    const claves = datosDinamicos.map(d => d.clave?.trim().toLowerCase()).filter(Boolean);
+    if (new Set(claves).size !== claves.length) {
+      this.error = 'Hay claves duplicadas entre los datos';
+      console.error(this.error);
+      this.guardado.emit({ success: false, error: this.error });
+      return;
     }
-    if (grupo.errors?.['rangoRequerido']) {
-      return 'El valor de rango es requerido';
-    }
-    if (grupo.errors?.['numeroRequerido']) {
-      return 'El valor numérico es requerido';
-    }
-    
-    return '';
+
+    const formValue = this.historiaForm.value;
+    const historiaBase = {
+      turno_id: this.turnoId,
+      paciente_id: this.pacienteId,
+      especialista_id: this.especialistaId,
+      especialidad_id: this.especialidadId,
+      altura: parseFloat(formValue.altura),
+      peso: parseFloat(formValue.peso),
+      temperatura: parseFloat(formValue.temperatura),
+      presion: formValue.presion
+    };
+
+    // Guardar historia clínica completa
+    const historiaGuardada = await this.historiaService.crearHistoriaClinicaCompleta(historiaBase, datosDinamicos);
+    console.log('Historia clínica guardada:', historiaGuardada);
+
+    this.guardado.emit({ success: true,           comentario: formValue.comentario,
+ historia: historiaGuardada });
+
+    // Limpiar formulario para evitar re-envíos
+    this.historiaForm.reset();
+    this.datosEspecificos.clear();
+    this.datosLibres.clear();
+
+  } catch (err: any) {
+    this.error = err.message || 'Error al guardar la historia clínica';
+    console.error('Error guardando historia clínica:', err);
+    this.guardado.emit({ success: false, error: this.error });
+  } finally {
+    this.procesando = false;
   }
+}
+
 }

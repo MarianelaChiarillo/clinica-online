@@ -104,7 +104,8 @@ async cargarPacientesAtendidos() {
     await this.cargarTurnosDelPaciente(paciente.id);
   }
 
- async cargarTurnosDelPaciente(pacienteId: number) {
+ 
+async cargarTurnosDelPaciente(pacienteId: number) {
   try {
     const resultado = await this.turnosService.obtenerTurnosDePaciente(pacienteId);
     const turnosData = resultado.data || [];
@@ -112,12 +113,27 @@ async cargarPacientesAtendidos() {
 
     for (let i = 0; i < turnosData.length; i++) {
       const turno = turnosData[i];
+
+      // Obtener historia clínica
       const historiaClinica = await this.historiaClinicaService.obtenerHistoriaClinicaPorTurno(turno.id);
-      turnosConHistoria.push({ ...turno, historia_clinica: historiaClinica });
+
+      // Obtener especialidad
+      const { data: especialidad } = await supabase
+        .from('especialidades')
+        .select('nombre')
+        .eq('id', turno.especialidad_id)
+        .single();
+
+      turnosConHistoria.push({
+        ...turno,
+        historia_clinica: historiaClinica,
+        especialidades: especialidad || null // así tu HTML puede usar turno.especialidades?.nombre
+      });
     }
 
     this.turnosDelPaciente = turnosConHistoria;
     console.log('Turnos del paciente:', this.turnosDelPaciente);
+
   } catch (error) {
     console.error('Error cargando turnos:', error);
   }

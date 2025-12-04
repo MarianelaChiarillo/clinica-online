@@ -12,21 +12,25 @@ export interface HistoriaClinica {
   datos_dinamicos: DatoDinamico[]; 
 }
 
+// En models/historia-clinica.ts
 export interface DatoDinamico {
   id?: number;
   historia_clinica_id?: number;
   clave: string;
+  tipo_control: 'texto' | 'rango' | 'numerico' | 'switch';
   
+  // Campos según tipo
+  valor?: string;          // Para texto o valor general
+  valor_rango?: number;    // Para rango (0-100)
+  valor_numerico?: number; // Para numérico
+  valor_switch?: boolean;  // Para switch
+  
+  // Campo temporal para formulario (puede eliminarse)
   valor_texto?: string;
   
-  tipo_control?: 'texto' | 'rango' | 'numerico' | 'switch';
-  valor_rango?: number;     
-  valor_numerico?: number;  
-  valor_switch?: boolean;    
-  
-  valor_mostrar?: string;
+  created_at?: string;
+  valor_mostrar?: string; // Para mostrar en UI
 }
-
 export function obtenerValorDato(dato: DatoDinamico): string {
   if (!dato.tipo_control || dato.tipo_control === 'texto') {
     return dato.valor_texto || '';

@@ -1,162 +1,92 @@
 <div class="historia-clinica-form">
   <form [formGroup]="historiaForm" (ngSubmit)="onSubmit()" class="form-container">
 
-    <!-- Datos Fijos -->
+    <!-- DATOS FIJOS -->
     <div class="seccion card">
-      <h3> Datos Fijos</h3>
-      <div class="campos-fijos">
-
-        <div class="form-group" [class.error]="mostrarError('altura')">
-          <label>Altura (cm) *</label>
-          <input type="number" formControlName="altura" step="0.1" placeholder="Ej: 170" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('altura')">Altura requerida (0-250 cm)</div>
+      <h3>Datos Fijos (Obligatorios)</h3>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Altura *</label>
+            <input type="number" formControlName="altura" class="input-text">
+          </div>
         </div>
-
-        <div class="form-group" [class.error]="mostrarError('peso')">
-          <label>Peso (kg) *</label>
-          <input type="number" formControlName="peso" step="0.1" placeholder="Ej: 70.5" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('peso')">Peso requerido (1-300 kg)</div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Peso *</label>
+            <input type="number" formControlName="peso" class="input-text">
+          </div>
         </div>
-
-        <div class="form-group" [class.error]="mostrarError('temperatura')">
-          <label>Temperatura (°C) *</label>
-          <input type="number" formControlName="temperatura" step="0.1" placeholder="Ej: 36.5" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('temperatura')">Temperatura requerida (0-100°C)</div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Temperatura *</label>
+            <input type="number" formControlName="temperatura" class="input-text">
+          </div>
         </div>
-
-        <div class="form-group" [class.error]="mostrarError('presion')">
-          <label>Presión Arterial *</label>
-          <input type="text" formControlName="presion" placeholder="Ej: 120/80" class="form-control">
-          <div class="error-message" *ngIf="mostrarError('presion')">Formato válido: 120/80</div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Presión Arterial *</label>
+            <input type="text" formControlName="presion" class="input-text">
+          </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Datos Dinámicos -->
-    <div class="seccion card">
-      <h3> Datos Dinámicos (Máximo 3)</h3>
-      
-      <div *ngIf="datosDinamicos.errors?.['clavesDuplicadas']" class="alert alert-danger">
-        ❌ No pueden haber claves duplicadas en los datos dinámicos
+    <!-- DATOS ESPECÍFICOS -->
+    <div class="seccion card" formArrayName="datosEspecificos">
+      <h3>Datos Específicos (Obligatorios)</h3>
+
+      <div *ngFor="let dato of datosEspecificos.controls; let i=index" [formGroupName]="i" class="form-group">
+        <label>Clave</label>
+        <input type="text" formControlName="clave" class="input-text" placeholder="Escribí tu clave">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'texto'">Valor</label>
+        <input *ngIf="dato.get('tipo_control')?.value === 'texto'" type="text" formControlName="valor_texto" class="input-text">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'rango'">Nivel: {{ dato.get('valor_rango')?.value }}%</label>
+        <input *ngIf="dato.get('tipo_control')?.value === 'rango'" type="range" formControlName="valor_rango" min="0" max="100">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'numerico'">Valor:</label>
+        <input *ngIf="dato.get('tipo_control')?.value === 'numerico'" type="number" formControlName="valor_numerico" class="input-text">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'switch'">Valor:</label>
+        <label *ngIf="dato.get('tipo_control')?.value === 'switch'" class="switch">
+          <input type="checkbox" formControlName="valor_switch">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- DATOS LIBRES -->
+    <div class="seccion card" formArrayName="datosLibres">
+      <h3>Datos Adicionales (Opcionales)</h3>
+
+      <div *ngFor="let dato of datosLibres.controls; let i=index" [formGroupName]="i" class="form-group">
+        <label>Clave</label>
+        <input type="text" formControlName="clave" class="input-text" placeholder="Escribí tu clave">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'texto'">Valor</label>
+        <input *ngIf="dato.get('tipo_control')?.value === 'texto'" type="text" formControlName="valor_texto" class="input-text">
+
+        <label *ngIf="dato.get('tipo_control')?.value === 'switch'">Valor</label>
+        <label *ngIf="dato.get('tipo_control')?.value === 'switch'" class="switch">
+          <input type="checkbox" formControlName="valor_switch">
+          <span class="slider round"></span>
+        </label>
+
+        <button type="button" class="btn-eliminar" (click)="removerDatoLibre(i)">Eliminar</button>
       </div>
 
-      <div formArrayName="datosDinamicos" class="datos-dinamicos-container">
-        <div *ngFor="let dato of datosDinamicos.controls; let i = index" [formGroupName]="i" class="dato-dinamico card">
-          
-          <!-- Encabezado -->
-          <div class="encabezado-dinamico">
-            <div class="form-group clave-container" [class.error]="mostrarErrorDatoDinamico(i, 'clave')">
-              <input type="text" formControlName="clave" 
-                     placeholder="Clave (ej: Glucosa, Dolor)" 
-                     class="form-control clave">
-              <div class="error-message" *ngIf="mostrarErrorDatoDinamico(i, 'clave')">
-                Clave requerida
-              </div>
-            </div>
-            
-            <!-- Tipo de control - CORREGIDO -->
-            <div class="form-group tipo-container">
-              <select formControlName="tipo_control" 
-                      (change)="cambiarTipoControl(i, tipoSelect.value)"
-                      class="form-control tipo-control"
-                      #tipoSelect>
-                <option value="texto">Texto libre</option>
-                <option value="rango">Rango (0-100%)</option>
-                <option value="numerico">Número</option>
-                <option value="switch">Sí/No</option>
-              </select>
-            </div>
-            
-            <button type="button" 
-                    class="btn-remover" 
-                    (click)="removerDatoDinamico(i)" 
-                    [disabled]="datosDinamicos.length <= 1"
-                    title="Eliminar este dato">
-              ❌
-            </button>
-          </div>
-
-          <!-- Controles según tipo -->
-          <div class="control-dinamico">
-            
-            <!-- Texto libre -->
-            <div *ngIf="!dato.get('tipo_control')?.value || dato.get('tipo_control')?.value === 'texto'" 
-                 class="form-group"
-                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['textoRequerido']">
-              <input type="text" formControlName="valor_texto" 
-                     placeholder="Valor (ej: 120 mg/dl, dolor moderado)" 
-                     class="form-control">
-              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['textoRequerido']">
-                {{ getMensajeErrorDatoDinamico(i) }}
-              </div>
-            </div>
-
-            <!-- Rango -->
-            <div *ngIf="dato.get('tipo_control')?.value === 'rango'" 
-                 class="form-group rango-group"
-                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['rangoRequerido']">
-              <label>Nivel: {{ dato.get('valor_rango')?.value || 50 }}%</label>
-              <input type="range" formControlName="valor_rango" 
-                     min="0" max="100" step="1" 
-                     class="form-control-range">
-              <div class="rango-labels">
-                <span>0%</span>
-                <span>50%</span>
-                <span>100%</span>
-              </div>
-              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['rangoRequerido']">
-                {{ getMensajeErrorDatoDinamico(i) }}
-              </div>
-            </div>
-
-            <!-- Numérico -->
-            <div *ngIf="dato.get('tipo_control')?.value === 'numerico'" 
-                 class="form-group"
-                 [class.error]="tieneErrorDatoDinamico(i) && dato.errors?.['numeroRequerido']">
-              <input type="number" formControlName="valor_numerico" 
-                     step="0.01" 
-                     placeholder="Ej: 120.5" 
-                     class="form-control">
-              <div class="error-message" *ngIf="tieneErrorDatoDinamico(i) && dato.errors?.['numeroRequerido']">
-                {{ getMensajeErrorDatoDinamico(i) }}
-              </div>
-            </div>
-
-            <!-- Switch Sí/No -->
-            <div *ngIf="dato.get('tipo_control')?.value === 'switch'" class="form-group switch-group">
-              <div class="switch-container">
-                <label class="switch-label">
-                  {{ dato.get('valor_switch')?.value ? 'Sí' : 'No' }}
-                </label>
-                <label class="switch">
-                  <input type="checkbox" formControlName="valor_switch">
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Error general -->
-          <div *ngIf="tieneErrorDatoDinamico(i)" class="error-dato-general">
-            {{ getMensajeErrorDatoDinamico(i) }}
-          </div>
-
-        </div>
-      </div>
-
-      <button type="button"
-              class="btn-agregar"
-              (click)="agregarDatoDinamico()"
-              [disabled]="datosDinamicos.length >= 3">
-        ➕ Agregar dato dinámico
-      </button>
+     <button type="button" class="btn-agregar" 
+        (click)="agregarDatoLibre()" 
+        [disabled]="datosLibres.length >= 3">
+  Agregar dato
+</button>
+<p *ngIf="datosLibres.length >= 3" class="alert">Máximo 3 datos dinámicos permitidos</p>
 
     </div>
 
-    <!-- Comentario -->
-    <div class="form-group card">
+     <div class="form-group card">
       <label>Reseña para el paciente</label>
       <textarea formControlName="comentario"
                 rows="3"
@@ -166,13 +96,10 @@
 
     <div class="error-general" *ngIf="error">{{ error }}</div>
 
-    <div class="acciones">
-      <button type="submit"
-              class="btn-enviar"
-              [disabled]="procesando">
-        {{ procesando ? ' Guardando...' : 'Guardar Historia Clínica' }}
-      </button>
-    </div>
 
+    <!-- BOTÓN GUARDAR -->
+    <button type="submit" class="btn-guardar" (click)="onSubmit()"  [disabled]="procesando">
+      {{ procesando ? 'Guardando...' : 'Guardar Historia Clínica' }}
+    </button>
   </form>
 </div>
