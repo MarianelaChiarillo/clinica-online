@@ -64,7 +64,6 @@ Incluye validaciones, seguridad con captcha, animaciones de transición y descar
 ![Diseño 5](src/assets/images/solicitar.png)
 ![Diseño 6](src/assets/images/turnos.png)
 ![Diseño 7](src/assets/images/miperfil.png)
-![Diseño 8](src/assets/images/miperfil.png)
 
 
 ---
