@@ -130,54 +130,32 @@ export class UtilsService {
   }
 
   // Método auxiliar para buscar en personas (se mantiene igual)
-  private buscarEnPersona(
-    persona: any,
-    tipo: string,
-    coincidencias: Coincidencia[],
-    termino: string
-  ): void {
-    if (!persona) return;
+private buscarEnPersona(
+  persona: any,
+  tipo: string,
+  coincidencias: Coincidencia[],
+  termino: string
+): void {
+  if (!persona) return;
 
-    const nombreCompleto = `${persona.nombre || ''} ${persona.apellido || ''}`.toLowerCase().trim();
-    const nombreInvertido = `${persona.apellido || ''} ${persona.nombre || ''}`
-      .toLowerCase()
-      .trim();
+  const nombreCompleto = `${persona.nombre || ''} ${persona.apellido || ''}`.toLowerCase().trim();
+  const nombreInvertido = `${persona.apellido || ''} ${persona.nombre || ''}`.toLowerCase().trim();
 
-    if (nombreCompleto.includes(termino) || nombreInvertido.includes(termino)) {
+  // Solo agregar coincidencia una vez por persona
+  if (nombreCompleto.includes(termino) || nombreInvertido.includes(termino)) {
+    const yaExiste = coincidencias.some(
+      c => c.tipo === tipo && c.valor === `${persona.nombre} ${persona.apellido}`
+    );
+    if (!yaExiste) {
       coincidencias.push({
-        tipo: tipo as
-          | 'paciente'
-          | 'especialista'
-          | 'especialidad'
-          | 'estado'
-          | 'fecha'
-          | 'hora'
-          | 'historia_clinica_fija'
-          | 'historia_clinica_dinamica',
+        tipo: tipo as 'paciente' | 'especialista',
         campo: this.obtenerNombreCampo(tipo),
         valor: `${persona.nombre} ${persona.apellido}`,
       });
-    } else {
-      const nombre = persona.nombre?.toLowerCase() || '';
-      const apellido = persona.apellido?.toLowerCase() || '';
-
-      if (nombre.includes(termino) || apellido.includes(termino)) {
-        coincidencias.push({
-          tipo: tipo as
-            | 'paciente'
-            | 'especialista'
-            | 'especialidad'
-            | 'estado'
-            | 'fecha'
-            | 'hora'
-            | 'historia_clinica_fija'
-            | 'historia_clinica_dinamica',
-          campo: this.obtenerNombreCampo(tipo),
-          valor: `${persona.nombre} ${persona.apellido}`,
-        });
-      }
     }
   }
+}
+
 
   // Búsqueda en historia clínica MODIFICADA
   private buscarCoincidenciasHistoriaClinica(
@@ -272,6 +250,13 @@ export class UtilsService {
 
     return coincidencias;
   }
+
+
+
+
+
+
+  
 
   // Nueva función para verificar coincidencias exactas
   private coincideExactamente(
@@ -553,6 +538,9 @@ class FiltroMedicoService {
     return unidades.some((unidad) => texto.toLowerCase().includes(unidad));
   }
 
+
+  
+
   esBusquedaDeMedicion(texto: string): boolean {
     const mediciones = [
       'cm',
@@ -596,4 +584,5 @@ class FiltroMedicoService {
     const match = texto.match(/\d+(\.\d+)?/);
     return match ? parseFloat(match[0]) : null;
   }
+  
 }

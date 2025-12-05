@@ -1,17 +1,9 @@
-<!-- Switch dinámico -->
-<div class="captcha-toggle">
-  <label>
-    <input type="checkbox" [(ngModel)]="captchaEnabled" (change)="onToggleCaptcha()" />
-    {{ captchaEnabled ? 'Deshabilitar CAPTCHA' : 'Habilitar CAPTCHA' }}
-  </label>
-</div>
+<div class="captcha-module-wrapper">
 
-<!-- Botón para mostrar el captcha -->
 <div *ngIf="captchaEnabled && !captchaVisible" class="captcha-show-btn">
   <button (click)="mostrarCaptcha()">Completar CAPTCHA</button>
 </div>
 
-<!-- Contenedor de captcha -->
 <div *ngIf="captchaVisible && captchaEnabled" class="captcha-container">
   <div appCaptcha
        [enabled]="captchaEnabled"
@@ -20,13 +12,11 @@
        (seleccionToggled)="onSeleccionToggled($event)"
        (verificarSolicitado)="onVerificarSolicitado()">
     
-    <!-- Mensaje si ya está validado -->
     <div *ngIf="captchaValido" class="captcha-success">
       <div class="success-icon">✓</div>
       <p>¡Captcha validado correctamente!</p>
     </div>
 
-    <!-- Mostrar captcha si no está validado -->
     <ng-container *ngIf="!captchaValido">
       <div class="instructions">
         <p *ngIf="objetivo">
@@ -56,11 +46,20 @@
   </div>
 </div>
 
-<!-- Mensaje si captcha está deshabilitado -->
 <div *ngIf="!captchaEnabled" class="captcha-disabled">
   <div class="disabled-icon">✓</div>
   <p>CAPTCHA deshabilitado</p>
 </div>
 
-<!-- Botón de registro -->
-<button type="submit" [disabled]="!captchaPassed || cargando">Registrar</button>
+<div class="captcha-toggle">
+  <label class="switch">
+    <input type="checkbox" [(ngModel)]="captchaEnabled" (change)="onToggleCaptcha()">
+    <span class="slider"></span>
+  </label>
+  <span class="toggle-label">
+    {{ captchaEnabled ? 'Deshabilitar CAPTCHA' : 'Habilitar CAPTCHA' }}
+  </span>
+</div>
+
+
+</div>

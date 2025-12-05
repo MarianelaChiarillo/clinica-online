@@ -55,6 +55,15 @@
       }
     }
   }
+.form-group.card textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
 
   .btn-agregar, .btn-guardar {
     background: #007bff;

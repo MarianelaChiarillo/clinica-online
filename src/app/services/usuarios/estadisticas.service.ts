@@ -5,266 +5,282 @@ import supabase from '../supabase.client';
   providedIn: 'root'
 })
 export class EstadisticasService {
+  
+  // ==================== FUNCIONES DE AJUSTE DE HORA ====================
+  
+  /**
+   * Convierte fecha/hora UTC a hora Argentina (UTC-3)
+   */
+  private utcToArgentinaHora(fechaUTC: string): string {
+    if (!fechaUTC) return '';
+    
+    const fecha = new Date(fechaUTC);
+    // Argentina está en UTC-3, restamos 3 horas
+    fecha.setHours(fecha.getHours() - 3);
+    
+    return fecha.toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+  
+  /**
+   * Convierte fecha/hora UTC a fecha Argentina (UTC-3)
+   */
+  private utcToArgentinaFecha(fechaUTC: string): string {
+    if (!fechaUTC) return '';
+    
+    const fecha = new Date(fechaUTC);
+    // Argentina está en UTC-3, restamos 3 horas
+    fecha.setHours(fecha.getHours() - 3);
+    
+    return fecha.toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  }
+  
+  /**
+   * Convierte fecha/hora UTC a fecha y hora Argentina completas
+   */
+  private utcToArgentinaCompleto(fechaUTC: string): string {
+    if (!fechaUTC) return '';
+    
+    const fecha = new Date(fechaUTC);
+    // Argentina está en UTC-3, restamos 3 horas
+    fecha.setHours(fecha.getHours() - 3);
+    
+    return fecha.toLocaleString('es-AR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+  
+  /**
+   * Obtiene el día de la semana en español desde una fecha UTC
+   */
+  private obtenerDiaSemanaArgentina(fechaUTC: string): string {
+    if (!fechaUTC) return '';
+    
+    const fecha = new Date(fechaUTC);
+    // Ajustar a hora Argentina
+    fecha.setHours(fecha.getHours() - 3);
+    
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return dias[fecha.getDay()];
+  }
+  
+  // ==================== MÉTODOS DEL SERVICIO ====================
 
   async obtenerLogIngresos(): Promise<any[]> {
-    try {
-      const respuesta = await supabase.rpc('get_auth_logs_with_profile');
-      const userLogs = respuesta.data;
-      const error = respuesta.error;
+    const { data, error } = await supabase
+      .from('logs_ingresos')
+      .select('usuario_id, email, nombre, apellido, fecha_hora')
+      .order('fecha_hora', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
-
-      if (!userLogs) {
-        return [];
-      }
-
-      const lista = [];
-      for (let i = 0; i < userLogs.length; i++) {
-        const log = userLogs[i];
-
-        const item: any = {};
-        item.usuario_id = log.user_id;
-        item.usuario_email = log.user_email;
-        item.nombre_completo = log.user_email;
-        item.primer_ingreso_fecha_hora = log.primer_ingreso_fecha_hora;
-        item.ultimo_ingreso_fecha_hora = log.ultimo_ingreso_fecha_hora;
-
-        if (log.tipo_usuario) {
-          item.tipo = log.tipo_usuario;
-        } else {
-          item.tipo = 'auth_user';
-        }
-
-        item.estado = 'activo';
-
-        if (item.primer_ingreso_fecha_hora) {
-          lista.push(item);
-        }
-      }
-
-      for (let a = 0; a < lista.length - 1; a++) {
-        for (let b = a + 1; b < lista.length; b++) {
-          const fechaA = new Date(lista[a].ultimo_ingreso_fecha_hora).getTime();
-          const fechaB = new Date(lista[b].ultimo_ingreso_fecha_hora).getTime();
-          if (fechaA < fechaB) {
-            const tiempo : any = lista[a];
-            lista[a] = lista[b];
-            lista[b] = tiempo;
-          }
-        }
-      }
-
-      return lista;
-
-    } catch (e) {
+    if(error) {
+      console.error('Error al obtener logs de ingresos:', error);
       return [];
     }
+
+    if (!data) return [];
+
+    // Ajustar todas las fechas a hora Argentina
+    return data.map(log => ({
+      ...log,
+      fecha_hora_argentina: this.utcToArgentinaCompleto(log.fecha_hora),
+      fecha_argentina: this.utcToArgentinaFecha(log.fecha_hora),
+      hora_argentina: this.utcToArgentinaHora(log.fecha_hora),
+      // Mantener la fecha original también
+      fecha_hora_original: log.fecha_hora
+    }));
   }
 
-  async obtenerDatosSinFiltro() {
-    const logs = await this.obtenerLogIngresos();
-    const turnos = await this.obtenerTurnosCompletos();
+  async obtenerTurnosPorEspecialidadConNombre() {
+    // 1. Traer todas las especialidades activas
+    const { data: especialidades, error: espError } = await supabase
+      .from('especialidades')
+      .select('id, nombre')
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
 
-    const resultado: any = {};
-    resultado.logIngresos = logs;
-    resultado.turnosCompletos = turnos;
+    if (espError || !especialidades) return [];
 
-    return resultado;
-  }
-
-  async obtenerTurnosCompletos(): Promise<any[]> {
-    const respuesta = await supabase
+    // 2. Traer todos los turnos
+    const { data: turnos, error: turnosError } = await supabase
       .from('turnos')
-      .select('id, estado, fecha_turno, especialidad_id')
-      .not('especialidad_id', 'is', null);
+      .select('especialidad_id, fecha_turno, hora_inicio, hora_fin');
 
-    const data = respuesta.data;
-    const error = respuesta.error;
+    if (turnosError || !turnos) return [];
 
-    if (error) {
-      return [];
-    }
+    // 3. Contar turnos por especialidad_id
+    const conteo: Record<number, number> = {};
+    turnos.forEach(t => {
+      if (t.especialidad_id) {
+        conteo[t.especialidad_id] = (conteo[t.especialidad_id] || 0) + 1;
+      }
+    });
 
-    if (!data) {
-      return [];
-    }
-
-    return data;
+    // 4. Combinar nombre con cantidad (0 si no tiene turnos)
+    return especialidades.map(e => ({
+      especialidad: e.nombre,
+      cantidad: conteo[e.id] || 0,
+      id: e.id
+    }));
   }
 
-  async obtenerTurnosPorDiaSemana(): Promise<any[]> {
-    const respuesta = await supabase
+  async obtenerTurnosPorDiaSemana() {
+    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    
+    // Inicializamos conteo en 0 para todos los días
+    const conteo: Record<string, number> = {};
+    diasSemana.forEach(d => conteo[d] = 0);
+
+    // Traemos todos los turnos
+    const { data: turnos, error } = await supabase
+      .from('turnos')
+      .select('fecha_turno, hora_inicio, hora_fin');
+
+    if (error || !turnos) {
+      return diasSemana.map(d => ({ 
+        dia: d, 
+        cantidad: 0 
+      }));
+    }
+
+    // Contamos los turnos por día de la semana EN ARGENTINA
+    turnos.forEach(t => {
+      if (!t.fecha_turno) return;
+      
+      // Obtener el día de la semana en Argentina
+      const diaArgentina = this.obtenerDiaSemanaArgentina(t.fecha_turno);
+      
+      if (diaArgentina && diaArgentina !== 'Domingo') { // Si no quieres domingos
+        conteo[diaArgentina]++;
+      } else if (diaArgentina === 'Domingo') {
+        conteo['Domingo']++;
+      }
+    });
+
+    // Ordenar según los días de la semana
+    return diasSemana.map(d => ({ 
+      dia: d, 
+      cantidad: conteo[d] 
+    }));
+  }
+
+  // ==================== NUEVOS MÉTODOS ====================
+
+  /**
+   * Obtiene turnos con fechas ajustadas a Argentina
+   */
+  async obtenerTurnosConHoraArgentina() {
+    const { data: turnos, error } = await supabase
+      .from('turnos')
+      .select('*')
+      .order('fecha_turno', { ascending: false });
+
+    if (error || !turnos) return [];
+
+    // Ajustar todas las fechas a hora Argentina
+    return turnos.map(turno => ({
+      ...turno,
+      // Fechas ajustadas a Argentina
+      fecha_turno_argentina: this.utcToArgentinaFecha(turno.fecha_turno),
+      hora_inicio_argentina: this.utcToArgentinaHora(turno.hora_inicio),
+      hora_fin_argentina: this.utcToArgentinaHora(turno.hora_fin),
+      // Para mostrar completo
+      fecha_hora_completa_argentina: `${this.utcToArgentinaFecha(turno.fecha_turno)} ${this.utcToArgentinaHora(turno.hora_inicio)}`,
+      // Mantener los originales por si acaso
+      fecha_turno_original: turno.fecha_turno,
+      hora_inicio_original: turno.hora_inicio,
+      hora_fin_original: turno.hora_fin
+    }));
+  }
+
+  /**
+   * Obtiene estadísticas de turnos por mes
+   */
+  async obtenerTurnosPorMes() {
+    const { data: turnos, error } = await supabase
       .from('turnos')
       .select('fecha_turno');
 
-    const data = respuesta.data;
-    const error = respuesta.error;
+    if (error || !turnos) return [];
 
-    if (error || !data) {
-      return [];
-    }
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
 
-    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const conteo: any = {};
+    const conteo: Record<number, number> = {};
 
-    for (let i = 0; i < dias.length; i++) {
-      conteo[dias[i]] = 0;
-    }
+    turnos.forEach(t => {
+      if (!t.fecha_turno) return;
+      
+      const fecha = new Date(t.fecha_turno);
+      // Ajustar a hora Argentina
+      fecha.setHours(fecha.getHours() - 3);
+      
+      const mes = fecha.getMonth(); // 0 = Enero, 11 = Diciembre
+      conteo[mes] = (conteo[mes] || 0) + 1;
+    });
 
-    for (let j = 0; j < data.length; j++) {
-      const turno = data[j];
-      const fecha = new Date(turno.fecha_turno);
-      const indice = fecha.getDay();
-      const nombreDia = dias[indice];
-      conteo[nombreDia] = conteo[nombreDia] + 1;
-    }
-
-    const orden = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const resultado: any[] = [];
-
-    for (let k = 0; k < orden.length; k++) {
-      const dia = orden[k];
-      const item: any = {};
-      item.dia = dia;
-      item.cantidad = conteo[dia];
-      resultado.push(item);
-    }
-
-    return resultado;
+    return meses.map((nombreMes, index) => ({
+      mes: nombreMes,
+      cantidad: conteo[index] || 0
+    }));
   }
 
-  async obtenerTurnosPorEspecialidad(especialidadNombre?: string) {
-    const respuesta = await supabase
+  /**
+   * Obtiene cantidad de turnos por estado
+   */
+  async obtenerTurnosPorEstado() {
+    const { data: turnos, error } = await supabase
       .from('turnos')
-      .select('id, estado, especialidad_id')
-      .not('especialidad_id', 'is', null);
+      .select('estado');
 
-    const data = respuesta.data;
-    const error = respuesta.error;
+    if (error || !turnos) return [];
 
-    if (error || !data) {
-      return [];
-    }
+    const conteo: Record<string, number> = {};
 
-    const agrupado: any = {};
+    turnos.forEach(t => {
+      const estado = t.estado || 'sin_estado';
+      conteo[estado] = (conteo[estado] || 0) + 1;
+    });
 
-    for (let i = 0; i < data.length; i++) {
-      const turno = data[i];
-      const id = turno.especialidad_id;
-
-      if (agrupado[id] === undefined) {
-        agrupado[id] = 1;
-      } else {
-        agrupado[id] = agrupado[id] + 1;
-      }
-    }
-
-    const resultado: any[] = [];
-    const claves = Object.keys(agrupado);
-
-    for (let j = 0; j < claves.length; j++) {
-      const clave = Number(claves[j]);
-      const item: any = {};
-      item.especialidad_id = clave;
-      item.cantidad = agrupado[clave];
-      resultado.push(item);
-    }
-
-    if (especialidadNombre !== undefined) {
-      if (especialidadNombre !== 'todas') {
-        const filtro: any[] = [];
-        const objetivo = Number(especialidadNombre);
-
-        for (let k = 0; k < resultado.length; k++) {
-          if (resultado[k].especialidad_id === objetivo) {
-            filtro.push(resultado[k]);
-          }
-        }
-
-        return filtro;
-      }
-    }
-
-    return resultado;
+    // Convertir a array y ordenar por cantidad
+    return Object.entries(conteo)
+      .map(([estado, cantidad]) => ({ estado, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad);
   }
 
-  async obtenerTurnosPorMedico(
-    medicoId: string,
-    estado: 'solicitado' | 'realizado',
-    fechaInicio: string,
-    fechaFin: string
-  ) {
-    const respuesta = await supabase
-      .from('turnos')
-      .select('id, estado, fecha_turno')
-      .eq('especialista_id', medicoId)
-      .eq('estado', estado)
-      .gte('fecha_turno', fechaInicio)
-      .lte('fecha_turno', fechaFin);
+  /**
+   * Obtiene los últimos ingresos (últimos 7 días)
+   */
+  async obtenerUltimosIngresos(dias: number = 7) {
+    const fechaLimite = new Date();
+    fechaLimite.setDate(fechaLimite.getDate() - dias);
+    
+    const { data, error } = await supabase
+      .from('logs_ingresos')
+      .select('*')
+      .gte('fecha_hora', fechaLimite.toISOString())
+      .order('fecha_hora', { ascending: false });
 
-    const data = respuesta.data;
-    const error = respuesta.error;
+    if (error || !data) return [];
 
-    if (error) {
-      return [];
-    }
-
-    let cantidad = 0;
-    if (data) {
-      cantidad = data.length;
-    }
-
-    const lista = [];
-    const item: any = {};
-    item.medicoId = medicoId;
-    item.cantidad = cantidad;
-    lista.push(item);
-
-    return lista;
-  }
-
-  async verificarDatosDisponibles() {
-    try {
-      const p1 = supabase.from('turnos').select('id', { count: 'exact', head: true });
-      const p2 = supabase.from('especialistas').select('id', { count: 'exact', head: true });
-      const p3 = supabase.from('especialidades').select('id', { count: 'exact', head: true });
-
-      const resultados = await Promise.all([p1, p2, p3]);
-
-      const t = resultados[0];
-      const m = resultados[1];
-      const e = resultados[2];
-
-      const respuesta: any = {};
-
-      if (t.count && t.count > 0) {
-        respuesta.tieneTurnos = true;
-      } else {
-        respuesta.tieneTurnos = false;
-      }
-
-      if (m.count && m.count > 0) {
-        respuesta.tieneMedicos = true;
-      } else {
-        respuesta.tieneMedicos = false;
-      }
-
-      if (e.count && e.count > 0) {
-        respuesta.tieneEspecialidades = true;
-      } else {
-        respuesta.tieneEspecialidades = false;
-      }
-
-      return respuesta;
-
-    } catch (err) {
-      return {
-        tieneTurnos: false,
-        tieneMedicos: false,
-        tieneEspecialidades: false
-      };
-    }
+    return data.map(log => ({
+      ...log,
+      fecha_hora_argentina: this.utcToArgentinaCompleto(log.fecha_hora),
+      fecha_argentina: this.utcToArgentinaFecha(log.fecha_hora),
+      hora_argentina: this.utcToArgentinaHora(log.fecha_hora)
+    }));
   }
 }

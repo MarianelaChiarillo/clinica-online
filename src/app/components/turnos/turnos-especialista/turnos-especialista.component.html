@@ -1,12 +1,10 @@
-<app-menu />
+<app-menu></app-menu>
 
 <div class="container">
-  <div *ngIf="loading" class="text-center">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Cargando turnos...</span>
-    </div>
+ 
+ <div *ngIf="cargando" class="spinner-wrapper text-center">
+    <app-spinner></app-spinner>
   </div>
-
   <div *ngIf="error && !loading" class="alert alert-danger alert-dismissible fade show" role="alert">
     {{ error }}
     <button type="button" class="btn-close" (click)="limpiarError()"></button>
@@ -18,8 +16,11 @@
       <div class="linea"></div>
     </div>
 
-    <app-filtro-general placeholder="Buscar por paciente, especialidad o datos clínicos..."
-      [tipoUsuario]="'especialista'" [turnos]="turnos" (filtroChange)="onFiltroChange($event)"
+    <app-filtro-general
+      placeholder="Buscar por paciente, especialidad o datos clínicos..."
+      [tipoUsuario]="'especialista'"
+      [turnos]="turnos"
+      (filtroChange)="onFiltroChange($event)"
       (turnosFiltradosChange)="onTurnosFiltradosChange($event)">
     </app-filtro-general>
 
@@ -44,7 +45,9 @@
                   <tbody>
                     <tr *ngFor="let turno of turnosFiltrados">
                       <td>
-                        <strong class="font">{{ turno.pacientes?.nombre }} {{ turno.pacientes?.apellido }}</strong>
+                        <strong class="font">
+                          {{ turno.pacientes?.nombre }} {{ turno.pacientes?.apellido }}
+                        </strong>
                       </td>
                       <td>
                         <span class="font badge bg-light text-dark">
@@ -54,19 +57,21 @@
                       <td>{{ turno.fecha_turno | fechaFormato }}</td>
                       <td>{{ turno.hora_inicio }}</td>
 
+                      <!-- ESTADO CON ETIQUETA -->
                       <td>
-                        <span class="badge font" [ngClass]="'bg-' + obtenerColorEstado(turno.estado)">
-                          {{ turno.estado }}
-                        </span>
+                        <span appEstadoTurno="{{ turno.estado }}"></span>
                       </td>
+
                       <td>
-                        <div *ngIf="turno.coincidencias && turno.coincidencias.length > 0"
-                          class="coincidencias-container">
+                        <div *ngIf="(turno.coincidencias ?? []).length > 0" class="coincidencias-container">
                           <div *ngFor="let coincidencia of turno.coincidencias" class="coincidencia-badge">
                             <small class="text-success">
                               <i class="bi bi-check-circle-fill me-1"></i>
-                              <strong class="font">{{ coincidencia.campo }}:</strong>
-                              {{ coincidencia.valor }}
+                              <strong class="font"
+                                      [appHighlightCoincidencia]="coincidencia.campo"
+                                      [termino]="filtroTexto">{{ coincidencia.campo }}:</strong>
+                              <span [appHighlightCoincidencia]="coincidencia.valor"
+                                    [termino]="filtroTexto">{{ coincidencia.valor }}</span>
                             </small>
                           </div>
                         </div>
@@ -74,21 +79,10 @@
                           -
                         </small>
                       </td>
-                      <td>
-                        <div class="btn-group btn-group-sm" *ngIf="accionesEspecialista(turno).length > 0">
-                          <button *ngFor="let accion of accionesEspecialista(turno)" class="btn" [ngClass]="{
-                              'btn-success': accion === 'aceptar',
-                              'btn-warning': accion === 'rechazar',
-                              'btn-danger': accion === 'cancelar',
-                              'btn-primary': accion === 'finalizar',
-                              'btn-info': accion === 'ver_resena'
-                            }" (click)="ejecutarAccion(accion, turno)" [title]="accion.replace('_', ' ') | titlecase">
-                            {{ getTextoAccion(accion) }}
-                          </button>
-                        </div>
-                        <small *ngIf="accionesEspecialista(turno).length === 0" class="text-muted">
-                          Sin acciones disponibles
-                        </small>
+
+                      <!-- ACCIONES -->
+                      <td [appAccionesTurno]="turno | accionesTurno" 
+                          (accionEjecutada)="ejecutarAccion($event, turno)">
                       </td>
                     </tr>
                   </tbody>

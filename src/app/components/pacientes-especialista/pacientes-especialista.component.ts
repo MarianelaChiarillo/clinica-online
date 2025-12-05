@@ -6,10 +6,11 @@ import supabase from '../../services/supabase.client';
 import { PacienteService } from '../../services/usuarios/paciente.service';
 import { EspecialistaService } from '../../services/usuarios/especialista.service';
 import { MenuComponent } from '../componentes/menu/menu.component';
+import { SpinnerComponent } from '../componentes/spinner/spinner.component';
 @Component({
   selector: 'app-pacientes-atendidos',
   standalone: true,
-  imports: [CommonModule, MenuComponent],
+  imports: [CommonModule, MenuComponent,SpinnerComponent ],
   templateUrl: './pacientes-especialista.component.html',
   styleUrls: ['./pacientes-especialista.component.scss']
 })
@@ -30,8 +31,10 @@ export class PacientesAtendidosComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    this.cargando = true;
     await this.cargarPacientesAtendidos();
     this.cargarFavoritos();
+    this.cargando = false;
   }
 
 

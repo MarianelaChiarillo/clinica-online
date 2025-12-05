@@ -1,4 +1,4 @@
-<div class="background-container">
+<div [@fadeInOut]="fadeState" class="background-container">
 
   <ng-container *ngIf="!estaEnFormulario">
     <a routerLink="/login" class="enlace-volver"> ← Volver</a>

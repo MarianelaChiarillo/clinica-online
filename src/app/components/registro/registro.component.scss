@@ -4,7 +4,7 @@ h1 {
   font-size: 3rem;
   text-align: center;
   margin: 0 auto;
-  padding-top: 2.5em;
+  padding-top: 3.5em;
   padding-bottom: 2rem;
 }
 
@@ -86,37 +86,32 @@ h1 {
   }
 }
 
-@media (max-width: 768px) {
-  .button-paciente,
-  .button-especialista {
-    width: 320px;
-    height: 380px;
-    font-size: 1.6rem;
-
-    img {
-      width: 70%;
-    }
-  }
-}
-
 @media (max-width: 480px) {
   .opciones-container {
     flex-direction: column;
     align-items: center;
+    gap: 2rem;
   }
 
   .button-paciente,
   .button-especialista {
-    width: 260px;
-    height: 300px;
-    font-size: 1.4rem;
+    width: 240px;
+    height: 280px;
+    font-size: 1.2rem;
+  }
 
-    img {
-      width: 65%;
-    }
+  .button-paciente img,
+  .button-especialista img {
+    width: 55%;
+  }
+
+  .button-paciente p,
+  .button-especialista p {
+    margin: 0;
   }
 }
 
+/* Animación */
 @keyframes fadeInUp {
   0% {
     opacity: 0;

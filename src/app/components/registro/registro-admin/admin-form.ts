@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   FormsModule,
+  Validators
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
+import { CaptchaWrapperComponent } from '../../componentes/captchaC/captcha-wrapper.component';
 
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';
@@ -27,6 +29,7 @@ import { UtilsService } from '../../../services/utils.service';
     FormsModule,
     MensajeComponent,
     SpinnerComponent,
+    CaptchaWrapperComponent
   ],
   templateUrl: './admin-form.html',
   styleUrls: ['./admin-form.scss'],
@@ -38,11 +41,12 @@ export class AdministradorFormComponent implements OnInit {
   mensaje: { titulo: string; texto: string; tipo: 'error' | 'success' | 'info' } | null = null;
   archivoSeleccionado: File | null = null;
   nombreArchivo: string | null = null;
-  captchaResuelto = false;
+  captchaPassed = false;
+  captchaEnabled = true;
   verClave = false;
   verClaveR = false;
 
-  especialidades: any[] = [];
+  @ViewChild('captchaWrapper') captchaWrapper!: CaptchaWrapperComponent;
 
   constructor(
     private fb: FormBuilder,
@@ -57,41 +61,26 @@ export class AdministradorFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.cargarCaptchaPersistente();
   }
 
-  private initForm(): void {
-    this.form = this.fb.group({
-      nombre: ['', this.registroValidators.getNombreValidators()],
-      apellido: ['', this.registroValidators.getApellidoValidators()],
-      email: ['', this.registroValidators.getEmailValidators()],
-      dni: ['', this.registroValidators.getDniValidators()],
-      edad: ['', this.registroValidators.getEdadEspecialistaValidators()],
-      clave: ['', this.registroValidators.getClaveValidators()],
-      repiteClave: ['', this.registroValidators.getConfirmarClaveValidator('clave')],
-      imagen: [null, this.registroValidators.getImagenValidators()],
-      recaptcha: ['']
-    });
+  ngOnDestroy(): void {
+    this.captchaWrapper?.limpiarCaptchaCompleto();
   }
 
-  onCaptchaResolved(event: any): void {
-    const token = typeof event === 'string' ? event : event?.token;
-    if (!token) return;
-
-    this.captchaResuelto = true;
-    this.form.patchValue({ recaptcha: token });
-    this.form.get('recaptcha')?.setErrors(null);
-  }
-
-  onCaptchaError(): void {
-    this.captchaResuelto = false;
-    this.form.get('recaptcha')?.setErrors({ captchaError: true });
-  }
-
-  onCaptchaExpired(): void {
-    this.captchaResuelto = false;
-    this.form.patchValue({ recaptcha: '' });
-    this.form.get('recaptcha')?.setErrors({ required: true });
-  }
+private initForm(): void {
+  this.form = this.fb.group({
+    nombre: ['', this.registroValidators.getNombreValidators()],
+    apellido: ['', this.registroValidators.getApellidoValidators()],
+    email: ['', this.registroValidators.getEmailValidators()],
+    dni: ['', this.registroValidators.getDniValidators()],  // ← Usa el del servicio
+    edad: ['', this.registroValidators.getEdadEspecialistaValidators()],
+    clave: ['', this.registroValidators.getClaveValidators()],
+    repiteClave: ['', this.registroValidators.getConfirmarClaveValidator('clave')],
+    imagen: [null, this.registroValidators.getImagenValidators()],
+    recaptcha: ['']
+  });
+}
 
   toggleVerClave(): void {
     this.verClave = !this.verClave;
@@ -106,6 +95,12 @@ export class AdministradorFormComponent implements OnInit {
     this.nombreArchivo = result.nombreArchivo;
     this.archivoSeleccionado = result.archivo;
   }
+getDniValidators() {
+  return [
+    Validators.required,
+    Validators.pattern(/^[0-9]{7,8}$/)
+  ];
+}
 
   quitarArchivo(): void {
     this.formUtils.quitarArchivo(this.form, 'imagen');
@@ -115,6 +110,12 @@ export class AdministradorFormComponent implements OnInit {
 
   async registrar(): Promise<void> {
     this.formUtils.markAllAsTouched(this.form);
+
+    // Validación del captcha
+    if (this.captchaEnabled && !this.captchaPassed) {
+      this.mostrarError('Por favor completa el captcha.');
+      return;
+    }
 
     if (this.form.invalid) {
       this.mostrarError('Por favor completá todos los campos requeridos.');
@@ -151,9 +152,13 @@ export class AdministradorFormComponent implements OnInit {
 
       this.mostrarExito('Administrador creado correctamente.');
       this.form.reset();
+      this.captchaPassed = false;
+      this.cargarNuevoCaptcha();
     } catch (error: any) {
       console.error(error);
       this.mostrarError(error.message || 'No se pudo registrar el administrador.');
+      // Forzar nuevo captcha en caso de error
+      this.cargarNuevoCaptcha();
     } finally {
       this.cargando = false;
     }
@@ -165,5 +170,62 @@ export class AdministradorFormComponent implements OnInit {
 
   private mostrarExito(texto: string): void {
     this.mensaje = { titulo: 'Éxito', texto, tipo: 'success' };
+  }
+
+onCaptchaSolved(esValido: boolean) { this.captchaPassed = esValido; }
+
+
+  async cargarCaptchaPersistente(): Promise<void> {
+    if (!this.captchaWrapper) {
+      console.log('CaptchaWrapper no disponible aún');
+      return;
+    }
+    
+    try {
+      const tokenGuardado = localStorage.getItem('captcha_token');
+      if (tokenGuardado) {
+        console.log('Intentando recuperar captcha persistente');
+        const captchaData = await this.captchaWrapper.recuperarCaptcha(tokenGuardado);
+        if (captchaData) {
+          console.log('Captcha recuperado exitosamente');
+          this.captchaPassed = true;
+          return;
+        }
+      }
+      
+      // Si no hay token o no se pudo recuperar, generar uno nuevo
+      console.log('Generando nuevo captcha');
+      await this.cargarNuevoCaptcha();
+    } catch (error) {
+      console.error('Error al cargar captcha persistente:', error);
+      await this.cargarNuevoCaptcha();
+    }
+  }
+
+  async cargarNuevoCaptcha(): Promise<void> {
+    if (!this.captchaWrapper) {
+      console.error('CaptchaWrapper no disponible');
+      return;
+    }
+    
+    try {
+      await this.captchaWrapper.generarNuevoCaptchaWrapper();
+      this.captchaPassed = false;
+      localStorage.removeItem('captcha_token');
+    } catch (error) {
+      console.error('Error al generar nuevo captcha:', error);
+    }
+  }
+
+  onToggleCaptcha(): void {
+    if (!this.captchaEnabled) {
+      this.captchaPassed = true;
+    } else {
+      this.captchaPassed = false;
+    }
+    
+    if (this.captchaWrapper) {
+      this.captchaWrapper.toggleCaptcha();
+    }
   }
 }

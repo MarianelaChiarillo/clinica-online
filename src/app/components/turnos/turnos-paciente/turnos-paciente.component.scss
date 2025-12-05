@@ -1,376 +1,209 @@
-.container {
-  padding: 1rem;
-  margin-top: 120px;
-}
+.turnos-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  color: #333;
 
-.turno-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  // Header
+  .turnos-header {
+    text-align: center;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #007bff;
+    }
 
-
-.turno-card {
-  background: #fff;
-  padding: 14px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.turno-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.estado.solicitado {
-  background: #007bff;
-}
-.estado.aceptado {
-  background: #28a745;
-}
-.estado.cancelado {
-  background: #dc3545;
-}
-.estado.realizado {
-  background: #6c757d;
-}
-
-.acciones {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-}
-
-.btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn.cancelar {
-  background: #dc3545;
-  color: white;
-}
-.btn.info {
-  background: #17a2b8;
-  color: white;
-}
-.btn.calificar {
-  background: #ffc107;
-  color: black;
-}
-
-.coincidencias {
-  margin-top: 8px;
-  padding: 8px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  border-left: 4px solid #28a745;
-}
-
-.coincidencia-badge {
-  background-color: #e8f5e8;
-  border: 1px solid #28a745;
-  border-radius: 4px;
-  padding: 2px 6px;
-  margin-bottom: 2px;
-
-  &:last-child {
-    margin-bottom: 0;
+    .titulo-separador {
+      width: 80px;
+      height: 3px;
+      background-color: #007bff;
+      margin: 0 auto 1.5rem;
+      border-radius: 2px;
+    }
   }
 
-  small {
-    font-size: 0.75rem;
-    line-height: 1.2;
-  }
-}
-
-.turno-card {
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: white;
-
-  .turno-header {
+  // Filtro
+  .filtro-wrapper {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+    flex-direction: column;
+    gap: 0.5rem;
 
-    h3 {
-      margin: 0;
-      color: #333;
-    }
+    .chip-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
 
-    .estado {
-      font-size: 1.2rem;
-      width: 10rem;
-      height: 3rem;
-      text-align: center;
-      border-radius: 2rem;
-      padding-top: 0.5rem;
+      .termino-chip {
+        background-color: #e7f1ff;
+        color: #007bff;
+        padding: 0.3rem 0.8rem;
+        border-radius: 16px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
 
-      &.solicitado {
-        background-color: #fff3cd;
-        color: #856404;
+        .btn-limpiar {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          font-size: 1rem;
+          line-height: 1;
+          color: #007bff;
+          &:hover {
+            color: #0056b3;
+          }
+        }
       }
-      &.aceptado {
-        background-color: #d1ecf1;
-        color: #0c5460;
-      }
-      &.realizado {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      &.cancelado {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      &.rechazado {
-        background-color: #e2e3e5;
-        color: #383d41;
-      }
-    }
-  }
 
-  .turno-info {
-    margin-bottom: 12px;
-    font-size: 0.5rem;
-
-    p {
-      margin: 2px 0;
-      color: #666;
+      .resultados-info {
+        font-size: 0.85rem;
+        color: #666;
+      }
     }
   }
 
-  .acciones {
+  // Spinner
+  .spinner-wrapper {
+    margin: 2rem 0;
+  }
+
+  // Lista de turnos
+  .turnos-list {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 1.5rem;
 
-    .btn {
-      padding: 7px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      margin-top: 1rem;
-
-      &.btn-cancelar {
-        background-color: #dc3545;
-        color: white;
-      }
-      &.btn-completar_encuesta {
-        background-color: #17a2b8;
-        color: white;
-      }
-      &.btn-calificar {
-        background-color: #ffc107;
-        color: black;
-      }
-      &.btn-ver_resena {
-        background-color: #6c757d;
-        color: white;
-      }
+    .turno-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
 
       &:hover {
-        opacity: 0.95;
-        transform: scale(1.03);
-        transition: 0.2s ease;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      .turno-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        h3 {
+          font-size: 1.25rem;
+          margin-bottom: 0.3rem;
+          color: #157bbe;
+        }
+
+        p {
+          margin: 0.2rem 0;
+          font-size: 0.95rem;
+
+          strong {
+            color: #333;
+          }
+        }
+
+        .coincidencias-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+
+          .coincidencia-badge {
+            background-color: #e6f9ed;
+            border-radius: 12px;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.8rem;
+            color: #2e7d32;
+            display: flex;
+            align-items: center;
+
+            i {
+              font-size: 0.85rem;
+            }
+
+            strong {
+              margin-right: 0.2rem;
+            }
+          }
+        }
+      }
+
+      // Acciones
+      .turno-acciones {
+        margin-top: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+
+        button {
+          padding: 0.4rem 0.8rem;
+          border-radius: 8px;
+          border: none;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: background 0.2s ease, transform 0.1s ease;
+
+          &.btn-cancelar {
+            background-color: #dc3545;
+            color: #fff;
+
+            &:hover {
+              background-color: #c82333;
+              transform: scale(1.05);
+            }
+          }
+
+          &.btn-confirmar {
+            background-color: #28a745;
+            color: #fff;
+
+            &:hover {
+              background-color: #218838;
+              transform: scale(1.05);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Mensajes sin turnos / sin resultados
+  .sin-turnos,
+  .sin-resultados {
+    text-align: center;
+    font-size: 1rem;
+    color: #666;
+    margin-top: 2rem;
+
+    button {
+      margin-top: 0.8rem;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background-color: #0056b3;
       }
     }
   }
 }
-
-p {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: #0c2960;
-}
-
 h1 {
+  margin-top: 10rem;
   font-size: 2.8rem;
   color: #1a798f;
-  margin-top: 1rem;
-}
-
-.container {
-  padding: 3rem;
-  margin-top: 2ren;
-}
-
-@media (max-width: 992px) {
-  h1 {
-    font-size: 2.5rem;
-  }
-
-  .turno-card .turno-header .estado {
-    font-size: 1.1rem;
-    width: 8rem;
-    height: 3rem;
-    padding-top: 0.6rem;
-  }
-
-  p {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  h1 {
-    margin-top: 1rem;
-    font-size: 2rem;
-  }
-
-  .turno-card {
-    padding: 12px;
-  }
-
-  .turno-card .turno-header {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .turno-card .turno-header .estado {
-    width: 100%;
-    height: 3rem;
-    padding-top: 0.5rem;
-    font-size: 1rem;
-  }
-
-  .acciones .btn {
-    width: 100%;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.6rem;
-  }
-
-  p {
-    font-size: 0.9rem;
-  }
-
-  .turno-card {
-    padding: 10px;
-  }
-
-  .turno-card .turno-header .estado {
-    font-size: 0.9rem;
-    height: 2.5rem;
-    padding-top: 0.5rem;
-  }
-}
-
-.titulo-turnos {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  img.icon-title {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-  }
-}
-
-.linea {
-  width: 100%;
-  height: 4px;
-  background: #1d8fa8;
-  margin: 10px 0 20px 0;
-}
-
-
-/* En turnos-paciente.component.scss */
-.termino-activo {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.termino-chip {
-  background-color: #e3f2fd;
-  border: 1px solid #2196f3;
-  color: #1565c0;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-limpiar {
-  background: none;
-  border: none;
-  color: #1565c0;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.btn-limpiar:hover {
-  color: #d32f2f;
-}
-
-.resultados-info {
-  font-size: 14px;
-  color: #666;
-}
-
-/* Para las coincidencias */
-.coincidencias-header {
-  background-color: #fff3cd;
-  border-left: 4px solid #ffc107;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-}
-
-.coincidencia-badge {
-  background-color: #ffc107;
-  color: #000;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-.coincidencia-item {
-  background-color: #e9ecef;
-  padding: 4px 8px;
-  margin: 2px;
-  border-radius: 4px;
-  font-size: 12px;
-  display: inline-block;
-}
-
-/* Mensaje sin resultados */
-.sin-resultados {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-}
-
-.btn-limpiar-busqueda {
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  color: #333;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.btn-limpiar-busqueda:hover {
-  background-color: #e9ecef;
+  margin-bottom: 1rem;
 }

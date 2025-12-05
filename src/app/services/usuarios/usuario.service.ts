@@ -240,5 +240,63 @@ async obtenerTodos(): Promise<any[]> {
     return [];
   }
 }
+async crearAdministradorCompleto(form: any) {
+  try {
+    // 1) Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: form.email,
+      password: form.password,
+      email_confirm: true
+    });
+
+    if (authError) throw new Error(authError.message);
+    const authId = authData.user?.id;
+    if (!authId) throw new Error("No se pudo obtener auth_id.");
+
+    // 2) Insertar en tabla usuarios
+    const usuarioPayload = {
+      auth_id: authId,
+      email: form.email,
+      tipo_usuario: 'administrador',
+      estado: 'activo',
+      imagen_perfil: form.imagen_perfil || null,
+    };
+
+    const { data: usuarioData, error: usuarioError } = await supabase
+      .from('usuarios')
+      .insert([usuarioPayload])
+      .select()
+      .single();
+
+    if (usuarioError) {
+      await supabase.auth.admin.deleteUser(authId);
+      throw new Error(usuarioError.message);
+    }
+
+    // 3) Insertar datos administrativos
+    const adminPayload = {
+      usuario_id: usuarioData.id,
+      nombre: form.nombre,
+      apellido: form.apellido,
+      edad: form.edad,
+      dni: form.dni,
+    };
+
+    const { error: adminError } = await supabase
+      .from('administradores')
+      .insert([adminPayload]);
+
+    if (adminError) {
+      await supabase.from('usuarios').delete().eq('id', usuarioData.id);
+      await supabase.auth.admin.deleteUser(authId);
+      throw new Error(adminError.message);
+    }
+
+    return { ok: true };
+
+  } catch (e: any) {
+    return { ok: false, message: e.message };
+  }
+}
 
 }

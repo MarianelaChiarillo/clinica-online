@@ -2,9 +2,6 @@
 
 <div class="perfil-container">
 
-  <div *ngIf="cargando" class="cargando">
-    <p>Cargando perfil...</p>
-  </div>
 
   <h1>Mi perfil</h1>
   <div class="linea"></div>
@@ -126,13 +123,26 @@
       </div>
     </div>
 
-    <button 
-      class="btn-descargar"
-      (click)="descargarPDF()"
-      *ngIf="historiaFiltrada.length > 0"
-    >
-      📄 Descargar PDF ({{ historiaFiltrada.length }} atenciones)
-    </button>
+    <div *ngIf="historiaFiltrada.length > 0">
+        <button 
+          class="btn-descargar"
+          (click)="descargarPDF()"
+          [disabled]="cargando"
+        >
+          📄 Descargar PDF 
+          <span *ngIf="especialistaSeleccionado === 'todos'">
+            ({{ historiaFiltrada.length }} atenciones)
+          </span>
+          <span *ngIf="especialistaSeleccionado !== 'todos'">
+            con especialista seleccionado ({{ historiaFiltrada.length }} atenciones)
+          </span>
+        </button>
+        
+        <small class="text-muted d-block mt-1">
+          <span *ngIf="especialistaSeleccionado !== 'todos'">
+          </span>
+        </small>
+      </div>
 
     <div *ngIf="historiaClinica.length === 0" 
       class="empty-state" 

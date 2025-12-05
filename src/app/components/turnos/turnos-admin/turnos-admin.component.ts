@@ -1,20 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MenuComponent } from '../../componentes/menu/menu.component';
 import { TurnoService } from '../../../services/turnos.service';
-
+import supabase from '../../../services/supabase.client';
+import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
+import {HighlightCoincidenciaDirective} from '../../../directives/coincidencias.directive';
+import {EstadoTurnoDirectiva} from '../../../directives/estados.directive'
 @Component({
   selector: 'app-turnos-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, MenuComponent],
+  imports: [CommonModule, FormsModule, MenuComponent, SpinnerComponent, HighlightCoincidenciaDirective, EstadoTurnoDirectiva],
   templateUrl: './turnos-admin.component.html',
   styleUrls: ['./turnos-admin.component.scss'],
 })
-export class TurnosAdminComponent implements OnInit {
+export class TurnosAdminComponent implements OnInit, OnDestroy {
   turnos: any[] = [];
   turnosFiltrados: any[] = [];
   filtro: string = '';
+  cargando = false;
 
   turnoSeleccionado: any = null;
   modalCancelar = false;
@@ -22,10 +26,38 @@ export class TurnosAdminComponent implements OnInit {
   guardando = false;
   error: string | null = null;
 
+  private canalRealtime: any; // Canal Realtime
+
   constructor(private turnoSrv: TurnoService) {}
 
   async ngOnInit() {
+    this.cargando  = true;
     await this.cargarTurnos();
+    this.suscribirRealtime();
+    this.cargando = false;
+  }
+
+  ngOnDestroy() {
+    if (this.canalRealtime) this.canalRealtime.unsubscribe();
+  }
+
+  private suscribirRealtime() {
+    this.canalRealtime = supabase
+      .channel('turnos-admin')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'turnos',
+        },
+        async () => {
+          console.log('Evento Realtime recibido: recargando turnos');
+          await this.cargarTurnos();
+          this.aplicarFiltro();
+        }
+      )
+      .subscribe();
   }
 
   async cargarTurnos() {
@@ -40,8 +72,6 @@ export class TurnosAdminComponent implements OnInit {
         return;
       }
 
-      console.log('Datos crudos recibidos del backend:', data);
-
       this.turnos = (data || []).map((t) => ({
         ...t,
         paciente: t.pacientes ?? { nombre: '', apellido: '' },
@@ -49,9 +79,6 @@ export class TurnosAdminComponent implements OnInit {
         especialidad: t.especialidades ?? { nombre: '' },
       }));
 
-      console.log('Primer turno crudo:', data[0]);
-      console.log('Pacientes del primer turno:', data[0]?.pacientes);
-      console.log('Tipo de pacientes:', typeof data[0]?.pacientes);
       this.turnosFiltrados = [...this.turnos];
     } catch (err) {
       console.error('Excepción al cargar turnos:', err);
@@ -67,8 +94,6 @@ export class TurnosAdminComponent implements OnInit {
           .toLowerCase()
           .includes(f)
     );
-
-    console.log('Turnos filtrados:', this.turnosFiltrados);
   }
 
   puedeCancelar(t: any): boolean {

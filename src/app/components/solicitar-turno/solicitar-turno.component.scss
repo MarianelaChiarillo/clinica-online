@@ -11,24 +11,27 @@
   padding: 50px;
 }
 
-.titulo-turno {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 10px;
+
+
+h1 {
+  margin-top: 10rem;
+  font-size: 2.8rem;
+    color: #2c7383;
+
+  margin-bottom: 1rem;
 }
 
-.linea {
-  height: 3px;
-  background: linear-gradient(to right, #3498db, #2ecc71);
-  width: 200px;
-  margin: 0 auto 30px;
+h3{
+  margin-top: 4rem;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #1a798f;
 }
-
 /* Paso: selección de paciente (admin) */
 .lista-pacientes {
   max-height: 400px;
   overflow-y: auto;
-  border: 1px solid #ddd;
+  border: 3px solid #075d68;
   border-radius: 8px;
   padding: 10px;
   margin-top: 15px;
@@ -38,11 +41,18 @@
   padding: 12px 15px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
+  font-size: 1rem;
+  background: #ffffff;
   transition: background-color 0.2s;
+}
+.boton-especialista {
+  display: flex;
+  flex-direction: column; /* Para que el contenido vaya de arriba a abajo */
+  align-items: center;    /* Centrar horizontalmente */
 }
 
 .opcion-paciente:hover {
-  background-color: #f8f9fa;
+  background: #5388bd;
 }
 
 .opcion-paciente:last-child {
@@ -58,22 +68,22 @@
   display: flex;
   gap: 15px;
   margin-top: 5px;
-  font-size: 0.85em;
-  color: #666;
+  font-size: 1rem;
+  color: #1e1e1f;
 }
 
 .paciente-seleccionado {
-  background-color: #e8f4fc;
   padding: 15px;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border:1px solid #052630;
 }
 
 .paciente-seleccionado button {
-  background-color: #6c757d;
+  background-color: #084172;
   color: white;
   border: none;
   padding: 8px 15px;
@@ -94,26 +104,35 @@
 }
 
 .especialidad-card {
-  border: 1px solid #ddd;
+  border: 3px solid #064a77;
   border-radius: 10px;
   padding: 15px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   text-align: center;
+    background: linear-gradient(hsl(170, 35%, 65%), #91dfd7);
+    margin-top: 2.3rem;
+
 }
 
 .especialidad-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  background: #125468;
 }
 
 .especialidad-imagen img {
-  width: 80px;
-  height: 80px;
+  width: 180px;
+  height: 150px;
   object-fit: contain;
-  margin-bottom: 10px;
+  margin-bottom: -1rem;
+  
 }
 
+p{
+  font-size: 1.2rem;
+  color: #052630;
+}
 /* Especialistas */
 .grid-especialista {
   display: grid;
@@ -129,14 +148,17 @@
   padding: 15px;
   border: 2px solid #ddd;
   border-radius: 8px;
-  background: white;
+    background: linear-gradient(hsl(170, 35%, 65%), #91dfd7);
   cursor: pointer;
+  border: 3px solid #064a77;
+
   transition: all 0.2s;
 }
 
+
+
 .boton-especialista:hover:not(:disabled) {
-  border-color: #3498db;
-  background-color: #f8f9fa;
+  background: #125468;
 }
 
 .boton-especialista.inactivo {
@@ -145,8 +167,8 @@
 }
 
 .boton-especialista img {
-  width: 60px;
-  height: 60px;
+  width: 150px;
+  height: 200px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 10px;
@@ -174,10 +196,13 @@
   padding: 15px;
   border: 2px solid #ddd;
   border-radius: 8px;
-  background: white;
   cursor: pointer;
   text-align: center;
   transition: all 0.2s;
+    border: 3px solid #064a77;
+    height: 10rem;
+    background: white;
+
 }
 
 .boton-fecha:hover {
@@ -311,6 +336,7 @@
   flex-direction: column;
   gap: 5px;
   margin-top: 10px;
+  font-size: 1rem;
 }
 
 /* Responsive */

@@ -14,6 +14,7 @@ $transicion-default: 0.3s ease-in-out;
   justify-content: center;
   align-items: center;
   position: relative;
+  
 }
 
 .contenedor-principal {
@@ -22,10 +23,12 @@ $transicion-default: 0.3s ease-in-out;
   grid-template-columns: 1.5fr 1.2fr;
   background-color: $color-fondo-blanco;
   box-shadow: $sombra-elevacion;
-  max-width: 900px;
+  max-width: 850px;
   width: 100%;
   border-radius: 3rem;
-}
+  height: auto;        // antes fijo (rompe en móvil)
+  min-height: 85vh;    // mantiene estética en desktop
+  }
 
 
 .inicio-container {
@@ -103,7 +106,7 @@ $transicion-default: 0.3s ease-in-out;
   .icono-input {
     position: absolute;
     left: 10px;
-    top: 45%;
+    top: 47%;
     transform: translateY(-50%);
     color: #999;
     pointer-events: none;
@@ -168,6 +171,8 @@ $transicion-default: 0.3s ease-in-out;
   justify-content: center;
   border-left: 6px solid rgba(243, 249, 255, 0.15);
   border-radius: 3rem;
+  height: 85vh;
+  margin-top:0.1rem;
 }
 
 .titulo-accesos {
@@ -208,7 +213,7 @@ $transicion-default: 0.3s ease-in-out;
   border: none;
 
   &.paciente {
-    background: #60c495;
+    background: #71c79f;
 
     &:hover {
       background: #3fb3da;
@@ -216,7 +221,7 @@ $transicion-default: 0.3s ease-in-out;
   }
 
   &.especialista {
-    background: #3ea891;
+    background: #42ad96;
 
     &:hover {
       background: #3fb3da;
@@ -242,18 +247,109 @@ $transicion-default: 0.3s ease-in-out;
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
+  border: solid 2px #139c85;
 }
 
   
 @media (max-width: 768px) {
+
   .contenedor-principal {
     grid-template-columns: 1fr;
     max-width: 95%;
+    border-radius: 2rem;
   }
 
-  .lista-accesos {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+  .inicio-container {
+    padding: 1.2rem;
+    padding-top: 2rem;
+  }
+
+  .titulo-principal {
+    font-size: 2rem;
+    margin: 1.5rem 0 1rem 0;
+  }
+
+  .subtexto {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .inicio-form {
+    width: 100%;
+  }
+
+  .campo-formulario {
+    width: 100%;
+    margin-top: 18px;
+    padding-bottom: 15px;
+  }
+
+  .input-inicio {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+
+  .input-con-icono input {
+    padding-left: 33px;
+  }
+
+  .icono-input {
+    font-size: 0.9rem;
+  }
+
+  .contenedor-password .boton-ver-clave {
+    right: 8px;
+  }
+
+  .boton-principal {
+    width: 92%;
+    max-width: none;
+    font-size: 1rem;
+    height: 45px;
+    margin-top: 25px;
+  }
+
+  .enlace-registro {
+    font-size: 0.9rem;
+    margin-top: 1.2rem;
+  }
+
+  .accesos-rapidos-container {
+    border-left: none;
+    border-top: 6px solid rgba(243, 249, 255, 0.15);
+    border-radius: 0 0 2rem 2rem;
+    padding: 25px 10px;
+    min-height: auto;
   }
 }
+@media (max-width: 480px) {
+
+  .titulo-principal {
+    font-size: 1.7rem;
+  }
+
+  .input-inicio {
+    font-size: 0.8rem;
+    padding: 9px 10px;
+  }
+
+  .campo-formulario {
+    margin-top: 15px;
+  }
+
+  .boton-principal {
+    height: 43px;
+    font-size: 0.95rem;
+  }
+
+  .boton-acceso-rapido {
+    width: 60px;
+    height: 60px;
+  }
+
+  .imagen-acceso {
+    width: 50px;
+    height: 50px;
+  }
+}
+

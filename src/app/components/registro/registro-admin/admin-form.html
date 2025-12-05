@@ -1,122 +1,144 @@
+<h1>Registrar nuevo administrador</h1>
 
-  <h1 class="fade-in title">Registrar nuevo administrador</h1>
+<div class=" fade-in ">
+  <form [formGroup]="form" (ngSubmit)="registrar()">
+    <label for="nombre">Nombre</label>
+    <input
+      id="nombre"
+      formControlName="nombre"
+      class="input-bordered small-input"
+    />
+    <div class="error" *ngIf="registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' })">
+      {{ registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' }) }}
+    </div>
 
-  <div class="login-container register fade-in scrollable-form">
-    <form
-      [formGroup]="form"
-      (ngSubmit)="registrar()"
-      class="pequeno formulario login-form"
-    >
+    <label for="apellido">Apellido</label>
+    <input
+      id="apellido"
+      formControlName="apellido"
+      class="input-bordered small-input"
+    />
+    <div class="error" *ngIf="registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' })">
+      {{ registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' }) }}
+    </div>
 
-      <label for="nombre">Nombre</label>
+    <label for="email">Email</label>
+    <input
+      id="email"
+      formControlName="email"
+      class="input-bordered small-input"
+    />
+    <div class="error" *ngIf="registroValidators.getRegistroError('email', form, { email: 'Email' })">
+      {{ registroValidators.getRegistroError('email', form, { email: 'Email' }) }}
+    </div>
+
+    <label for="dni">DNI</label>
+    <input
+      id="dni"
+      formControlName="dni"
+      class="input-bordered small-input"
+    />
+    <div class="error" *ngIf="registroValidators.getRegistroError('dni', form, { dni: 'DNI' })">
+      {{ registroValidators.getRegistroError('dni', form, { dni: 'DNI' }) }}
+    </div>
+
+    <label for="edad">Edad</label>
+    <input
+      id="edad"
+      type="number"
+      formControlName="edad"
+      class="input-bordered small-input"
+    />
+    <div class="error" *ngIf="registroValidators.getRegistroError('edad', form, { edad: 'Edad' })">
+      {{ registroValidators.getRegistroError('edad', form, { edad: 'Edad' }) }}
+    </div>
+
+    <label for="clave">Contraseña</label>
+    <div class="clave-container">
       <input
-        id="nombre"
-        formControlName="nombre"
+        id="clave"
+        [type]="verClave ? 'text' : 'password'"
+        formControlName="clave"
         class="input-bordered small-input"
       />
-      <div class="error" *ngIf="registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' })">
-        {{ registroValidators.getRegistroError('nombre', form, { nombre: 'Nombre' }) }}
-      </div>
+      <span (click)="toggleVerClave()" class="iconito">
+        {{ verClave ? '🫣' : '👁️' }}
+      </span>
+    </div>
+    <div class="error" *ngIf="registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' })">
+      {{ registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' }) }}
+    </div>
 
-      <label for="apellido">Apellido</label>
+    <label for="repiteClave">Repetir contraseña</label>
+    <div class="clave-container">
       <input
-        id="apellido"
-        formControlName="apellido"
+        id="repiteClave"
+        [type]="verClaveR ? 'text' : 'password'"
+        formControlName="repiteClave"
         class="input-bordered small-input"
       />
-      <div class="error" *ngIf="registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' })">
-        {{ registroValidators.getRegistroError('apellido', form, { apellido: 'Apellido' }) }}
-      </div>
+      <span (click)="toggleVerClaveR()" class="iconito">
+        {{ verClaveR ? '🫣' : '👁️' }}
+      </span>
+    </div>
+    <div class="error" *ngIf="registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' })">
+      {{ registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' }) }}
+    </div>
 
-      <label for="email">Email</label>
-      <input
-        id="email"
-        formControlName="email"
-        class="input-bordered small-input"
-      />
-      <div class="error" *ngIf="registroValidators.getRegistroError('email', form, { email: 'Email' })">
-        {{ registroValidators.getRegistroError('email', form, { email: 'Email' }) }}
-      </div>
+    <label for="imagen">Imagen de perfil</label>
+    <input
+      id="imagen"
+      type="file"
+      (change)="onFileChange($event)"
+      class="input-bordered small-input"
+    />
 
-      <label for="dni">DNI</label>
-      <input
-        id="dni"
-        formControlName="dni"
-        class="input-bordered small-input"
-      />
-      <div class="error" *ngIf="registroValidators.getRegistroError('dni', form, { dni: 'DNI' })">
-        {{ registroValidators.getRegistroError('dni', form, { dni: 'DNI' }) }}
-      </div>
-
-      <label for="edad">Edad</label>
-      <input
-        id="edad"
-        type="number"
-        formControlName="edad"
-        class="input-bordered small-input"
-      />
-      <div class="error" *ngIf="registroValidators.getRegistroError('edad', form, { edad: 'Edad' })">
-        {{ registroValidators.getRegistroError('edad', form, { edad: 'Edad' }) }}
-      </div>
-
-      <label for="clave">Contraseña</label>
-      <div class="clave-container">
-        <input
-          id="clave"
-          [type]="verClave ? 'text' : 'password'"
-          formControlName="clave"
-          class="input-bordered small-input"
-        />
-        <span (click)="toggleVerClave()" class="iconito">
-          {{ verClave ? '🫣' : '👁️' }}
-        </span>
-      </div>
-      <div class="error" *ngIf="registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' })">
-        {{ registroValidators.getRegistroError('clave', form, { clave: 'Contraseña' }) }}
-      </div>
-
-      <label for="repiteClave">Repetir contraseña</label>
-      <div class="clave-container">
-        <input
-          id="repiteClave"
-          [type]="verClaveR ? 'text' : 'password'"
-          formControlName="repiteClave"
-          class="input-bordered small-input"
-        />
-        <span (click)="toggleVerClaveR()" class="iconito">
-          {{ verClaveR ? '🫣' : '👁️' }}
-        </span>
-      </div>
-      <div class="error" *ngIf="registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' })">
-        {{ registroValidators.getRegistroError('repiteClave', form, { repiteClave: 'Repetir contraseña' }) }}
-      </div>
-
-      <label for="imagen">Imagen de perfil</label>
-      <input
-        id="imagen"
-        type="file"
-        (change)="onFileChange($event)"
-        class="input-bordered small-input"
-      />
-
-      <div *ngIf="nombreArchivo" class="archivo-info">
-        <span>{{ nombreArchivo }}</span>
-        <button type="button" class="btn-quitar" (click)="quitarArchivo()">
-          Quitar
-        </button>
-      </div>
-
-
-      <button type="submit" class="submit-button">
-        {{ cargando ? 'Registrando...' : 'Registrar administrador' }}
+    <div *ngIf="nombreArchivo" class="archivo-info">
+      <span>{{ nombreArchivo }}</span>
+      <button type="button" class="btn-quitar" (click)="quitarArchivo()">
+        Quitar
       </button>
-    </form>
-  </div>
+    </div>
+    
+    <!-- CAPTCHA - con mensaje si no se ve -->
+    <div class="captcha-section">
+      <div *ngIf="captchaEnabled">
+        <app-captcha-wrapper
+          #captchaWrapper
+          [enabled]="captchaEnabled"
+          (solved)="onCaptchaSolved($event)"
+        ></app-captcha-wrapper>
+        
+        <!-- Mensaje si el captcha no se carga -->
+        <div *ngIf="!captchaPassed && !cargando" class="captcha-hint">
+          <p><small>Completa el captcha para continuar</small></p>
+        </div>
+      </div>
+      
+      <div *ngIf="!captchaEnabled" class="captcha-disabled">
+        <p class="text-muted"><small>Captcha deshabilitado para desarrollo</small></p>
+      </div>
+    </div>
 
-  <app-mensaje
-    *ngIf="mensaje"
-    [titulo]="mensaje.titulo"
-    [mensaje]="mensaje.texto"
-    [tipo]="mensaje.tipo"
-  />
-  <app-spinner *ngIf="cargando" />
+    <button 
+      type="submit" 
+      class="submit-button"
+      [disabled]="cargando || (captchaEnabled && !captchaPassed)"
+    >
+      {{ cargando ? 'Registrando...' : 'Registrar administrador' }}
+    </button>
+    
+    <div *ngIf="captchaEnabled && !captchaPassed && !cargando" class="captcha-error">
+      <small class="text-danger">Debes completar el captcha</small>
+    </div>
+  </form>
+</div>
+
+<app-mensaje
+  *ngIf="mensaje"
+  [titulo]="mensaje.titulo"
+  [mensaje]="mensaje.texto"
+  [tipo]="mensaje.tipo"
+  (cerrar)="mensaje = null"
+/>
+<app-spinner *ngIf="cargando" />

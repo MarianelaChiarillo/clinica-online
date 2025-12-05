@@ -1,9 +1,65 @@
+
+
+
+
+
+
+
+
+
+
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+  .small-field {
+  max-width: 170px;   // más angosto
+  margin-right: 10px;
+
+  .mat-mdc-form-field-infix {
+    padding: 1px 1px; // reduce la altura interna
+  }
+
+  input {
+    font-size: 8px;  // texto más chico
+    padding: 1rem 4px;
+  }
+}
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+}
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
 $transicion-default: 0.3s ease-in-out;
 $color-azul-boton-hover: #135f87;
@@ -45,12 +101,6 @@ html {
   color: #010200;
 }
 
-.background-container {
-  background: linear-gradient(#95e4f6, #e9fbff);
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
-}
 
 .scrollable-form {
   max-height: 90vh;
@@ -95,17 +145,9 @@ html {
   }
 }
 
-.registro-container {
-  background: $color-fondo;
-  padding: 3rem;
-  border-radius: 10px;
-  width: 60%;
-  margin-top: 3rem;
-  margin-bottom: 3rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+
 body {
-  background: linear-gradient(#e2f8ff);
+  background: linear-gradient(#c1e9f5);
 }
 
 .title {
@@ -113,7 +155,8 @@ body {
   font-weight: bold;
   font-size: 2.6rem;
   text-align: center;
-  padding-top: 1rem;
+  padding-top: 3rem;
+  margin-top: 1rem;
 }
 
 .login-form {
@@ -158,6 +201,7 @@ body {
   padding-bottom: 0.5rem;
   font-weight: 600;
   text-align: center;
+  line-height: 2;
 }
 
 .clave-container {
@@ -332,4 +376,207 @@ body {
   font-weight: bold;
   padding: 0 2px;
   border-radius: 2px;
+}
+
+
+.bienvenida__subtitulo {
+  display: block;
+  color: #c5fafa;
+  font-size: 4.1rem;
+  line-height: 1.3;
+  margin-top: 1rem;
+}
+
+
+/* --- BOTÓN BASE --- */
+.boton {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: .3px;
+  margin-left:1rem;
+  display: inline-block;
+  transition: all .25s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,.15);
+
+  &:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.07);
+    box-shadow: 0 6px 14px rgba(0,0,0,.20);
+  }
+
+  &:active {
+    transform: translateY(0px) scale(.97);
+    box-shadow: 0 2px 4px rgba(0,0,0,.15);
+  }
+}
+
+/* Tamaño chico (tu clase existente) */
+.boton-chico {
+  padding: 6px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+}
+/* Éxito */
+.boton-exito {
+  background: #28a745;
+  color: white;
+}
+h1 {
+  margin-top: 1rem;
+  font-size: 2.8rem;
+  color: #1a798f;
+  margin-bottom: 1rem;
+}
+
+/* Advertencia */
+.boton-advertencia {
+  background: #ffb03a;
+  color: #3a2a00;
+}
+
+body {
+  background: linear-gradient(#e2f8ff);
+}
+
+.title {
+  color: $color-titulo;
+  font-weight: bold;
+  font-size: 2.6rem;
+  text-align: center;
+  padding-top: 1rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.subtexto {
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+  color: $color-subtexto;
+  font-size: 1.3rem;
+}
+
+.form-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 3rem;
+  margin-left: 0;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    color: $color-input-text;
+    margin-bottom: 0rem;
+    font-size: 1rem;
+  }
+}
+
+/* Peligro */
+.boton-peligro {
+  background: #e63946;
+  color: white;
+}
+
+/* Primario (finalizar) */
+.boton-primario {
+  background: #1d4ed8;
+  color: white;
+}
+
+/* Info */
+.boton-info {
+  background: #0ea5e9;
+  color: white;
+}
+
+/* Secundario */
+.boton-secundario {
+  background: #64748b;
+  color: white;
+}
+
+/* Oscuro */
+.boton-oscuro {
+  background: #1e293b;
+  color: white;
+}
+
+
+/* etiquetaS (en español) */
+.etiqueta {
+  display: inline-block;
+  padding: 12px 13px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+  text-transform: capitalize;
+  color: #fff;
+  min-width: 90px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(13, 38, 63, 0.06);
+}
+
+/* Estados */
+.etiqueta-solicitado {
+  background: linear-gradient( #ffd966 100%);
+  color: #5f4300;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.etiqueta-aceptado {
+  background: linear-gradient( #bfeef5 100%);
+  color: #004b55;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.etiqueta-realizado {
+  background: linear-gradient( #bfe8c9 100%);
+  color: #0b3b18;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.etiqueta-cancelado {
+  background: linear-gradient( #f1b8bd 100%);
+  color: #641a1f;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.etiqueta-rechazado {
+  background: linear-gradient(180deg, #ececec 0%, #d6d6d6 100%);
+  color: #333;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Variantes pequeñas o compactas */
+.etiqueta--small {
+  padding: 4px 8px;
+  min-width: 70px;
+  font-size: 0.78rem;
+}
+.background-container {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* Ejemplo de utilidad (opcional) */
+.etiqueta-outline {
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: none;
 }

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 import supabase from '../../services/supabase.client';
 
@@ -28,8 +29,18 @@ import { Usuario } from '../../models/user-data';
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  animations: [
+    trigger('slideInRight', [
+      state('hidden', style({ transform: 'translateX(100%)', opacity: 0 })),
+      state('visible', style({ transform: 'translateX(0)', opacity: 1 })),
+      transition('hidden => visible', animate('500ms ease-out')),
+      transition('visible => hidden', animate('300ms ease-in'))
+    ])
+  ]
 })
 export class LoginComponent implements OnInit {
+ slideState = 'hidden'; // empieza oculto
+
 
   form!: FormGroup;
   cargando = false;
@@ -41,8 +52,8 @@ export class LoginComponent implements OnInit {
   { src: 'assets/perfiles/alexia.png', alt: 'Paciente Alexia', email: 'alexach@gmail.com', pass: 'alexita1', rol: 'paciente' },
   { src: 'assets/perfiles/juan.png', alt: 'Paciente Juan', email: 'juanperez@gmail.com', pass: 'juani123', rol: 'paciente' },
   { src: 'assets/perfiles/maria2.png', alt: 'Paciente María', email: 'mariag@gmail.com', pass: 'maria456', rol: 'paciente' },
-  { src: 'assets/perfiles/jose.png', alt: 'Especialista Dr. López', email: 'drlopez@gmail.com', pass: 'doctor123', rol: 'especialista' },
-  { src: 'assets/perfiles/nadia2.png', alt: 'Especialista Dra. García', email: 'dragarcia@gmail.com', pass: 'dra456', rol: 'especialista' },
+  { src: 'assets/perfiles/jose.png', alt: 'Dr. López', email: 'drlopez@gmail.com', pass: 'doctor123', rol: 'especialista' },
+  { src: 'assets/perfiles/nadia2.png', alt: 'Dra. García', email: 'dragarcia@gmail.com', pass: 'dra456', rol: 'especialista' },
   { src: 'assets/perfiles/admin2.png', alt: 'Administrador', email: 'admin@gmail.com', pass: 'admin789', rol: 'administrador' }
 ];
 
@@ -57,6 +68,9 @@ export class LoginComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
+     setTimeout(() => {
+      this.slideState = 'visible';
+    }, 50);
     this.cargando = true;
     this.inicializarFormulario();
     this.cargando = false;

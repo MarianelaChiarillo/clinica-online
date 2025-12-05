@@ -15,7 +15,7 @@
     (cerrar)="mensaje = null">
   </app-mensaje>
 
-  <h1 class="titulo-turno">Solicitá tu turno</h1>
+  <h1>Solicitá tu turno</h1>
   <div class="linea"></div>
 
   <div class="grid-especialidades-compact">
@@ -63,9 +63,15 @@
       <button (click)="pacienteSeleccionado = null; turnoData.pacienteId = null;">Cambiar paciente</button>
     </div>
 
+    <div *ngIf="!esAdmin && pasoActual === 1 && !cargando" class="info-paciente">
+      <p>📋 Estás solicitando un turno para ti mismo:</p>
+      <div class="datos-paciente">
+        <strong>{{ usuarioLogueado?.nombre }} {{ usuarioLogueado?.apellido }}</strong>
+      </div>
+    </div>
     <!-- ========== PASO 1: SELECCIÓN DE ESPECIALIDAD ========== -->
     <div *ngIf="pasoActual === 1 && (!esAdmin || (esAdmin && pacienteSeleccionado))" class="paso-container">
-      <h2>Selecciona una especialidad</h2>
+      <h2>Selecciona una especialidad: </h2>
       
       <div *ngIf="cargando" class="text-center">
         <app-spinner></app-spinner>
@@ -91,39 +97,45 @@
     </div>
 
     <!-- ========== PASO 2: SELECCIÓN DE ESPECIALISTA ========== -->
-    <div *ngIf="pasoActual === 2" class="paso">
-      <h3 class="titulo-seccion">Seleccionar especialista</h3>
+<div *ngIf="pasoActual === 2" class="paso">
+  <h3 class="titulo-seccion">Seleccionar especialista:</h3>
+  
+  <div class="grid-especialista">
+    <button *ngFor="let e of especialistas; trackBy: trackByEspecialista" 
+            class="boton-especialista" 
+            [class.inactivo]="e.estado !== 'activo'" 
+            [disabled]="e.estado !== 'activo'" 
+            (click)="seleccionarEspecialista(e)">
       
-      <div class="grid-especialista">
-        <button *ngFor="let e of especialistas; trackBy: trackByEspecialista" 
-                class="boton-especialista" 
-                [class.inactivo]="e.estado !== 'activo'" 
-                [disabled]="e.estado !== 'activo'" 
-                (click)="seleccionarEspecialista(e)">
-          <img [src]="e.imagen_perfil" [alt]="e.nombre" />
-          <span class="nombre-especialista">{{ e.nombre }} {{ e.apellido }}</span>
-          <span *ngIf="e.estado !== 'activo'" class="estado-especialista">({{ e.estado }})</span>
-        </button>
-      </div>
+      <!-- Nombre arriba -->
+      <span class="nombre-especialista">{{ e.nombre }} {{ e.apellido }}</span>
       
-      <div *ngIf="especialistas.length === 0" class="sin-resultados">
-        <p>No hay especialistas disponibles para esta especialidad.</p>
-      </div>
+      <!-- Imagen debajo -->
+      <img [src]="e.imagen_perfil" [alt]="e.nombre" />
       
-      <button class="btn-atras" (click)="volverPasoAnterior()">Atrás</button>
-    </div>
+      <!-- Estado opcional -->
+      <span *ngIf="e.estado !== 'activo'" class="estado-especialista">({{ e.estado }})</span>
+    </button>
+  </div>
+  
+  <div *ngIf="especialistas.length === 0" class="sin-resultados">
+    <p>No hay especialistas disponibles para esta especialidad.</p>
+  </div>
+  
+  <button class="btn-atras" (click)="volverPasoAnterior()">Atrás</button>
+</div>
+
 
     <!-- ========== PASO 3: SELECCIÓN DE FECHA ========== -->
     <div *ngIf="pasoActual === 3" class="paso">
-      <h2>Seleccionar fecha</h2>
+      <h2>Seleccionar fecha:</h2>
       
       <div *ngIf="fechasDisponibles.length > 0">
         <div class="grid-fechas">
           <button *ngFor="let f of fechasDisponibles" 
                   class="boton-fecha" 
                   (click)="seleccionarFecha(f)">
-            <div class="dia-semana">{{ f.nombreDia }}</div>
-            <div class="fecha-numero">{{ f.value | horaFormato }}</div>
+            <div class="fecha-numero">{{ f.value | fechaFormato }}</div>
           </button>
         </div>
       </div>
@@ -190,13 +202,7 @@
     </div>
 
     <!-- ========== INFORMACIÓN PARA PACIENTES NO-ADMIN ========== -->
-    <div *ngIf="!esAdmin && pasoActual === 1 && !cargando" class="info-paciente">
-      <p>📋 Estás solicitando un turno para ti mismo:</p>
-      <div class="datos-paciente">
-        <strong>{{ usuarioLogueado?.nombre }} {{ usuarioLogueado?.apellido }}</strong>
-        <small>DNI: {{ usuarioLogueado?.dni || 'No registrado' }}</small>
-      </div>
-    </div>
+    
 
   </div>
 </div>

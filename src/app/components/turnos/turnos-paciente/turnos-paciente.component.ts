@@ -15,6 +15,12 @@ import { UtilsService } from '../../../services/utils.service';
 import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
 import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
+import {EstadoTurnoDirectiva} from '../../../directives/estados.directive';
+import { AccionesTurnoDirective } from '../../../directives/acciones.directive';
+import { AccionesTurnoPipe } from '../../../pipes/acciones.pipe';
+import { HighlightCoincidenciaDirective } from '../../../directives/coincidencias.directive';
+import { FormsModule } from '@angular/forms';
+
 
 @Component({
   selector: 'app-turnos-paciente',
@@ -26,8 +32,13 @@ import { Subscription } from 'rxjs';
     EncuestaModalComponent,
     MenuComponent,
     SpinnerComponent,
-    FechaFormatoPipe
-  ],
+    FechaFormatoPipe,
+    EstadoTurnoDirectiva,
+    AccionesTurnoDirective,
+    AccionesTurnoPipe,
+    HighlightCoincidenciaDirective,
+    FormsModule,
+    SpinnerComponent  ],
   templateUrl: './turnos-paciente.component.html',
   styleUrls: ['./turnos-paciente.component.scss'],
 })
@@ -35,6 +46,7 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
   cargando = false;
   turnos: TurnoExtendido[] = [];
   turnosFiltrados: TurnoExtendido[] = [];
+  filtro: string = '';
 
   mostrarEncuestaModal = false;
   turnoSeleccionado: any = null;
@@ -207,6 +219,16 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
 
     return acciones;
   }
+  aplicarFiltro() {
+    const f = this.filtro.toLowerCase();
+    this.turnosFiltrados = this.turnos.filter(
+      (t) =>
+        (t.especialidad?.nombre?.toLowerCase() || '').includes(f) ||
+        `${t.especialista?.nombre || ''} ${t.especialista?.apellido || ''}`
+          .toLowerCase()
+          .includes(f)
+    );
+  }
 
   async ejecutarAccion(accion: string, turno: TurnoExtendido) {
     let prom: any;
@@ -258,6 +280,7 @@ export class PacienteMisTurnosComponent implements OnInit, OnDestroy {
     };
     return textos[accion] || accion;
   }
+  
 
   formatearEstado(estado: string): string {
     return this.utilsService.formatearEstadoParaMostrar(estado);

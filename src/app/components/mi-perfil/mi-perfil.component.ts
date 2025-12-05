@@ -11,11 +11,12 @@ import { ArchivosService } from '../../services/archivos.service';
 import { MenuComponent } from './../componentes/menu/menu.component';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
 import { ActivatedRoute } from '@angular/router';
+import { HistoriaResumenPipe } from '../../pipes/historia-clinica.pipe'; // Ajusta la ruta
 
 @Component({
   selector: 'app-mi-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule, MenuComponent, SpinnerComponent],
+  imports: [CommonModule, FormsModule, MenuComponent, SpinnerComponent,HistoriaResumenPipe],
   templateUrl: './mi-perfil.component.html',
   styleUrls: ['./mi-perfil.component.scss']
 })
@@ -105,35 +106,69 @@ async ngOnInit() {
   }
 
 
-descargarPDF() {
-  const columnas = [
-    { key: 'fecha_turno', header: 'Fecha' },
-    { key: 'especialidad', header: 'Especialidad' },
-    { key: 'especialista', header: 'Especialista' },
-    { key: 'altura', header: 'Altura' },
-    { key: 'peso', header: 'Peso' },
-    { key: 'temperatura', header: 'Temperatura' },
-    { key: 'presion', header: 'Presión' },
-  ];
 
-  const datos = this.historiaFiltrada.map(h => ({
-    fecha_turno: h.turno?.fecha_turno || '',
-    especialidad: h.turno?.especialidad?.nombre || '',
-    especialista: h.turno?.especialista ? `${h.turno.especialista.nombre} ${h.turno.especialista.apellido}` : '',
-    altura: h.altura,
-    peso: h.peso,
-    temperatura: h.temperatura,
-    presion: h.presion
-  }));
+ async descargarPDF() {
+    if (!this.historiaFiltrada || this.historiaFiltrada.length === 0) {
+      this.mostrarMensaje('Info', 'No hay historias clínicas para descargar', 'info');
+      return;
+    }
 
-  this.archivoService.exportarPDF(
-    `Historia Clínica - ${this.perfil.nombre} ${this.perfil.apellido}`,
-    datos,
-    columnas,
-    `HistoriaClinica-${this.perfil.apellido}`
-  );
-}
-
+    try {
+      this.cargando = true;
+      
+      // Obtener el nombre del especialista seleccionado
+      let nombreEspecialista = 'todos';
+      let tituloPDF = '';
+      
+      if (this.especialistaSeleccionado !== 'todos') {
+        const especialista = this.especialistasAtendidos.find(
+          esp => esp.id.toString() === this.especialistaSeleccionado
+        );
+        
+        if (especialista) {
+          nombreEspecialista = `${especialista.nombre} ${especialista.apellido}`;
+          tituloPDF = `Historias clínicas con Dr. ${nombreEspecialista}`;
+        }
+      } else {
+        tituloPDF = 'Todas mis historias clínicas';
+      }
+      
+      // Preparar datos para el PDF
+      const datosPDF = {
+        paciente: {
+          nombre: this.perfil.nombre,
+          apellido: this.perfil.apellido,
+          dni: this.perfil.dni,
+          obraSocial: this.perfil.obra_social
+        },
+        especialista: nombreEspecialista,
+        historias: this.historiaFiltrada,
+        fechaGeneracion: new Date().toLocaleDateString('es-AR'),
+        totalAtenciones: this.historiaFiltrada.length
+      };
+      
+      // Llamar al servicio para generar PDF
+      await this.archivoService.descargarHistoriaClinicaCompletaP(
+        this.perfil,
+        this.historiaFiltrada,
+        `historia-clinica-${this.perfil.nombre}-${nombreEspecialista}`
+      );
+      
+      this.mostrarMensaje('Éxito', `PDF descargado correctamente (${this.historiaFiltrada.length} atenciones)`, 'success');
+      
+    } catch (error: any) {
+      console.error('Error al descargar PDF:', error);
+      this.mostrarMensaje('Error', 'No se pudo generar el PDF', 'error');
+    } finally {
+      this.cargando = false;
+    }
+  }
+  
+  // Método para mostrar mensajes
+  private mostrarMensaje(titulo: string, texto: string, tipo: 'error' | 'success' | 'info') {
+    // Implementa tu lógica de mensajes aquí
+    console.log(`${tipo}: ${titulo} - ${texto}`);
+  }
 
   getTipoUsuarioTexto(): string {
     switch (this.perfil?.tipo_usuario) {
@@ -154,6 +189,6 @@ descargarPDF() {
   }
 
   navegarAHorarios() {
-    this.router.navigate(['/horarios']);
+    this.router.navigate(['/horarios/especialista']);
   }
 }

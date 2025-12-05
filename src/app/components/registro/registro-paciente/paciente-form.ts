@@ -18,6 +18,8 @@ import { RegistroValidatorsService } from '../../../validators/registro.validato
 import { UtilsService } from '../../../services/utils.service';
 import { CaptchaWrapperComponent } from '../../componentes/captchaC/captcha-wrapper.component';
 import { CaptchaDirectiva } from '../../../directives/captcha.directive';
+import { trigger, state, style, transition, animate } from '@angular/animations';
+
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
@@ -33,10 +35,21 @@ import { CaptchaDirectiva } from '../../../directives/captcha.directive';
   ],
   templateUrl: './paciente-form.html',
   styleUrls: ['./paciente-form.scss'],
+     animations: [
+    trigger('fadeIn', [
+  state('hidden', style({ opacity: 0 })),
+  state('visible', style({ opacity: 1 })),
+  transition('hidden => visible', animate('400ms ease-in')),
+  transition('visible => hidden', animate('300ms ease-out'))
+])
+
+  ]
 })
+
 
 export class PacienteForm implements OnInit {
     @ViewChild('captchaWrapper') captchaWrapper!: CaptchaWrapperComponent;
+fadeState: 'hidden' | 'visible' = 'hidden';
 
   form!: FormGroup;
   cargando = false;
@@ -50,6 +63,13 @@ export class PacienteForm implements OnInit {
   captchaResuelto = false;
 captchaPassed = false;
 captchaEnabled = true;
+private mostrarMensaje(
+  titulo: string,
+  texto: string,
+  tipo: 'error' | 'success' | 'info'
+) {
+  this.mensaje = { titulo, texto, tipo };
+}
 
   constructor(
     private fb: FormBuilder,
@@ -62,6 +82,8 @@ captchaEnabled = true;
   ) {}
 
   ngOnInit(): void {
+            setTimeout(() => this.fadeState = 'visible', 0);
+
   this.initForm();
   this.cargarCaptchaPersistente();
 }
@@ -83,7 +105,6 @@ ngOnDestroy(): void {
       repiteClave: ['', this.validators.getConfirmarClaveValidator('clave')],
       imagen1: [null, this.validators.getImagenValidators()],
       imagen2: [null, this.validators.getImagenValidators()],
-      recaptcha: [''],
     });
   }
 
@@ -148,7 +169,10 @@ onCaptchaSolved(esValido: boolean) { this.captchaPassed = esValido; }
 async registrar() {
   this.formUtils.markAllAsTouched(this.form);
   if (this.form.invalid) return;
-  if (this.captchaEnabled && !this.captchaPassed) return alert('Captcha requerido');
+if (this.captchaEnabled && !this.captchaPassed) {
+  this.mostrarMensaje('Info', 'Debes completar el captcha antes de registrarte.', 'info');
+  return;
+}
 
   this.cargando = true;
   try {

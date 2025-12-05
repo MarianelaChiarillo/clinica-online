@@ -23,24 +23,25 @@ export class AccionesTurnoDirective implements OnChanges {
 
     for (const accion of this.acciones) {
       const btn = this.renderer.createElement('button');
-      this.renderer.addClass(btn, 'btn');
-      this.renderer.addClass(btn, 'btn-sm');
+     this.renderer.addClass(btn, 'boton');
+this.renderer.addClass(btn, 'boton-chico');
 
-      if (accion === 'aceptar') {
-        this.renderer.addClass(btn, 'btn-success');
-      } else if (accion === 'rechazar') {
-        this.renderer.addClass(btn, 'btn-warning');
-      } else if (accion === 'cancelar') {
-        this.renderer.addClass(btn, 'btn-danger');
-      } else if (accion === 'finalizar') {
-        this.renderer.addClass(btn, 'btn-primary');
-      } else if (accion === 'ver_resena') {
-        this.renderer.addClass(btn, 'btn-info');
-      } else if (accion === 'completar_encuesta') {
-        this.renderer.addClass(btn, 'btn-secondary');
-      } else if (accion === 'calificar') {
-        this.renderer.addClass(btn, 'btn-dark');
-      }
+if (accion === 'aceptar') {
+  this.renderer.addClass(btn, 'boton-exito');
+} else if (accion === 'rechazar') {
+  this.renderer.addClass(btn, 'boton-advertencia');
+} else if (accion === 'cancelar') {
+  this.renderer.addClass(btn, 'boton-peligro');
+} else if (accion === 'finalizar') {
+  this.renderer.addClass(btn, 'boton-primario');
+} else if (accion === 'ver_resena') {
+  this.renderer.addClass(btn, 'boton-info');
+} else if (accion === 'completar_encuesta') {
+  this.renderer.addClass(btn, 'boton-secundario');
+} else if (accion === 'calificar') {
+  this.renderer.addClass(btn, 'boton-oscuro');
+}
+
 
       btn.innerText = this.getTextoAccion(accion);
 

@@ -41,6 +41,16 @@ h2 {
   }
 }
 
+.btn-volver {
+  background: #001e55;
+  color: white;
+  border-radius: 30px;
+  border:none;
+  padding: 12px;
+  margin-bottom: 1rem;
+
+}
+
 .form-nuevo-horario {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -172,3 +182,17 @@ hr {
   border-top: 1px solid #dee2e6;
 }
 
+.enlace-volver {
+  position: absolute;
+  top: 7rem;
+  left: 30px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    transform: translateX(-3px);
+    color: #1a3a52;
+  }
+}

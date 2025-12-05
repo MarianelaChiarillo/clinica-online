@@ -1,4 +1,4 @@
-<div class="background-container">
+<div  [@slideInRight]="slideState" class="background-container">
 
   <a routerLink="/home" class="enlace-volver"> ← Volver</a>
 
@@ -53,7 +53,7 @@
             (click)="completarYAcceder(user.email, user.pass)">
             <img [src]="user.src" [alt]="user.alt" class="imagen-acceso" />
           </button>
-          <span class="rol-usuario">{{ user.rol }}</span>
+          <span class="rol-usuario">{{ user.alt }}</span>
         </div>
       </div>
     </div>

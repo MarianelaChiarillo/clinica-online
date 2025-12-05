@@ -13,8 +13,11 @@ import { ModalService } from '../../../services/modal.service';
 import { TurnoService } from '../../../services/turnos.service';
 import { EspecialistaService } from '../../../services/usuarios/especialista.service';
 import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
-
-
+import { AccionesTurnoDirective } from '../../../directives/acciones.directive';
+import { AccionesTurnoPipe } from '../../../pipes/acciones.pipe';
+import {HighlightCoincidenciaDirective} from '../../../directives/coincidencias.directive'
+import {EstadoTurnoDirectiva} from '../../../directives/estados.directive'
+import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
 @Component({
   selector: 'app-turnos-especialista',
   standalone: true,
@@ -24,7 +27,12 @@ import { FechaFormatoPipe } from '../../../pipes/fecha-formato.pipe';
     ModalContainerComponent,
     FiltroGeneralComponent,
     MenuComponent,
-    FechaFormatoPipe
+    FechaFormatoPipe,
+    AccionesTurnoDirective,
+    AccionesTurnoPipe,
+    HighlightCoincidenciaDirective,
+    EstadoTurnoDirectiva,
+    SpinnerComponent
   ],
   templateUrl: './turnos-especialista.component.html',
   styleUrls: ['./turnos-especialista.component.scss'],
@@ -35,6 +43,7 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   private canalRealtime: any;
+  cargando = false;
 
   constructor(
     private turnosService: TurnoService,
@@ -46,16 +55,24 @@ export class TurnosEspecialistaComponent implements OnInit, OnDestroy {
   ) {}
 
  async ngOnInit() {
+      this.cargando = true;
+
   await this.esperarSesion();
   await this.cargarTurnos();
   this.suscribirRealtime();
+  this.cargando = false;
 }
+filtroTexto: string = '';
 
 
   ngOnDestroy() {
     if (this.canalRealtime) this.canalRealtime.unsubscribe();
   }
 
+onFiltroChange(filtroTexto: string) {
+  this.filtroTexto = filtroTexto; // guardar el texto para resaltar coincidencias
+  console.log('Filtro aplicado:', filtroTexto);
+}
 
 private async esperarSesion() {
   return new Promise<void>(async resolve => {
@@ -137,9 +154,6 @@ private async esperarSesion() {
     this.turnosFiltrados = turnosFiltrados;
   }
 
-  onFiltroChange(filtroTexto: string) {
-    console.log('Filtro aplicado:', filtroTexto);
-  }
 
   accionesEspecialista(t: TurnoExtendido): string[] {
     const estado = t.estado?.toLowerCase().trim();

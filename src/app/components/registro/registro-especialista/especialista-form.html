@@ -1,4 +1,4 @@
-<div class="background-container">
+<div [@fadeIn]="fadeState" class="background-container">
   <a routerLink="/registro" class="enlace-volver"> ← Volver</a>
 
   <div class="registro-container scrollable-form">
@@ -91,7 +91,11 @@
         </div>
       </div>
 
-
+  <app-captcha-wrapper
+        #captchaWrapper
+        [enabled]="captchaEnabled"
+        (solved)="onCaptchaSolved($event)"
+      ></app-captcha-wrapper>
       <a routerLink="/login" class="fade-in enlace-cuenta">¿Ya tenés cuenta? Iniciá sesión</a>
       <button type="submit" class="submit-button">
         <ng-container *ngIf="cargando; else iniciar">Registrando...</ng-container>

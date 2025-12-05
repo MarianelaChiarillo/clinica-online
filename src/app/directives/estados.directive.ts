@@ -9,32 +9,38 @@ export class EstadoTurnoDirectiva implements OnChanges {
 
   constructor(private el: ElementRef, private renderer: Renderer2) {}
 
-  ngOnChanges() {
-    let clase = '';
-    let texto = '';
-    const estadoNormalizado = this.estado ? this.estado.toLowerCase() : '';
+ngOnChanges() {
+  // Limpio clases previas (opcional, evita acumulación)
+  const clasesPrevias = ['etiqueta-solicitado','etiqueta-aceptado','etiqueta-realizado','etiqueta-cancelado','etiqueta-rechazado','etiqueta'];
+  clasesPrevias.forEach(c => this.renderer.removeClass(this.el.nativeElement, c));
 
-    if (estadoNormalizado === 'solicitado') {
-      clase = 'badge-warning';
-      texto = 'Solicitado';
-    } else if (estadoNormalizado === 'aceptado') {
-      clase = 'badge-info';
-      texto = 'Aceptado';
-    } else if (estadoNormalizado === 'realizado') {
-      clase = 'badge-success';
-      texto = 'Realizado';
-    } else if (estadoNormalizado === 'cancelado') {
-      clase = 'badge-danger';
-      texto = 'Cancelado';
-    } else if (estadoNormalizado === 'rechazado') {
-      clase = 'badge-secondary';
-      texto = 'Rechazado';
-    } else {
-      clase = 'badge-secondary';
-      texto = this.estado;
-    }
+  this.renderer.addClass(this.el.nativeElement, 'etiqueta');
 
-    this.el.nativeElement.innerText = texto;
-    this.renderer.addClass(this.el.nativeElement, clase);
+  let clase = '';
+  let texto = '';
+  const estadoNormalizado = this.estado ? this.estado.toLowerCase().trim() : '';
+
+  if (estadoNormalizado === 'solicitado') {
+    clase = 'etiqueta-solicitado';
+    texto = 'Solicitado';
+  } else if (estadoNormalizado === 'aceptado') {
+    clase = 'etiqueta-aceptado';
+    texto = 'Aceptado';
+  } else if (estadoNormalizado === 'realizado') {
+    clase = 'etiqueta-realizado';
+    texto = 'Realizado';
+  } else if (estadoNormalizado === 'cancelado') {
+    clase = 'etiqueta-cancelado';
+    texto = 'Cancelado';
+  } else if (estadoNormalizado === 'rechazado') {
+    clase = 'etiqueta-rechazado';
+    texto = 'Rechazado';
+  } else {
+    clase = 'etiqueta-rechazado';
+    texto = this.estado || 'Desconocido';
   }
+
+  this.renderer.addClass(this.el.nativeElement, clase);
+  this.el.nativeElement.innerText = texto;
+}
 }

@@ -1,105 +1,202 @@
-<app-menu/>
+<app-menu></app-menu>
 
-<div class="container-fluid py-4">
+<div class="container-estadisticas">
 
-  <h1 class="mb-4">Panel de Estadísticas - Administrador</h1>
+  <h1>Panel de Estadísticas</h1>
+  <div class="linea"></div>
+<div *ngIf="cargando" class="spinner-wrapper text-center">
+    <app-spinner></app-spinner>
+  </div>
+  <!-- Botones de navegación - SEPARADOS -->
+  <div class="botones-secciones">
+    <button class="btn-consultar" [class.active]="mostrarLogIngresos" (click)="toggleSeccion('log')">Log de Ingresos</button>
+    <button class="btn-consultar" [class.active]="mostrarTurnosEspecialidad" (click)="toggleSeccion('especialidad')">Turnos por Especialidad</button>
+    <button class="btn-consultar" [class.active]="mostrarTurnosDiaSemana" (click)="toggleSeccion('dias')">Turnos por Día</button>
+    <button class="btn-consultar" [class.active]="mostrarTurnosMedicoSolicitado" (click)="toggleSeccion('medicoSolicitado')">Turnos Solicitados</button>
+    <button class="btn-consultar" [class.active]="mostrarTurnosMedicoRealizado" (click)="toggleSeccion('medicoRealizado')">Turnos Realizados</button>
+  </div>
 
-  <!-- LOG DE INGRESOS -->
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Log de Ingresos al Sistema</h5>
-
-      <button class="btn btn-sm btn-success"
-              (click)="exportarLogIngresosPDF()"
-              [disabled]="logIngresos.length === 0">
-        Exportar PDF
-      </button>
+  <!-- Log de Ingresos -->
+  <div *ngIf="mostrarLogIngresos" class="seccion log-seccion">
+    <div class="seccion-header">
+      <h2>Log de Ingresos</h2>
+      <div class="header-buttons">
+        <button class="btn-pdf" (click)="exportarLogIngresosPDF()">Exportar PDF</button>
+        <button class="btn-excel" (click)="exportarLogIngresosExcel()">Exportar Excel</button>
+      </div>
     </div>
-
-    <div class="card-body">
-
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-
-          <thead class="table-dark">
-            <tr>
-              <th>Usuario (Email)</th>
-              <th>Primer Ingreso</th>
-              <th>Último Ingreso</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr *ngFor="let log of logIngresos">
-              <td><small class="text-muted">{{ log.usuario_email }}</small></td>
-
-              <td>{{ log.primer_ingreso_fecha_hora | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-              <td>{{ log.ultimo_ingreso_fecha_hora | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-            </tr>
-          </tbody>
-
-        </table>
-      </div>
-
-      <div class="mt-3 text-end">
-        <small class="text-muted">Mostrando {{ logIngresos.length }} registros</small>
-      </div>
-
+    
+    <div class="tabla-wrapper">
+      <table class="tabla-estadisticas">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Email</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logIngresos">
+            <td>{{ log.nombre }}</td>
+            <td>{{ log.apellido }}</td>
+            <td>{{ log.email }}</td>
+            <td>{{ log.fecha_hora }}</td>
+          </tr>
+          <tr *ngIf="!logIngresos || logIngresos.length === 0">
+            <td colspan="4">No hay datos de ingresos disponibles</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- TURNOS POR ESPECIALIDAD -->
-  <div class="card mb-4">
-    <div class="card-body">
-
-      <h6 class="mb-3">Turnos por Especialidad</h6>
-
-      <div class="mb-3">
-        <label class="form-label">Filtrar por Especialidad</label>
-        <select class="form-select form-select-sm"
-                [(ngModel)]="filtroEspecialidadSeleccionada"
-                (change)="cargarTurnosPorEspecialidad(filtroEspecialidadSeleccionada)">
-          <option value="todas">Todas</option>
-          <option *ngFor="let esp of especialidadesDisponibles" [value]="esp.nombre">
-            {{ esp.nombre }}
-          </option>
-        </select>
+  <!-- Turnos por Especialidad -->
+  <div *ngIf="mostrarTurnosEspecialidad" class="seccion">
+    <div class="seccion-header">
+      <h2>Turnos por Especialidad</h2>
+      <div class="header-buttons" *ngIf="!turnosEspecialidadVacios">
+        <button class="btn-pdf" (click)="exportTurnosPorEspecialidadPDF()">PDF</button>
+        <button class="btn-excel" (click)="exportTurnosPorEspecialidadExcel()">Excel</button>
       </div>
-
+    </div>
+    
+    <div class="chart-wrapper" *ngIf="!turnosEspecialidadVacios; else noEspecialidad">
       <div class="chart-container">
         <canvas #chartEspecialidadCanvas></canvas>
       </div>
-
-      <button class="btn btn-sm btn-success mt-3"
-              (click)="exportTurnosPorEspecialidadPDF()"
-              [disabled]="turnosPorEspecialidad.length === 0">
-         Exportar PDF
-      </button>
-
-      <button class="btn btn-sm btn-primary mt-3 ms-2"
-              (click)="exportTurnosPorEspecialidadExcel()"
-              [disabled]="turnosPorEspecialidad.length === 0">
-         Exportar Excel
-      </button>
-
     </div>
+    
+    <ng-template #noEspecialidad>
+      <div class="mensaje-vacio">
+        <p>No hay turnos por especialidad para mostrar.</p>
+      </div>
+    </ng-template>
   </div>
 
-  <!-- TURNOS POR DÍA -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <h6 class="mb-3">Cantidad de turnos por día</h6>
-
-      <div class="chart-container">
-        <canvas #chartPorDiaCanvas></canvas>
+  <!-- Turnos por Día de la Semana -->
+  <div *ngIf="mostrarTurnosDiaSemana" class="seccion">
+    <div class="seccion-header">
+      <h2>Turnos por Día de la Semana</h2>
+      <div class="header-buttons" *ngIf="!turnosDiaSemanaVacios">
+        <button class="btn-pdf" (click)="exportTurnosPorDiaSemanaPDF()">PDF</button>
+        <button class="btn-excel" (click)="exportTurnosPorDiaSemanaExcel()">Excel</button>
       </div>
-
-      <button class="btn btn-sm btn-success mt-3"
-              (click)="exportPDF('Turnos por día', chartPorDia, turnosPorDia, ['dia','cantidad'], 'turnos_por_dia')"
-              [disabled]="!turnosPorDia || turnosPorDia.length === 0">
-         Exportar PDF
-      </button>
     </div>
+    
+    <div class="chart-wrapper" *ngIf="!turnosDiaSemanaVacios; else noDias">
+      <div class="chart-container">
+        <canvas #chartPorDiaSemanaCanvas></canvas>
+      </div>
+    </div>
+    
+    <ng-template #noDias>
+      <div class="mensaje-vacio">
+        <p>No hay turnos por día de la semana para mostrar.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Turnos Solicitados -->
+  <div *ngIf="mostrarTurnosMedicoSolicitado" class="seccion">
+    <div class="seccion-header">
+      <h2>Turnos Solicitados por Médico</h2>
+      <div class="header-buttons" *ngIf="!turnosSolicitadosVacios">
+        <button class="btn-pdf" (click)="exportTurnosSolicitadosPDF()">PDF</button>
+      </div>
+    </div>
+    
+    <div class="filtros-medico">
+      <label>Médico:</label>
+      <select [(ngModel)]="medicoSeleccionadoSolicitados">
+        <option [ngValue]="null">Todos</option>
+        <option *ngFor="let m of medicos" [ngValue]="m">{{ m.nombre }} {{ m.apellido }}</option>
+      </select>
+      
+      <mat-form-field appearance="outline" class="small-field">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesdeSolicitado" [(ngModel)]="fechaDesdeSolicitados">
+        <mat-datepicker-toggle matSuffix [for]="pickerDesdeSolicitado"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesdeSolicitado></mat-datepicker>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="small-field">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHastaSolicitado" [(ngModel)]="fechaHastaSolicitados">
+        <mat-datepicker-toggle matSuffix [for]="pickerHastaSolicitado"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHastaSolicitado></mat-datepicker>
+      </mat-form-field>
+      
+      <button class="button-consultar" (click)="consultarTurnosSolicitados()">Consultar</button>
+    </div>
+    
+    <div class="chart-wrapper" *ngIf="!turnosSolicitadosVacios; else noSolicitados">
+      <div class="chart-container">
+        <canvas #chartSolicitadoEspecialidadesCanvas></canvas>
+      </div>
+    </div>
+    
+    <ng-template #noSolicitados>
+      <div class="mensaje-vacio">
+        <p *ngIf="!medicoSeleccionadoSolicitados || !fechaDesdeSolicitados || !fechaHastaSolicitados">
+          Por favor, seleccione un médico y rango de fechas, luego haga clic en "Consultar"
+        </p>
+        <p *ngIf="medicoSeleccionadoSolicitados && fechaDesdeSolicitados && fechaHastaSolicitados && turnosSolicitadosVacios">
+          No hay turnos solicitados para mostrar con los filtros seleccionados
+        </p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Turnos Realizados -->
+  <div *ngIf="mostrarTurnosMedicoRealizado" class="seccion">
+    <div class="seccion-header">
+      <h2>Turnos Realizados por Médico</h2>
+      <div class="header-buttons" *ngIf="!turnosRealizadosVacios">
+        <button class="btn-pdf" (click)="exportTurnosRealizadosPDF()">PDF</button>
+      </div>
+    </div>
+    
+    <div class="filtros-medico">
+      <label>Médico:</label>
+      <select [(ngModel)]="medicoSeleccionadoRealizados">
+        <option [ngValue]="null">Todos</option>
+        <option *ngFor="let m of medicos" [ngValue]="m">{{ m.nombre }} {{ m.apellido }}</option>
+      </select>
+      
+      <mat-form-field appearance="outline" class="small-field">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesdeRealizado" [(ngModel)]="fechaDesdeRealizados">
+        <mat-datepicker-toggle matSuffix [for]="pickerDesdeRealizado"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesdeRealizado></mat-datepicker>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="small-field">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHastaRealizado" [(ngModel)]="fechaHastaRealizados">
+        <mat-datepicker-toggle matSuffix [for]="pickerHastaRealizado"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHastaRealizado></mat-datepicker>
+      </mat-form-field>
+      
+      <button class="button-consultar" (click)="consultarTurnosRealizados()">Consultar</button>
+    </div>
+    
+    <div class="chart-wrapper" *ngIf="!turnosRealizadosVacios; else noRealizados">
+      <div class="chart-container">
+        <canvas #chartFinalizadoEspecialidadesCanvas></canvas>
+      </div>
+    </div>
+    
+    <ng-template #noRealizados>
+      <div class="mensaje-vacio">
+        <p *ngIf="!medicoSeleccionadoRealizados || !fechaDesdeRealizados || !fechaHastaRealizados">
+          Por favor, seleccione un médico y rango de fechas, luego haga clic en "Consultar"
+        </p>
+        <p *ngIf="medicoSeleccionadoRealizados && fechaDesdeRealizados && fechaHastaRealizados && turnosRealizadosVacios">
+          No hay turnos realizados para mostrar con los filtros seleccionados
+        </p>
+      </div>
+    </ng-template>
   </div>
 
 </div>

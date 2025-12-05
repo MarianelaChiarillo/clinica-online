@@ -91,7 +91,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         await this.servicioAuth.cerrarSesion();
         this.rolUsuario = null;
         localStorage.removeItem('usuario');
-        this.router.navigate(['/login']);
+        this.router.navigate(['/home/bienvenida']);
       } catch (error) {
         console.error('Error al cerrar sesión:', error);
         Swal.fire('Error', 'No se pudo cerrar sesión', 'error');

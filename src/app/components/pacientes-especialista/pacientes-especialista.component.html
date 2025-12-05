@@ -1,7 +1,10 @@
 <app-menu/>
-<div class="pacientes-container">
-  <h2>Mis Pacientes Atendidos</h2>
-
+<div    class="pacientes-container">
+  <h1>Mis Pacientes Atendidos</h1>
+  <div class="linea"></div>
+ <div *ngIf="cargando" class="spinner-wrapper text-center">
+    <app-spinner></app-spinner>
+  </div>
   <div *ngIf="!pacienteSeleccionado" class="pacientes-grid">
 
     <div 
@@ -26,7 +29,7 @@
       <div class="paciente-info">
         <h3>{{ paciente.nombre }} {{ paciente.apellido }}</h3>
         <p>DNI: {{ paciente.dni }}</p>
-        <small>{{ paciente.cantidadTurnos }} turno(s)</small>
+        <p>{{ paciente.cantidadTurnos }} turno(s)</p>
       </div>
 
     </div>
@@ -78,7 +81,6 @@
             {{ turno.fecha_turno | date:'dd/MM/yyyy' }} – 
             {{ turno.especialidades?.nombre || 'Sin especialidad' }}
           </h4>
-          <span class="estado-badge" [class]="turno.estado">{{ turno.estado }}</span>
         </div>
 
         <div class="turno-info-detalle">
@@ -141,3 +143,16 @@
     </div>
   </div>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,10 +1,11 @@
 <app-menu/>
 <div class="admin-container">
-  <h2>Gestión de Usuarios</h2>
+  <h1>Gestión de Usuarios</h1>
+  <div class="linea"></div>
 
   <div class="acciones-superiores">
     <button type="button" class="btn-nuevo-admin" (click)="abrirModalAdmin()">
-      ➕ Crear Nuevo Administrador
+       Crear Nuevo Administrador
     </button>
 
     <button
@@ -13,17 +14,15 @@
       (click)="descargarExcelGeneral()"
       [disabled]="usuariosFiltrados.length === 0"
     >
-      📊 Descargar Excel General
+       Descargar Excel General
     </button>
   </div>
 
-  <div class="filtro-busqueda-container">
-    <app-filtro-general
-      placeholder="Buscar por nombre, apellido, tipo de usuario, email..."
-      (filtroChange)="onFiltroChange($event)"
-    >
-    </app-filtro-general>
-  </div>
+  <app-filtro-general
+    placeholder="Buscar por nombre, apellido, tipo de usuario, email..."
+    (filtroChange)="onFiltroChange($event)"
+  >
+  </app-filtro-general>
 
   <div *ngIf="!mostrarDetalleUsuario">
     
@@ -41,27 +40,28 @@
           />
 
           <div class="usuario-info">
-            <h3>{{ user.nombre }} {{ user.apellido }}</h3>
-            <p class="dni">{{ user.dni }}</p>
+            <h3>
+<span [appHighlightCoincidencia]="user.nombre" [termino]="textoFiltro"></span>
+<span [appHighlightCoincidencia]="' ' + (user.apellido || '')" [termino]="textoFiltro"></span>
+            </h3>
+            
+            <p class="dni">
+<span [appHighlightCoincidencia]="user.dni || ''" [termino]="textoFiltro"></span>
+            </p>
+            
+            <p class="email">
+<span [appHighlightCoincidencia]="user.email || ''" [termino]="textoFiltro"></span>
+            </p>
 
             <div class="badges-container">
               <span class="badge-tipo" [class]="user.tipo_usuario">
-                {{ user.tipo_usuario }}
+<span [appHighlightCoincidencia]="user.tipo_usuario || ''" [termino]="textoFiltro"></span>
               </span>
 
               <span class="badge-estado" [class]="user.estado">
-                {{ user.estado }}
+<span [appHighlightCoincidencia]="user.estado || ''" [termino]="textoFiltro"></span>
               </span>
             </div>
-          </div>
-        </div>
-
-        <div class="usuario-stats">
-          <div class="stat">
-            <strong>Turnos Totales:</strong> {{ getTotalTurnos(user) }}
-          </div>
-          <div class="stat">
-            <strong>Realizados:</strong> {{ getTurnosRealizados(user) }}
           </div>
         </div>
 
@@ -71,22 +71,28 @@
             (click)="$event.stopPropagation(); toggleEstado(user)"
             [disabled]="cargando"
             class="btn-toggle"
+            [class.btn-toggle-inactivo]="user.estado === 'inactivo'"
+            [class.btn-toggle-activo]="user.estado === 'activo'"
           >
-            {{ user.estado === 'activo' ? 'Inhabilitar' : 'Habilitar' }}
+            {{ user.estado === 'activo' ? '❌ Inhabilitar' : '✅ Habilitar' }}
           </button>
-
+          
           <button
             *ngIf="user.tipo_usuario === 'paciente'"
-            class="btn-descargar-excel"
             (click)="$event.stopPropagation(); descargarExcelUsuario(user)"
+            class="btn-excel-paciente"
+            [disabled]="!user || !user.turnos || user.turnos.length === 0"
+            [title]="(!user?.turnos?.length) ? 'No hay turnos para descargar' : 'Descargar Excel con todos los turnos'"
           >
-            📥 Descargar Turnos
+            📊 Excel Turnos
           </button>
 
           <button
             *ngIf="user.tipo_usuario === 'paciente'"
             class="btn-ver-historia"
             (click)="$event.stopPropagation(); verHistoriaClinica(user)"
+            [disabled]="!user?.historiasClinicas?.length"
+            [title]="(!user?.historiasClinicas?.length) ? 'No hay historias clínicas' : 'Ver historias clínicas'"
           >
             📋 Historia Clínica
           </button>
@@ -109,155 +115,308 @@
       </div>
     </div>
 
-    <p *ngIf="!cargando && usuariosFiltrados.length === 0 && !textoFiltro">
-      No hay usuarios registrados.
-    </p>
+    <div *ngIf="!cargando && usuariosFiltrados.length === 0 && !textoFiltro" class="sin-usuarios">
+      <div class="sin-usuarios-content">
+        <i class="fas fa-users fa-3x"></i>
+        <h3>No hay usuarios registrados</h3>
+        <p>Cuando se registren usuarios, aparecerán aquí.</p>
+      </div>
+    </div>
   </div>
 
+  <!-- DETALLE DE USUARIO -->
   <div *ngIf="mostrarDetalleUsuario && usuarioSeleccionado" class="detalle-usuario">
-    <button class="btn-volver" (click)="volverALista()">← Volver a la lista</button>
+    <div class="detalle-header">
+      <button class="btn-volver" (click)="volverALista()">
+        <i class="fas fa-arrow-left"></i> Volver a la lista
+      </button>
+      
+      <div class="detalle-acciones">
+        <button
+          *ngIf="usuarioSeleccionado.tipo_usuario === 'paciente' && usuarioSeleccionado.historiasClinicas?.length"
+          class="btn-descargar-pdf-detalle"
+          (click)="descargarHistoriaClinicaPDF(usuarioSeleccionado)"
+          [disabled]="cargando"
+          [title]="cargando ? 'Generando PDF...' : 'Descargar PDF con todas las historias clínicas'"
+        >
+          <i class="fas fa-file-pdf"></i> Descargar PDF Completo
+        </button>
+      </div>
+    </div>
 
     <div class="usuario-detalle-header">
-     <img
-  [src]="usuarioSeleccionado.imagen_perfil_url"
-  class="imagen-grande"
-/>
-
+      <img
+        [src]="usuarioSeleccionado.imagen_perfil_url"
+        class="imagen-grande"
+        [alt]="usuarioSeleccionado.nombre"
+      />
 
       <div class="usuario-detalle-info">
         <h2>
           {{ usuarioSeleccionado.nombre }} {{ usuarioSeleccionado.apellido }}
         </h2>
-        <p><strong>DNI:</strong> {{ usuarioSeleccionado.dni }}</p>
-        <p><strong>Email:</strong> {{ usuarioSeleccionado.email }}</p>
-        <p><strong>Tipo:</strong> {{ usuarioSeleccionado.tipo_usuario }}</p>
-        <p><strong>Estado:</strong> {{ usuarioSeleccionado.estado }}</p>
-
-        <p *ngIf="usuarioSeleccionado.obra_social">
-          <strong>Obra Social:</strong> {{ usuarioSeleccionado.obra_social }}
-        </p>
-
-        <p *ngIf="usuarioSeleccionado.especialidades?.length">
-          <strong>Especialidades:</strong>
-          {{ usuarioSeleccionado.especialidades.join(', ') }}
-        </p>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>DNI:</strong> 
+            <span>{{ usuarioSeleccionado.dni }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Email:</strong> 
+            <span>{{ usuarioSeleccionado.email }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Tipo:</strong> 
+            <span class="badge-tipo-detalle" [class]="usuarioSeleccionado.tipo_usuario">
+              {{ usuarioSeleccionado.tipo_usuario }}
+            </span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Estado:</strong> 
+            <span class="badge-estado-detalle" [class]="usuarioSeleccionado.estado">
+              {{ usuarioSeleccionado.estado }}
+            </span>
+          </div>
+          
+          <div class="info-item" *ngIf="usuarioSeleccionado.obra_social">
+            <strong>Obra Social:</strong> 
+            <span>{{ usuarioSeleccionado.obra_social }}</span>
+          </div>
+          
+          <div class="info-item" *ngIf="usuarioSeleccionado.especialidades?.length">
+            <strong>Especialidades:</strong> 
+            <span class="especialidades-lista">
+              <span *ngFor="let esp of usuarioSeleccionado.especialidades" class="especialidad-badge">
+                {{ esp }}
+              </span>
+            </span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Total Turnos:</strong> 
+            <span>{{ getTotalTurnos(usuarioSeleccionado) }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Turnos Realizados:</strong> 
+            <span>{{ getTurnosRealizados(usuarioSeleccionado) }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div
-      *ngIf="usuarioSeleccionado.tipo_usuario === 'paciente'"
-      class="historia-clinica-section"
-    >
+    <!-- HISTORIAS CLÍNICAS (solo para pacientes) -->
+    <div *ngIf="usuarioSeleccionado.tipo_usuario === 'paciente'" class="historia-clinica-section">
       <div class="section-header">
-        <h3>📋 Historia Clínica</h3>
-        <button
-          class="btn-descargar-pdf"
-          (click)="descargarHistoriaClinicaPDF(usuarioSeleccionado)"
-        >
-          📄 Descargar PDF
-        </button>
+        <h3><i class="fas fa-file-medical"></i> Historia Clínica</h3>
+        <div class="section-actions">
+          <button
+            class="btn-descargar-pdf"
+            (click)="descargarHistoriaClinicaPDF(usuarioSeleccionado)"
+            [disabled]="!usuarioSeleccionado?.historiasClinicas?.length || cargando"
+            [title]="!usuarioSeleccionado?.historiasClinicas?.length ? 'No hay historias clínicas para descargar' : 'Descargar PDF'"
+          >
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+          </button>
+        </div>
       </div>
 
       <div *ngIf="usuarioSeleccionado.historiasClinicas?.length > 0; else noHC">
         <div
-          *ngFor="let historia of usuarioSeleccionado.historiasClinicas"
+          *ngFor="let historia of usuarioSeleccionado.historiasClinicas; let i = index"
           class="historia-card"
         >
           <div class="historia-header">
-            <h4>
-              Consulta del
-              {{ historia.fecha_creacion | date : 'dd/MM/yyyy' }}
-            </h4>
-            <span class="especialista-info">
-              Dr. {{ historia.turno?.especialista?.nombre }}
-              {{ historia.turno?.especialista?.apellido }} -
-              {{ historia.turno?.especialidad?.nombre }}
-            </span>
+            <div class="historia-header-left">
+              <h4>
+                <i class="fas fa-calendar-check"></i> 
+                Consulta del {{ historia.fecha_creacion | date : 'dd/MM/yyyy' }}
+              </h4>
+              <span class="especialista-info">
+                <i class="fas fa-user-md"></i> 
+                Dr. {{ historia.turno?.especialista?.nombre || historia.turno?.especialistas?.nombre }}
+                {{ historia.turno?.especialista?.apellido || historia.turno?.especialistas?.apellido }}
+                - {{ historia.turno?.especialidad?.nombre || historia.turno?.especialidades?.nombre }}
+              </span>
+            </div>
+            
+            <div class="historia-header-right">
+              <button
+                class="btn-descargar-mini"
+                (click)="$event.stopPropagation(); descargarHistoriaClinicaTurno(historia)"
+                [disabled]="cargando"
+                title="Descargar esta historia clínica"
+              >
+                <i class="fas fa-download"></i> PDF
+              </button>
+            </div>
           </div>
 
           <div class="datos-fijos">
-            <h5>Datos Fijos:</h5>
+            <h5><i class="fas fa-clipboard-list"></i> Datos Fijos:</h5>
             <div class="datos-grid">
               <div class="dato-item">
-                <strong>Altura:</strong> {{ historia.altura }} cm
+                <i class="fas fa-ruler-vertical"></i>
+                <strong>Altura:</strong> {{ historia.altura || 'N/A' }} cm
               </div>
               <div class="dato-item">
-                <strong>Peso:</strong> {{ historia.peso }} kg
+                <i class="fas fa-weight"></i>
+                <strong>Peso:</strong> {{ historia.peso || 'N/A' }} kg
               </div>
               <div class="dato-item">
-                <strong>Temperatura:</strong> {{ historia.temperatura }} °C
+                <i class="fas fa-thermometer-half"></i>
+                <strong>Temperatura:</strong> {{ historia.temperatura || 'N/A' }} °C
               </div>
               <div class="dato-item">
-                <strong>Presión:</strong> {{ historia.presion }}
+                <i class="fas fa-heartbeat"></i>
+                <strong>Presión:</strong> {{ historia.presion || 'N/A' }}
               </div>
             </div>
           </div>
 
           <div *ngIf="historia.datos_dinamicos?.length" class="datos-dinamicos">
-            <h5>Datos Adicionales:</h5>
+            <h5><i class="fas fa-plus-circle"></i> Datos Adicionales:</h5>
             <div class="datos-grid">
               <div *ngFor="let dato of historia.datos_dinamicos" class="dato-item">
-                <strong>{{ dato.clave }}:</strong> {{ dato.valor }}
+                <strong>{{ dato.clave }}:</strong> 
+                <span [ngSwitch]="dato.tipo_control">
+                  <span *ngSwitchCase="'switch'">{{ dato.valor_switch ? 'Sí' : 'No' }}</span>
+                  <span *ngSwitchCase="'rango'">{{ dato.valor_rango }}%</span>
+                  <span *ngSwitchCase="'numerico'">{{ dato.valor_numerico }}</span>
+                  <span *ngSwitchDefault>{{ dato.valor_texto || dato.valor }}</span>
+                </span>
               </div>
             </div>
+          </div>
+
+          <div *ngIf="historia.comentario" class="comentario-section">
+            <h5><i class="fas fa-comment"></i> Comentario:</h5>
+            <p class="comentario-texto">{{ historia.comentario }}</p>
           </div>
         </div>
       </div>
 
       <ng-template #noHC>
         <div class="sin-historia">
-          <p>No hay historia clínica registrada para este paciente.</p>
+          <i class="fas fa-file-medical-alt fa-3x"></i>
+          <h4>No hay historia clínica registrada</h4>
+          <p>Este paciente aún no tiene historias clínicas registradas.</p>
         </div>
       </ng-template>
     </div>
 
+    <!-- TURNOS -->
     <div class="turnos-section">
-      <h3>Turnos ({{ getTotalTurnos(usuarioSeleccionado) }})</h3>
-
-      <div
-        *ngFor="let turno of usuarioSeleccionado.turnos"
-        class="turno-card"
-        [class.turno-con-historia]="tieneHistoriaClinica(turno)"
-        (click)="verHistoriaClinicaDelTurno(turno)"
-      >
-        <div class="turno-header">
-          <p>
-            <strong>Fecha:</strong>
-            {{ turno.fecha_turno | date : 'dd/MM/yyyy' }}
-          </p>
-          <p><strong>Hora:</strong> {{ turno.hora_inicio }} - {{ turno.hora_fin }}</p>
-        </div>
-
-        <div class="turno-info">
-          <p><strong>Especialidad:</strong> {{ turno.especialidades?.nombre }}</p>
-          <p>
-            <strong>Estado:</strong>
-            <span class="estado-turno" [class]="turno.estado">{{ turno.estado }}</span>
-          </p>
-
-          <p *ngIf="turno.especialistas">
-            <strong>Especialista:</strong>
-            {{ turno.especialistas.nombre }} {{ turno.especialistas.apellido }}
-          </p>
-        </div>
-
-        <div *ngIf="tieneHistoriaClinica(turno)" class="historia-indicator">
-          <span class="badge-historia">📋 Tiene historia clínica</span>
-          <small>(Click para ver)</small>
-        </div>
-
-        <div *ngIf="!tieneHistoriaClinica(turno)" class="sin-historia-indicator">
-          <span class="badge-sin-historia">📝 Sin historia clínica</span>
+      <div class="section-header">
+        <h3><i class="fas fa-calendar-alt"></i> Turnos ({{ getTotalTurnos(usuarioSeleccionado) }})</h3>
+        
+        <div class="turnos-filtros">
+          <div class="filtro-estado">
+            <label for="filtroEstado">Filtrar por estado:</label>
+            <select id="filtroEstado" (change)="filtrarTurnosPorEstado($event)">
+              <option value="todos">Todos</option>
+              <option value="solicitado">Solicitados</option>
+              <option value="aceptado">Aceptados</option>
+              <option value="realizado">Realizados</option>
+              <option value="cancelado">Cancelados</option>
+              <option value="rechazado">Rechazados</option>
+            </select>
+          </div>
+          
+          <button
+            *ngIf="usuarioSeleccionado.tipo_usuario === 'paciente'"
+            class="btn-excel-turnos"
+            (click)="descargarExcelUsuario(usuarioSeleccionado)"
+            [disabled]="!usuarioSeleccionado?.turnos?.length"
+            [title]="!usuarioSeleccionado?.turnos?.length ? 'No hay turnos para exportar' : 'Exportar todos los turnos a Excel'"
+          >
+            <i class="fas fa-file-excel"></i> Exportar Turnos
+          </button>
         </div>
       </div>
 
-      <div *ngIf="!usuarioSeleccionado.turnos?.length" class="sin-turnos">
-        <p>No hay turnos registrados</p>
+      <div *ngIf="usuarioSeleccionado.turnos?.length; else sinTurnos">
+        <div
+          *ngFor="let turno of usuarioSeleccionado.turnos"
+          class="turno-card"
+          [class.turno-con-historia]="tieneHistoriaClinica(turno)"
+          (click)="verHistoriaClinicaDelTurno(turno)"
+          [title]="tieneHistoriaClinica(turno) ? 'Click para ver historia clínica' : 'Sin historia clínica'"
+        >
+          <div class="turno-header">
+            <div class="fecha-hora">
+              <p>
+                <strong><i class="fas fa-calendar-day"></i> Fecha:</strong>
+                {{ turno.fecha_turno | date : 'dd/MM/yyyy' }}
+              </p>
+              <p>
+                <strong><i class="fas fa-clock"></i> Hora:</strong> 
+                {{ turno.hora_inicio }} - {{ turno.hora_fin }}
+              </p>
+            </div>
+            
+            <div class="estado-container">
+              <span [appEstadoTurno]="turno.estado"></span>
+            </div>
+          </div>
+
+          <div class="turno-info">
+            <p>
+              <strong><i class="fas fa-stethoscope"></i> Especialidad:</strong> 
+              {{ turno.especialidad?.nombre || turno.especialidades?.nombre || 'N/A' }}
+            </p>
+            
+            <p *ngIf="turno.especialistas || turno.especialista">
+              <strong><i class="fas fa-user-md"></i> Especialista:</strong>
+              {{ turno.especialistas?.nombre || turno.especialista?.nombre }}
+              {{ turno.especialistas?.apellido || turno.especialista?.apellido }}
+            </p>
+            
+            <p *ngIf="turno.pacientes">
+              <strong><i class="fas fa-user"></i> Paciente:</strong>
+              {{ turno.pacientes?.nombre }} {{ turno.pacientes?.apellido }}
+            </p>
+            
+            <p *ngIf="turno.comentario_paciente">
+              <strong><i class="fas fa-comment"></i> Comentario:</strong>
+              {{ turno.comentario_paciente }}
+            </p>
+          </div>
+
+          <div class="turno-acciones">
+            <div [appAccionesTurno]="turno | accionesTurno" (accionEjecutada)="ejecutarAccionTurno($event, turno)"></div>
+          </div>
+
+          <div *ngIf="tieneHistoriaClinica(turno)" class="historia-indicator">
+            <span class="badge-historia">
+              <i class="fas fa-file-medical"></i> Tiene historia clínica
+            </span>
+            <small>(Click para ver)</small>
+          </div>
+
+          <div *ngIf="!tieneHistoriaClinica(turno)" class="sin-historia-indicator">
+            <span class="badge-sin-historia">
+              <i class="fas fa-file-medical-alt"></i> Sin historia clínica
+            </span>
+          </div>
+        </div>
       </div>
+
+      <ng-template #sinTurnos>
+        <div class="sin-turnos">
+          <i class="fas fa-calendar-times fa-3x"></i>
+          <h4>No hay turnos registrados</h4>
+          <p>Este usuario no tiene turnos registrados en el sistema.</p>
+        </div>
+      </ng-template>
     </div>
   </div>
 </div>
 
+<!-- MODAL ADMINISTRADOR -->
 <div class="modal-backdrop" *ngIf="mostrarModalAdmin">
   <div class="modal-registro-admin">
     <div class="background-container">
@@ -270,7 +429,7 @@
         <form [formGroup]="formAdmin" (ngSubmit)="registrarAdmin()" class="login-form">
           <div class="form-columns">
             <div class="columna">
-              <h3 class="seccion-titulo">Datos personales:</h3>
+              <h3 class="seccion-titulo"><i class="fas fa-user"></i> Datos personales:</h3>
 
               <label for="nombre">Ingrese su nombre:</label>
               <input
@@ -335,7 +494,7 @@
             </div>
 
             <div class="columna">
-              <h3 class="seccion-titulo">Datos cuenta:</h3>
+              <h3 class="seccion-titulo"><i class="fas fa-key"></i> Datos cuenta:</h3>
 
               <label for="email">Ingrese su email:</label>
               <input
@@ -352,7 +511,6 @@
                 {{ getErrorAdmin('email') }}
               </small>
 
-              <!-- CLAVE -->
               <label for="clave">Ingrese una contraseña:</label>
               <div class="clave-container">
                 <input
@@ -403,30 +561,43 @@
 
               <div class="files-container">
                 <div class="file-group">
-                  <label>Imagen de Perfil</label>
+                  <label><i class="fas fa-image"></i> Imagen de Perfil</label>
 
                   <div class="custom-file-upload" (click)="fileInput.click()">
                     <i class="fas fa-upload"></i> Subir imagen
                   </div>
 
-                  <input #fileInput type="file" hidden (change)="onFileSelect($event)" />
+                  <input #fileInput type="file" hidden (change)="onFileSelect($event)" accept="image/*" />
 
                   <p *ngIf="nombreArchivo" class="file-name">
-                    {{ nombreArchivo }}
+                    <i class="fas fa-file-image"></i> {{ nombreArchivo }}
+                  </p>
+                  <p *ngIf="!nombreArchivo" class="file-name-placeholder">
+                    No se ha seleccionado ninguna imagen
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="captcha-container"></div>
+          <div class="form-validaciones" *ngIf="formAdmin.errors?.['clavesNoCoinciden'] && formAdmin.get('clave')?.touched && formAdmin.get('repiteClave')?.touched">
+            <small class="text-danger">
+              <i class="fas fa-exclamation-triangle"></i> Las contraseñas no coinciden
+            </small>
+          </div>
 
           <div class="modal-actions">
             <button type="button" class="btn-cancelar" (click)="cerrarModalAdmin()">
-              Cancelar
+              <i class="fas fa-times"></i> Cancelar
             </button>
 
-            <button type="submit" class="submit-button" [disabled]="cargandoAdmin">
+            <button 
+              type="submit" 
+              class="submit-button" 
+              [disabled]="cargandoAdmin || formAdmin.invalid"
+              [class.btn-disabled]="cargandoAdmin || formAdmin.invalid"
+            >
+              <i class="fas fa-user-plus"></i> 
               {{ cargandoAdmin ? 'Registrando...' : 'CREAR ADMINISTRADOR' }}
             </button>
           </div>
@@ -436,80 +607,87 @@
   </div>
 </div>
 
-<div
-  class="modal-backdrop"
-  *ngIf="mostrarHistoriaTurno && historiaTurnoSeleccionada"
->
+<div class="modal-backdrop" *ngIf="mostrarHistoriaTurno && historiaTurnoSeleccionada">
   <div class="modal-historia-turno">
     <div class="modal-header">
-      <h2>Historia Clínica</h2>
-      <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">✖</button>
+      <h2><i class="fas fa-file-medical"></i> Historia Clínica</h2>
+      <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
     <div class="modal-content">
       <div class="historia-header">
         <h3>
-          Consulta del
-          {{ historiaTurnoSeleccionada.turno?.fecha_turno | date : 'dd/MM/yyyy' }}
+          <i class="fas fa-calendar-check"></i>
+          Consulta del {{ historiaTurnoSeleccionada.turno?.fecha_turno | date : 'dd/MM/yyyy' }}
         </h3>
 
         <p class="especialista-info">
-          <strong>Especialista:</strong>
-          {{ historiaTurnoSeleccionada.turno?.especialista?.nombre }}
-          {{ historiaTurnoSeleccionada.turno?.especialista?.apellido }}
+          <strong><i class="fas fa-user-md"></i> Especialista:</strong>
+          {{ historiaTurnoSeleccionada.turno?.especialista?.nombre || historiaTurnoSeleccionada.turno?.especialistas?.nombre }}
+          {{ historiaTurnoSeleccionada.turno?.especialista?.apellido || historiaTurnoSeleccionada.turno?.especialistas?.apellido }}
         </p>
 
         <p class="especialidad-info">
-          <strong>Especialidad:</strong>
-          {{ historiaTurnoSeleccionada.turno?.especialidad?.nombre }}
+          <strong><i class="fas fa-stethoscope"></i> Especialidad:</strong>
+          {{ historiaTurnoSeleccionada.turno?.especialidad?.nombre || historiaTurnoSeleccionada.turno?.especialidades?.nombre }}
         </p>
       </div>
 
       <div class="datos-fijos">
-        <h4>Datos Fijos:</h4>
+        <h4><i class="fas fa-clipboard-list"></i> Datos Fijos:</h4>
 
         <div class="datos-grid">
           <div class="dato-item">
-            <strong>Altura:</strong> {{ historiaTurnoSeleccionada.altura }} cm
+            <strong>Altura:</strong> {{ historiaTurnoSeleccionada.altura || 'N/A' }} cm
           </div>
 
           <div class="dato-item">
-            <strong>Peso:</strong> {{ historiaTurnoSeleccionada.peso }} kg
+            <strong>Peso:</strong> {{ historiaTurnoSeleccionada.peso || 'N/A' }} kg
           </div>
 
           <div class="dato-item">
             <strong>Temperatura:</strong>
-            {{ historiaTurnoSeleccionada.temperatura }} °C
+            {{ historiaTurnoSeleccionada.temperatura || 'N/A' }} °C
           </div>
 
           <div class="dato-item">
-            <strong>Presión:</strong> {{ historiaTurnoSeleccionada.presion }}
+            <strong>Presión:</strong> {{ historiaTurnoSeleccionada.presion || 'N/A' }}
           </div>
         </div>
       </div>
 
-      <div
-        *ngIf="historiaTurnoSeleccionada.datos_dinamicos?.length"
-        class="datos-dinamicos"
-      >
-        <h4>Datos Adicionales:</h4>
+      <div *ngIf="historiaTurnoSeleccionada.datos_dinamicos?.length" class="datos-dinamicos">
+        <h4><i class="fas fa-plus-circle"></i> Datos Adicionales:</h4>
 
         <div class="datos-grid">
           <div *ngFor="let dato of historiaTurnoSeleccionada.datos_dinamicos" class="dato-item">
-            <strong>{{ dato.clave }}:</strong> {{ dato.valor }}
+            <strong>{{ dato.clave }}:</strong> 
+            <span [ngSwitch]="dato.tipo_control">
+              <span *ngSwitchCase="'switch'">{{ dato.valor_switch ? 'Sí' : 'No' }}</span>
+              <span *ngSwitchCase="'rango'">{{ dato.valor_rango }}%</span>
+              <span *ngSwitchCase="'numerico'">{{ dato.valor_numerico }}</span>
+              <span *ngSwitchDefault>{{ dato.valor_texto || dato.valor }}</span>
+            </span>
           </div>
         </div>
       </div>
 
-      <div
-        *ngIf="!historiaTurnoSeleccionada.datos_dinamicos?.length"
-        class="sin-datos-adicionales"
-      >
-        <p>No hay datos adicionales registrados para esta consulta.</p>
+      <div *ngIf="!historiaTurnoSeleccionada.datos_dinamicos?.length" class="sin-datos-adicionales">
+        <p><i class="fas fa-info-circle"></i> No hay datos adicionales registrados para esta consulta.</p>
+      </div>
+
+      <div *ngIf="historiaTurnoSeleccionada.comentario" class="comentario-modal">
+        <h4><i class="fas fa-comment"></i> Comentario:</h4>
+        <p class="comentario-texto">{{ historiaTurnoSeleccionada.comentario }}</p>
       </div>
     </div>
 
     <div class="modal-actions">
+      <button class="btn-descargar-modal" (click)="descargarHistoriaClinicaTurno(historiaTurnoSeleccionada)" [disabled]="cargando">
+        <i class="fas fa-download"></i> Descargar PDF
+      </button>
       <button class="btn-cerrar" (click)="cerrarHistoriaTurno()">Cerrar</button>
     </div>
   </div>

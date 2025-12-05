@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -14,6 +14,12 @@ import { StorageService } from '../../services/storage.service';
 import { TurnoService } from '../../services/turnos.service';
 import { HistoriaClinicaService } from '../../services/usuarios/historia-clinica.service';
 import { ArchivosService } from '../../services/archivos.service';
+import { HighlightCoincidenciaDirective } from '../../directives/coincidencias.directive';
+import { AccionesTurnoDirective } from '../../directives/acciones.directive';
+import { EstadoTurnoDirectiva } from '../../directives/estados.directive';
+import { AccionesTurnoPipe } from '../../pipes/acciones.pipe';
+import { CaptchaWrapperComponent } from './../componentes/captchaC/captcha-wrapper.component';
+import { CaptchaDirectiva } from './../../directives/captcha.directive';
 
 @Component({
   selector: 'app-usuario',
@@ -26,25 +32,35 @@ import { ArchivosService } from '../../services/archivos.service';
     MenuComponent,
     SpinnerComponent,
     FiltroGeneralComponent,
-    MenuComponent
+    MenuComponent,
+    HighlightCoincidenciaDirective,  
+    AccionesTurnoDirective,          
+    EstadoTurnoDirectiva,          
+    AccionesTurnoPipe,
+        CaptchaWrapperComponent,
+        CaptchaDirectiva,
+    
   ],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })
+
 export class UsuarioComponente implements OnInit {
+  @ViewChild('captchaWrapper') captchaWrapper!: CaptchaWrapperComponent;
 
   usuarios: any[] = [];
   usuariosFiltrados: any[] = [];
   cargando = false;
   mensaje: { titulo: string; texto: string; tipo: 'error' | 'success' | 'info' } | null = null;
-
+mostrarModalAdmin: boolean = false;
+verClave: boolean = false;
+verClaveR: boolean = false;
+nombreArchivo: string = "";
+cargandoAdmin: boolean = false;
+ captchaPassed = false;
+  captchaEnabled = true;
   // Modal admin
-  mostrarModalAdmin = false;
   formAdmin!: FormGroup;
-  cargandoAdmin = false;
-  verClave = false;
-  verClaveR = false;
-  nombreArchivo: string | null = null;
   archivoSeleccionado: File | null = null;
 
   // Filtro
@@ -57,6 +73,7 @@ export class UsuarioComponente implements OnInit {
   // Historia clínica por turno
   mostrarHistoriaTurno = false;
   historiaTurnoSeleccionada: any = null;
+fileURL: string | null = null;
 
   constructor(
     private usuarioSrv: UsuarioService,
@@ -69,15 +86,25 @@ export class UsuarioComponente implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private archivosService: ArchivosService
+    private archivosService: ArchivosService,
+    private usuarioService: UsuarioService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.cargando = true;
     await this.cargarUsuarios();
+    
     this.initFormAdmin();
+
     this.cargando = false;
+    
   }
+ ngOnDestroy(): void {
+    this.captchaWrapper?.limpiarCaptchaCompleto();
+  }
+ngAfterViewInit(): void {
+  this.cargarCaptchaPersistente();
+}
 
   // ================== CARGA DE USUARIOS ==================
 async cargarUsuarios(): Promise<void> {
@@ -85,17 +112,26 @@ async cargarUsuarios(): Promise<void> {
     this.usuarios = await this.usuarioSrv.obtenerTodos();
     console.log('Usuarios crudos desde DB:', this.usuarios);
 
-    this.usuarios.forEach(u => {
-      u.imagen_perfil_url = u.imagen_perfil || './assets/user-default.png';
-    });
-
     for (const usuario of this.usuarios) {
+      usuario.imagen_perfil_url = usuario.imagen_perfil || './assets/user-default.png';
+
       if (usuario.tipo_usuario === 'paciente') {
-        const turnosData = await this.turnosService.obtenerTurnosDePaciente(usuario.id);
-        usuario.turnos = turnosData.data || [];
-        usuario.historiasClinicas = await this.historiaClinicaService.obtenerPorPaciente(usuario.id);
+        // Primero obtenemos el id de la tabla 'pacientes'
+        const paciente = await this.usuarioSrv.obtenerRelacionado('pacientes', usuario.id);
+        const pacienteId = paciente.data?.id;
+
+        if (pacienteId) {
+          const turnosData = await this.turnosService.obtenerTurnosDePacienteConDatos(pacienteId);
+          console.log(`Turnos del paciente ${usuario.nombre} ${usuario.apellido}:`, turnosData.data);
+          usuario.turnos = turnosData.data || [];
+          usuario.historiasClinicas = await this.historiaClinicaService.obtenerPorPaciente(usuario.id);
+        } else {
+          usuario.turnos = [];
+          usuario.historiasClinicas = [];
+        }
       } else if (usuario.tipo_usuario === 'especialista') {
         const turnosData = await this.turnosService.obtenerTurnosDeEspecialista(usuario.id);
+        console.log(`Turnos del especialista ${usuario.nombre} ${usuario.apellido}:`, turnosData.data);
         usuario.turnos = turnosData.data || [];
         usuario.historiasClinicas = [];
       } else {
@@ -103,12 +139,13 @@ async cargarUsuarios(): Promise<void> {
         usuario.historiasClinicas = [];
       }
     }
+
     this.aplicarFiltro();
   } catch (error) {
+    console.error(error);
     this.mostrarMensaje('Error', 'No se pudieron cargar los usuarios.', 'error');
   }
 }
-
 
 
   // ================== FILTRO ==================
@@ -199,14 +236,12 @@ async cargarUsuarios(): Promise<void> {
     return clave === repite ? null : { clavesNoCoinciden: true };
   }
 
+
   abrirModalAdmin() {
-      console.log('Abriendo modal de administrador...');
-  console.log('Estado mostrarModalAdmin antes:', this.mostrarModalAdmin);
-    this.mostrarModalAdmin = true;
-    this.formAdmin.reset();
-    this.archivoSeleccionado = null;
-    this.nombreArchivo = null;
-  }
+  this.mostrarModalAdmin = true;
+}
+
+
 
   cerrarModalAdmin() {
     this.mostrarModalAdmin = false;
@@ -240,14 +275,21 @@ async cargarUsuarios(): Promise<void> {
     if (this.formAdmin.invalid) {
       this.mostrarMensaje('Error', 'Por favor completá todos los campos requeridos.', 'error');
       return;
+    } if (this.captchaEnabled && !this.captchaPassed) {
+      this.mostrarMensaje('Error', 'Por favor completa el captcha.', 'error');
+      return;
     }
 
     this.cargandoAdmin = true;
 
     try {
       const valores = this.formAdmin.value;
-      const usuarioExistente = await this.usuarioSrv.obtenerPorEmail(valores.email);
-      if (usuarioExistente) throw new Error('Ya existe un usuario registrado con este email.');
+      const { data: usuarioExistente } = await this.usuarioSrv.obtenerPorEmail(valores.email);
+
+if (usuarioExistente) {
+  throw new Error('Ya existe un usuario registrado con este email.');
+}
+
 
       const { user, error: authError } = await this.authSrv.registrar(valores.email, valores.clave);
       if (authError || !user) throw new Error(authError?.message || 'Error al registrar usuario.');
@@ -270,10 +312,43 @@ async cargarUsuarios(): Promise<void> {
     } catch (error: any) {
       console.error(error);
       this.mostrarMensaje('Error', error.message || 'No se pudo registrar el administrador.', 'error');
+            this.cargarNuevoCaptcha();
+
     } finally {
       this.cargandoAdmin = false;
     }
   }
+abrirAltaAdmin() {
+  this.captchaPassed = false;
+  this.captchaWrapper?.generarNuevoCaptchaWrapper();
+}
+
+async crearAdministradorDesdeAdmin() {
+
+  const valores = this.formAdmin.value;
+
+  const form = {
+    nombre: valores.nombre,
+    apellido: valores.apellido,
+    edad: valores.edad,
+    dni: valores.dni,
+    email: valores.email,
+    password: valores.password,
+    imagen_perfil: this.fileURL || null
+  };
+
+  const resp = await this.usuarioService.crearAdministradorCompleto(form);
+
+  if (!resp.ok) {
+    this.mostrarMensaje('Error', 'No se pudo crear.', 'error');
+    return;
+  }
+
+    this.mostrarMensaje('Éxito', 'Creado correctamente.', 'success');
+  this.cerrarModalAdmin();
+  this.cargarUsuarios();
+}
+
 
   // ================== MENSAJES ==================
   mostrarMensaje(titulo: string, texto: string, tipo: 'error' | 'success' | 'info') {
@@ -319,23 +394,6 @@ async cargarUsuarios(): Promise<void> {
     }
   }
 
-  descargarExcelGeneral() {
-    try {
-      this.archivosService.generarExcelUsuariosGeneral(this.usuariosFiltrados);
-      this.mostrarMensaje('Éxito', 'Excel general descargado correctamente', 'success');
-    } catch (error: any) {
-      this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
-    }
-  }
-
-  async descargarExcelUsuario(usuario: any) {
-    try {
-      await this.archivosService.generarExcelTurnosPaciente(usuario);
-      this.mostrarMensaje('Éxito', `Excel de turnos de ${usuario.nombre} descargado`, 'success');
-    } catch (error: any) {
-      this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
-    }
-  }
 
   // ================== ESPECIALISTAS ==================
   async toggleEstado(usuario: any) {
@@ -350,6 +408,176 @@ async cargarUsuarios(): Promise<void> {
     } catch (error) {
       console.error(error);
       this.mostrarMensaje('Error', 'No se pudo actualizar el estado del especialista.', 'error');
+    }
+  }
+
+
+  // ================== DESCARGA TURNOS DEL PACIENTE ==================
+async descargarTurnosPaciente(usuario: any) {
+  try {
+    if (usuario.tipo_usuario !== 'paciente') {
+      this.mostrarMensaje('Info', 'Solo los pacientes tienen turnos', 'info');
+      return;
+    }
+
+    // Llamamos al servicio para generar Excel de los turnos
+    await this.archivosService.generarExcelTurnosPaciente(usuario);
+
+    this.mostrarMensaje('Éxito', `Turnos de ${usuario.nombre} descargados correctamente`, 'success');
+  } catch (error: any) {
+    console.error(error);
+    this.mostrarMensaje('Error', error.message || 'No se pudieron descargar los turnos', 'error');
+  }
+}
+// En UsuarioComponente, actualiza estas funciones:
+
+descargarExcelGeneral() {
+  try {
+    console.log('Descargando Excel General...');
+    console.log('Usuarios filtrados:', this.usuariosFiltrados.length);
+    
+    if (this.usuariosFiltrados.length === 0) {
+      this.mostrarMensaje('Info', 'No hay datos para exportar', 'info');
+      return;
+    }
+    
+    // Verifica que el servicio esté disponible
+    if (!this.archivosService) {
+      console.error('ArchivosService no está disponible');
+      this.mostrarMensaje('Error', 'Servicio no disponible', 'error');
+      return;
+    }
+    
+    // Usa el nuevo método
+    this.archivosService.exportarExcelUsuarios(
+      this.usuariosFiltrados, 
+      'usuarios_general'
+    );
+    
+    this.mostrarMensaje('Éxito', 'Excel general descargado correctamente', 'success');
+  } catch (error: any) {
+    console.error('Error al descargar Excel:', error);
+    this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
+  }
+}
+
+async descargarExcelUsuario(usuario: any) {
+  try {
+    console.log('Descargando Excel para:', usuario.nombre);
+    
+    if (!usuario || usuario.tipo_usuario !== 'paciente') {
+      this.mostrarMensaje('Info', 'Solo los pacientes tienen turnos', 'info');
+      return;
+    }
+    
+    // Verifica que haya turnos
+    if (!usuario.turnos || usuario.turnos.length === 0) {
+      this.mostrarMensaje('Info', 'No hay turnos para exportar', 'info');
+      return;
+    }
+    
+    console.log('Turnos del paciente:', usuario.turnos);
+    
+    // Llamada al servicio
+    await this.archivosService.generarExcelTurnosPaciente(usuario);
+    
+    this.mostrarMensaje('Éxito', `Excel de ${usuario.nombre} descargado`, 'success');
+  } catch (error: any) {
+    console.error('Error:', error);
+    this.mostrarMensaje('Error', error.message || 'No se pudo generar el Excel', 'error');
+  }
+}
+
+ejecutarAccionTurno(accion: string, turno: any) {
+  console.log(`Acción ejecutada: ${accion} para turno:`, turno);
+  
+  switch(accion) {
+    case 'aceptar':
+      this.mostrarMensaje('Info', 'Función aceptar turno', 'info');
+      break;
+    case 'rechazar':
+      this.mostrarMensaje('Info', 'Función rechazar turno', 'info');
+      break;
+    case 'cancelar':
+      this.mostrarMensaje('Info', 'Función cancelar turno', 'info');
+      break;
+    case 'finalizar':
+      this.mostrarMensaje('Info', 'Función finalizar turno', 'info');
+      break;
+    case 'ver_resena':
+      this.mostrarMensaje('Info', 'Función ver reseña', 'info');
+      break;
+    case 'completar_encuesta':
+      this.mostrarMensaje('Info', 'Función completar encuesta', 'info');
+      break;
+    case 'calificar':
+      this.mostrarMensaje('Info', 'Función calificar turno', 'info');
+      break;
+  }
+}
+
+// Método para filtrar turnos por estado
+filtrarTurnosPorEstado(event: any) {
+  const estado = event.target.value;
+  // Implementa la lógica de filtrado según necesites
+  console.log('Filtrar por estado:', estado);
+}
+
+
+onCaptchaSolved(esValido: boolean) { this.captchaPassed = esValido; }
+
+
+  async cargarCaptchaPersistente(): Promise<void> {
+    if (!this.captchaWrapper) {
+      console.log('CaptchaWrapper no disponible aún');
+      return;
+    }
+    
+    try {
+      const tokenGuardado = localStorage.getItem('captcha_token');
+      if (tokenGuardado) {
+        console.log('Intentando recuperar captcha persistente');
+        const captchaData = await this.captchaWrapper.recuperarCaptcha(tokenGuardado);
+        if (captchaData) {
+          console.log('Captcha recuperado exitosamente');
+          this.captchaPassed = true;
+          return;
+        }
+      }
+      
+      // Si no hay token o no se pudo recuperar, generar uno nuevo
+      console.log('Generando nuevo captcha');
+      await this.cargarNuevoCaptcha();
+    } catch (error) {
+      console.error('Error al cargar captcha persistente:', error);
+      await this.cargarNuevoCaptcha();
+    }
+  }
+
+  async cargarNuevoCaptcha(): Promise<void> {
+    if (!this.captchaWrapper) {
+      console.error('CaptchaWrapper no disponible');
+      return;
+    }
+    
+    try {
+      await this.captchaWrapper.generarNuevoCaptchaWrapper();
+      this.captchaPassed = false;
+      localStorage.removeItem('captcha_token');
+    } catch (error) {
+      console.error('Error al generar nuevo captcha:', error);
+    }
+  }
+
+  onToggleCaptcha(): void {
+    if (!this.captchaEnabled) {
+      this.captchaPassed = true;
+    } else {
+      this.captchaPassed = false;
+    }
+    
+    if (this.captchaWrapper) {
+      this.captchaWrapper.toggleCaptcha();
     }
   }
 }

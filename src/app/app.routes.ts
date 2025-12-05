@@ -65,7 +65,7 @@ export const routes: Routes = [
     loadChildren: () => import('./components/turnos/turnos.routes').then((m) => m.Turnos),
   },
   {
-    path: 'horarios',
+    path: 'horarios/especialista',
     canActivate: [AuthGuard, RoleGuard],
     data: { rol: 'especialista' },
     loadComponent: () =>

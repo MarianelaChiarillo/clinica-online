@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -9,6 +9,7 @@ import { EspecialistaService } from '../../../services/usuarios/especialista.ser
 import { StorageService } from '../../../services/storage.service';
 import { RegistroValidatorsService } from '../../../validators/registro.validator';
 import { UtilsService } from '../../../services/utils.service';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 import { MensajeComponent } from '../../componentes/mensaje/mensaje.component';
 import { SpinnerComponent } from '../../componentes/spinner/spinner.component';
@@ -17,7 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import supabase from '../../../services/supabase.client';
-
+import { CaptchaDirectiva } from '../../../directives/captcha.directive';
 @Component({
   selector: 'app-especialista-form',
   standalone: true,
@@ -30,12 +31,29 @@ import supabase from '../../../services/supabase.client';
     MatFormFieldModule,
     MatSelectModule,
     MatOptionModule,
-    CaptchaWrapperComponent
+    CaptchaWrapperComponent,
+     CaptchaWrapperComponent,
+       CaptchaDirectiva
   ],
   templateUrl: './especialista-form.html',
   styleUrls: ['./especialista-form.scss'],
+   animations: [
+    trigger('fadeIn', [
+  state('hidden', style({ opacity: 0 })),
+  state('visible', style({ opacity: 1 })),
+  transition('hidden => visible', animate('400ms ease-in')),
+  transition('visible => hidden', animate('300ms ease-out'))
+])
+
+  ]
 })
 export class EspecialistaForm implements OnInit {
+fadeState: 'hidden' | 'visible' = 'hidden';
+
+
+
+      @ViewChild('captchaWrapper') captchaWrapper!: CaptchaWrapperComponent;
+
   public form!: FormGroup;
   public cargando = false;
   public mensaje: { titulo: string; texto: string; tipo: 'error' | 'success' | 'info' } | null = null;
@@ -45,8 +63,9 @@ export class EspecialistaForm implements OnInit {
   public verClaveR = false;
   public archivoSeleccionado: File | null = null;
   public fileName1: string = '';
-  public captchaResuelto = false;
-
+public  captchaResuelto = false;
+public captchaPassed = false;
+public captchaEnabled = true;
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -59,10 +78,21 @@ export class EspecialistaForm implements OnInit {
   ) {}
 
   ngOnInit(): void {
+        setTimeout(() => this.fadeState = 'visible', 0);
+
     this.initForm();
     this.cargarEspecialidades();
   }
-
+ngOnDestroy(): void {
+  this.captchaWrapper?.limpiarCaptchaCompleto();
+}
+private mostrarMensaje(
+  titulo: string,
+  texto: string,
+  tipo: 'error' | 'success' | 'info'
+) {
+  this.mensaje = { titulo, texto, tipo };
+}
   private initForm(): void {
     this.form = this.fb.group({
       nombre: ['', this.validators.getNombreValidators()],
@@ -122,6 +152,29 @@ export class EspecialistaForm implements OnInit {
     }
   }
 
+  async cargarCaptchaPersistente() {
+  if (!this.captchaWrapper) return;
+  const tokenGuardado = localStorage.getItem('captcha_token');
+  if (tokenGuardado) {
+    const captchaData = await this.captchaWrapper.recuperarCaptcha(tokenGuardado);
+    if (captchaData) return;
+  }
+  await this.captchaWrapper.generarNuevoCaptchaWrapper();
+}
+
+onCaptchaSolved(esValido: boolean) { this.captchaPassed = esValido; }
+
+
+
+onToggleCaptcha() {
+  if (!this.captchaEnabled) {
+    this.captchaPassed = true;
+  } else {
+    this.captchaPassed = false;
+  }
+  this.captchaWrapper?.toggleCaptcha();
+}
+
   toggleVerClave(): void { this.verClave = !this.verClave; }
   toggleVerClaveR(): void { this.verClaveR = !this.verClaveR; }
 
@@ -144,6 +197,10 @@ export class EspecialistaForm implements OnInit {
   // --- Registro ---
   async registrar(): Promise<void> {
     this.formUtils.markAllAsTouched(this.form);
+  if (this.captchaEnabled && !this.captchaPassed) {
+  this.mostrarMensaje('Info', 'Debes completar el captcha antes de registrarte.', 'info');
+  return;
+}
 
     if (this.form.invalid) {
       this.mostrarError('Por favor corregí los errores antes de continuar.');
@@ -217,7 +274,7 @@ export class EspecialistaForm implements OnInit {
     };
   }
 
-  onCaptchaResolved(token: string): void {
+onCaptchaResolved(token: string): void {
     this.captchaResuelto = true;
     this.form.patchValue({ recaptcha: token });
     this.form.get('recaptcha')?.setErrors(null);
@@ -233,4 +290,5 @@ export class EspecialistaForm implements OnInit {
     this.form.patchValue({ recaptcha: '' });
     this.form.get('recaptcha')?.setErrors({ required: true });
   }
+
 }

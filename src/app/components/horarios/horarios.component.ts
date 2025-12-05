@@ -6,6 +6,8 @@ import { AuthService } from '../../services/auth.service';
 import { EspecialistaService } from '../../services/usuarios/especialista.service';
 import { UsuarioService } from '../../services/usuarios/usuario.service';
 import { MenuComponent } from '../componentes/menu/menu.component';
+import { Router } from '@angular/router';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-horarios',
@@ -13,6 +15,19 @@ import { MenuComponent } from '../componentes/menu/menu.component';
   templateUrl: './horarios.component.html',
   styleUrls: ['./horarios.component.scss'],
   imports: [CommonModule, FormsModule, MenuComponent],
+  animations: [
+  trigger('slideBounce', [
+    transition(':enter', [
+      style({ transform: 'translateY(50px)', opacity: 0 }),
+      animate('500ms cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+        style({ transform: 'translateY(0)', opacity: 1 }))
+    ]),
+    transition(':leave', [
+      animate('300ms ease-in', style({ transform: 'translateY(50px)', opacity: 0 }))
+    ])
+  ])
+]
+
 })
 export class MisHorariosComponent implements OnInit {
   cargando = false;
@@ -21,7 +36,14 @@ export class MisHorariosComponent implements OnInit {
   error = '';
   especialidades: any[] = [];
   especialidadSeleccionada: number | null = null;
+ mostrarFormulario = false;
 
+  
+
+  // Para ocultar si querés hacer leave animation
+  ocultarFormulario() {
+    this.mostrarFormulario = false;
+  }
   horasPosibles: string[] = [];
   dias = [
     { id: 1, nombre: 'Lunes' },
@@ -44,10 +66,13 @@ export class MisHorariosComponent implements OnInit {
     private horariosService: DisponibilidadService,
     private authSrv: AuthService,
     private especialistaSrv: EspecialistaService,
-    private usuarioSrv: UsuarioService
+    private usuarioSrv: UsuarioService,
+    private router: Router
   ) { }
 
   async ngOnInit() {
+        setTimeout(() => this.mostrarFormulario = true, 0);
+
     this.cargando = true;
     try {
       const authUser = await this.authSrv.getUsuarioActual();
@@ -75,7 +100,9 @@ export class MisHorariosComponent implements OnInit {
       this.cargando = false;
     }
   }
-
+volver() {
+  this.router.navigate(['/mi-perfil/especialista']);
+}
   // Cargar especialidades del especialista
   async cargarEspecialidades(especialistaId: number) {
     try {
@@ -96,38 +123,48 @@ export class MisHorariosComponent implements OnInit {
     this.horarios = await this.horariosService.obtenerHorariosPorEspecialista(this.especialistaId);
   }
 
-  // Agregar nuevo horario
-  async agregarHorario() {
-    if (!this.especialistaId) return alert('No se pudo identificar al especialista');
-    if (!this.especialidadSeleccionada) return alert('Selecciona una especialidad');
+async agregarHorario() {
+  if (!this.especialistaId) return alert('No se pudo identificar al especialista');
+  if (!this.especialidadSeleccionada) return alert('Selecciona una especialidad');
 
-    const { dia_semana, hora_inicio, hora_fin, duracion_consulta } = this.nuevoHorario;
+  const { dia_semana, hora_inicio, hora_fin, duracion_consulta } = this.nuevoHorario;
 
-    if (hora_inicio >= hora_fin) return alert('Hora inicio debe ser menor a hora fin');
+  if (hora_inicio >= hora_fin) return alert('La hora de inicio debe ser menor a la hora de fin');
 
-    try {
-      this.cargando = true;
-      await this.horariosService.agregarHorario(
-        this.especialistaId,
-        this.especialidadSeleccionada,
-        dia_semana,
-        hora_inicio,
-        hora_fin,
-        duracion_consulta
-      );
-      await this.cargarHorarios();
+  const solapado = this.horarios.some(h =>
+    h.dia_semana === dia_semana &&
+    h.especialidad_id === this.especialidadSeleccionada &&
+    !(
+      hora_fin <= h.hora_inicio ||
+      hora_inicio >= h.hora_fin
+    )
+  );
 
-      // Reset
-      this.nuevoHorario = { dia_semana: 1, hora_inicio: '08:00', hora_fin: '19:00', duracion_consulta: 30 };
-      this.onDiaChange();
-
-      alert('Horario agregado correctamente');
-    } catch (error: any) {
-      alert('Error al agregar horario: ' + error.message);
-    } finally {
-      this.cargando = false;
-    }
+  if (solapado) {
+    return alert('Ya existe un horario en ese rango para esta especialidad. Elimina el anterior para poder crear otro.');
   }
+
+  try {
+    this.cargando = true;
+    await this.horariosService.agregarHorario(
+      this.especialistaId,
+      this.especialidadSeleccionada,
+      dia_semana,
+      hora_inicio,
+      hora_fin,
+      duracion_consulta
+    );
+    await this.cargarHorarios();
+    this.nuevoHorario = { dia_semana: 1, hora_inicio: '08:00', hora_fin: '19:00', duracion_consulta: 30 };
+    this.onDiaChange();
+    alert('Horario agregado correctamente');
+  } catch (error: any) {
+    alert('Error al agregar horario: ' + error.message);
+  } finally {
+    this.cargando = false;
+  }
+}
+
 
   async eliminarHorario(id: number) {
     if (!confirm('¿Eliminar este horario?')) return;

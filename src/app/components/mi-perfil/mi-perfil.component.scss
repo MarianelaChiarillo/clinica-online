@@ -3,7 +3,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  margin-top: 7rem;
+  margin-top: 7.8rem;
 }
 
 .perfil-header {
@@ -11,7 +11,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid #ffffff;
   padding-bottom: 15px;
 }
 
@@ -69,25 +69,29 @@
   height: 200px;
   border-radius: 50%;
   object-fit: cover;
-  border: 6px solid #848f8f;
+  border: 6px solid #ffffff;
   margin-bottom: 15px;
+  border: 2px solid #0c3169;
 }
 
 
 h1 {
-  margin-top: 1rem;
+  margin-top: 2.6rem;
   font-size: 2.8rem;
   color: #1a798f;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+
 }
 
 /* SECCIÓN INFORMACIÓN */
 .seccion-info {
-  background: #f8fafa;
+  background: #ffffff;
   padding: 25px;
   border-radius: 12px;
   margin-bottom: 5rem;
   margin-top: 2rem;
+    border: 4px solid #119397;
+
 }
 
 .badges {
@@ -257,17 +261,15 @@ margin-top: 40rem;
   background: #0c3169;
   color: white;
   border: none;
-  padding: 12px 20px;
+  padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
-  margin-bottom: 20px;
+  font-size: 0.9rem;
+  margin-bottom: -3rem;
   transition: background 0.3s;
 }
 
-.btn-descargar:hover {
-  background: #2b4ec0;
-}
+
 
 .empty-state {
   text-align: center;
@@ -296,7 +298,7 @@ margin-top: 40rem;
 .hc-card h3 {
   margin-top: 0;
   color: #2c3e50;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid #fdfdfd;
   padding-bottom: 10px;
   font-size: 1.3rem;
 }
@@ -378,4 +380,81 @@ margin-top: 40rem;
   .btn {
     width: 100%;
   }
+}
+
+
+/* Estilos para el botón de descarga */
+.btn-descargar {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+  margin-bottom: 1rem;
+}
+
+.btn-descargar:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.btn-descargar:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-descargar i {
+  font-size: 18px;
+}
+
+/* Estilos para las tarjetas de historia clínica */
+.hc-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.hc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dato-item {
+  padding: 8px 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.dato-dinamico {
+  padding: 6px 10px;
+  background: white;
+  border-radius: 4px;
+  border: 1px dashed #dee2e6;
+}
+
+.valor-dinamico {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+/* Estilos para el select */
+.form-select {
+  border: 2px solid #a0ccf8;
+  transition: border-color 0.3s;
+  background: #fff;
+
+}
+
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }

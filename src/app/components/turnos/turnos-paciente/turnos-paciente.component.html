@@ -1,119 +1,133 @@
-<!-- turnos-paciente.component.html -->
-<div class="container">
-  <app-menu></app-menu>
+<app-menu></app-menu>
 
-  <div class="turnos-container">
+<div class="turnos-container">
+
+  <!-- Título -->
     <h1>Mis Turnos</h1>
+    <div class="linea"></div>
 
-    <!-- Filtro -->
-    <div >
-      <app-filtro-general
-        placeholder="Buscar por: nombre completo (ej: 'jose lopez'), especialidad, fecha, datos médicos (80 kg, 170 cm, 36.5°C, cm, kg, temperatura)..."
-        [turnos]="turnos"  
-        [tipoUsuario]="'paciente'"  
-        (filtroChange)="onFiltroChange($event)"  
-        (turnosFiltradosChange)="onTurnosFiltradosChange($event)"  
-      ></app-filtro-general>
+  <!-- Filtro -->
+  <section class="filtro-wrapper">
+    <app-filtro-general
+      placeholder="Buscar por: nombre, especialista, especialidad, fecha o datos clínicos..."
+      [turnos]="turnos"
+      [tipoUsuario]="'paciente'"
+      (filtroChange)="onFiltroChange($event)"
+      (turnosFiltradosChange)="onTurnosFiltradosChange($event)">
+    </app-filtro-general>
 
-      <!-- Mostrar término de búsqueda activo -->
-      <div *ngIf="textoFiltro" >
-        <span class="termino-chip">
-          🔍 Búsqueda: "{{textoFiltro}}"
-          <button (click)="limpiarFiltro()" class="btn-limpiar">×</button>
-        </span>
-        <span class="resultados-info">
-          {{turnosFiltrados.length}} de {{turnos.length}} resultados
-        </span>
-      </div>
+    <!-- Chip del filtro -->
+    <div *ngIf="textoFiltro" class="chip-container">
+      <span class="termino-chip">
+        🔍 "{{textoFiltro}}"
+        <button (click)="limpiarFiltro()" class="btn-limpiar">×</button>
+      </span>
+      <span class="resultados-info">
+        {{turnosFiltrados.length}} de {{turnos.length}} resultados
+      </span>
     </div>
+  </section>
 
-    <!-- Spinner -->
-    <div *ngIf="cargando" class="text-center">
-      <app-spinner></app-spinner>
-    </div>
+  <!-- Spinner -->
+  <div *ngIf="cargando" class="spinner-wrapper text-center">
+    <app-spinner></app-spinner>
+  </div>
 
-    <!-- Lista de turnos -->
-    <div *ngIf="!cargando" class="turnos-list">
-      <div *ngFor="let turno of turnosFiltrados" class="turno-card">
-        <!-- Encabezado con coincidencias -->
-        <div *ngIf="turno.coincidencias && turno.coincidencias.length > 0" class="coincidencias-header">
-          <span class="coincidencia-badge">🔍 Coincidencia</span>
-          <div class="coincidencias-list">
-            <span *ngFor="let coincidencia of getCoincidenciasTurno(turno)" class="coincidencia-item">
-              {{ coincidencia }}
-            </span>
-          </div>
-        </div>
+  <!-- Lista de turnos -->
+  <section *ngIf="!cargando" class="turnos-list">
 
-        <!-- Información del turno -->
-        <div class="turno-info">
-          <div class="turno-datos">
-            <h3>{{ turno.especialidad?.nombre || 'Sin especialidad' }}</h3>
-            <p>
-              <strong>Especialista:</strong>
-              {{ turno.especialista?.nombre }} {{ turno.especialista?.apellido }}
-            </p>
-            <p><strong>Fecha:</strong> {{ turno.fecha_turno | fechaFormato }}</p>
-            <p><strong>Hora:</strong> {{ turno.hora_inicio }} - {{ turno.hora_fin }}</p>
-            <p>
-              <span class="estado-badge" [class]="turno.estado">
-                {{ formatearEstado(turno.estado) }}
-              </span>
-            </p>
-          </div>
+    <article *ngFor="let turno of turnosFiltrados" class="turno-card">
 
-          <!-- Historia clínica (si existe) -->
-          <div *ngIf="turno.historia_clinica" class="historia-clinica-resumen">
-            <h4>📋 Datos Clínicos</h4>
-            <div class="datos-clinicos">
-              <span *ngIf="turno.historia_clinica.altura"><strong>Altura:</strong> {{ turno.historia_clinica.altura }} cm</span>
-              <span *ngIf="turno.historia_clinica.peso"><strong>Peso:</strong> {{ turno.historia_clinica.peso }} kg</span>
-              <span *ngIf="turno.historia_clinica.temperatura"><strong>Temperatura:</strong> {{ turno.historia_clinica.temperatura }} °C</span>
-              <span *ngIf="turno.historia_clinica.presion"><strong>Presión:</strong> {{ turno.historia_clinica.presion }}</span>
-              
-              <!-- Datos dinámicos -->
-              <div *ngIf="turno.historia_clinica.datos_dinamicos?.length" class="datos-dinamicos">
-                <div *ngFor="let dato of turno.historia_clinica.datos_dinamicos" class="dato-dinamico">
-                  <strong>{{ dato.clave }}:</strong> {{ dato.valor }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- INFO -->
+      <div class="turno-info">
 
-        <!-- Acciones -->
-        <div class="turno-acciones">
-          <button
-            *ngFor="let accion of acciones(turno)"
-            class="btn-accion"
-            [class]="accion"
-            (click)="ejecutarAccion(accion, turno)"
-          >
-            {{ getTextoAccion(accion) }}
-          </button>
-        </div>
-      </div>
-    </div>
+  <!-- ESPECIALIDAD -->
+  <h3
+    [appHighlightCoincidencia]="turno.especialidad?.nombre || 'Sin especialidad'"
+    [termino]="textoFiltro || ''">
+    {{ turno.especialidad?.nombre || 'Sin especialidad' }}
+  </h3>
 
-    <!-- Mensaje sin turnos -->
-    <div *ngIf="!cargando && turnosFiltrados.length === 0 && !textoFiltro" class="sin-turnos">
-      <p>No tienes turnos registrados.</p>
-    </div>
+  <!-- ESTADO -->
+  <span class="estado-turno" [appEstadoTurno]="turno.estado"></span>
 
-    <!-- Mensaje de búsqueda sin resultados -->
-    <div *ngIf="!cargando && turnosFiltrados.length === 0 && textoFiltro" class="sin-resultados">
-      <p>No se encontraron turnos para "{{textoFiltro}}"</p>
-      <button (click)="limpiarFiltro()" class="btn-limpiar-busqueda">Limpiar búsqueda</button>
+  <!-- ESPECIALISTA -->
+  <p>
+    <strong>Especialista: </strong>
+    <span
+      [appHighlightCoincidencia]="turno.especialista?.nombre || ''"
+      [termino]="textoFiltro || ''">{{ turno.especialista?.nombre }}</span>
+    &nbsp;
+    <span
+      [appHighlightCoincidencia]="turno.especialista?.apellido || ''"
+      [termino]="textoFiltro || ''">{{ turno.especialista?.apellido }}</span>
+  </p>
+
+  <!-- FECHA Y HORA -->
+  <p>
+    <strong>Fecha: </strong>
+    <span
+      [appHighlightCoincidencia]="(turno.fecha_turno | fechaFormato) || ''"
+      [termino]="textoFiltro || ''">{{ turno.fecha_turno | fechaFormato }}</span>
+  </p>
+  <p>
+    <strong>Hora: </strong>
+    <span
+      [appHighlightCoincidencia]="turno.hora_inicio || ''"
+      [termino]="textoFiltro || ''">{{ turno.hora_inicio }}</span>
+    -
+    <span
+      [appHighlightCoincidencia]="turno.hora_fin || ''"
+      [termino]="textoFiltro || ''">{{ turno.hora_fin }}</span>
+  </p>
+
+  <!-- DATOS CLÍNICOS -->
+  <div *ngIf="turno.coincidencias?.length" class="coincidencias-container">
+    <div *ngFor="let coincidencia of turno.coincidencias" class="coincidencia-badge">
+      <small class="text-success">
+        <i class="bi bi-check-circle-fill me-1"></i>
+        <strong
+          [appHighlightCoincidencia]="coincidencia.campo"
+          [termino]="textoFiltro || ''">{{ coincidencia.campo }}:</strong>
+        <span
+          [appHighlightCoincidencia]="coincidencia.valor || ''"
+          [termino]="textoFiltro || ''">{{ coincidencia.valor }}</span>
+      </small>
     </div>
   </div>
 
-  <!-- Modal de encuesta -->
+
+
+
+
+      <!-- ACCIONES -->
+      <div
+        class="turno-acciones"
+        [appAccionesTurno]="acciones(turno)"
+        (accionEjecutada)="ejecutarAccion($event, turno)">
+      </div>
+
+
+
+  <!-- Sin turnos -->
+  <div *ngIf="!cargando && turnosFiltrados.length === 0 && !textoFiltro"
+       class="sin-turnos">
+    <p>No tenés turnos registrados.</p>
+  </div>
+
+  <!-- Sin resultados -->
+  <div *ngIf="!cargando && turnosFiltrados.length === 0 && textoFiltro"
+       class="sin-resultados">
+    <p>No se encontraron turnos para "{{textoFiltro}}".</p>
+    <button (click)="limpiarFiltro()" class="btn-limpiar-busqueda">Limpiar búsqueda</button>
+  </div>
+
+  <!-- Modal encuesta -->
   <app-encuesta-modal
     *ngIf="mostrarEncuestaModal"
     [turno]="turnoSeleccionado"
-    (cerrar)="cerrarEncuestaModal($event)"
-  ></app-encuesta-modal>
+    (cerrar)="cerrarEncuestaModal($event)">
+  </app-encuesta-modal>
 
-  <!-- Modales dinámicos -->
   <app-modal-container></app-modal-container>
-</div>
+
