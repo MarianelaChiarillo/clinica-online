@@ -1,59 +1,89 @@
-# Clinica
+#  Clínica Online - README
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.0.
+## Descripción
+Plataforma web para gestión de clínica: registro de pacientes y especialistas, administración de usuarios, turnos, historia clínica y estadísticas.  
+Incluye validaciones, seguridad con captcha, animaciones de transición y descargas en PDF/Excel.
 
-## Development server
+---
 
-To start a local development server, run:
+##  Sprint 1 - Registro y Usuarios
 
-```bash
-ng serve
-```
+### Funcionalidades
+- **Página de bienvenida**: accesos a login y registro.
+- **Registro**:
+  - Pacientes: Nombre, Apellido, Edad, DNI, Obra Social, Mail, Contraseña, 2 imágenes de perfil.
+  - Especialistas: Nombre, Apellido, Edad, DNI, Especialidad (selección o nueva), Mail, Contraseña, Imagen de perfil.
+- **Login**:
+  - Acceso rápido.
+  - Pacientes: ingreso solo si verificaron mail.
+- **Usuarios (solo Administrador)**:
+  - Ver información de usuarios.
+  - Habilitar/inhabilitar especialistas.
+  - Crear nuevos usuarios (Paciente, Especialista, Administrador).
+  
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+##  Sprint 2 - Turnos
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Funcionalidades
+- **Mis Turnos**:
+  - Paciente: ver turnos solicitados, filtrar por Especialidad/Especialista (sin combobox).  
+    Acciones según estado: cancelar, ver reseña, completar encuesta, calificar atención.
+  - Especialista: ver turnos asignados, filtrar por Especialidad/Paciente.  
+    Acciones: cancelar, rechazar, aceptar, finalizar (con reseña), ver reseña.
+- **Turnos (Administrador)**:
+  - Ver todos los turnos, filtrar por Especialidad/Especialista.
+  - Cancelar turnos.
+- **Solicitar Turno**:
+  - Paciente/Administrador: seleccionar Especialidad, Especialista, día y horario (próximos 15 días).
+  - Administrador: asignar paciente.
+  - No usar Datepicker.
+- **Mi Perfil**:
+  - Datos del usuario.
+  - Mis horarios (solo Especialista): marcar disponibilidad por especialidad.
 
-```bash
-ng generate component component-name
-```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+##  Sprint 3 - Historia Clínica
 
-```bash
-ng generate --help
-```
+### Funcionalidades
+- **Historia Clínica**:
+  - Visible en: Mi Perfil (Paciente), Usuarios (Administrador), Pacientes (Especialista).
+  - Cargada por Especialista al finalizar atención.
+  - Datos fijos: Altura, Peso, Temperatura, Presión.
+  - Máx. 3 datos dinámicos (clave/valor).
+- **Filtro de turnos mejorado**:
+  - Buscar por cualquier campo, incluyendo historia clínica.
 
-## Building
+---
 
-To build the project run:
+##  Sprint 4 - Estadísticas
 
-```bash
-ng build
-```
+### Funcionalidades
+- **Informes (Administrador)**:
+  - Log de ingresos al sistema (usuario, día, hora).
+  - Cantidad de turnos por especialidad.
+  - Cantidad de turnos por día.
+  - Turnos solicitados por médico en un lapso.
+  - Turnos finalizados por médico en un lapso.
+- Descarga de gráficos  en Excel o PDF.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
-## Running unit tests
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+##  Sprint 5 - Mejoras
+### Requerimientos mínimos
+- Nuevos datos dinámicos en historia clínica:
+  - Control de rango (0–100).
+  - Cuadro de texto numérico.
+  - Switch Sí/No.
+- Directiva de captcha propio:
+  - Opción de deshabilitar captcha.
+- Animaciones de transición:
+  -Animaciones entre componentes.
 
-```bash
-ng test
-```
+---
 
-## Running end-to-end tests
+## 🎯 Conclusión
+Este sistema evoluciona sprint a sprint, pasando de lo básico (registro y login) a funcionalidades avanzadas como historia clínica, estadísticas y seguridad con captcha.  
+Cada entrega suma valor y robustez a la plataforma.
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
