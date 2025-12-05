@@ -21,12 +21,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { FechaFormatoPipe } from '../../pipes/fecha-formato.pipe';
 import { SpinnerComponent } from '../componentes/spinner/spinner.component';
+import { HoraFormatoPipe } from '../../pipes/hora.pipe';
 @Component({
   selector: 'app-estadisticas-admin',
   imports: [
     DatePipe, FormsModule, CommonModule, MenuComponent,
     MatFormFieldModule, MatInputModule, MatDatepickerModule, MatNativeDateModule,
-    FechaFormatoPipe, MatButtonModule, MatIconModule, MatSelectModule, SpinnerComponent
+    FechaFormatoPipe, MatButtonModule, MatIconModule, MatSelectModule, SpinnerComponent, HoraFormatoPipe
   ],
   templateUrl: './estadisticas.component.html',
   styleUrls: ['./estadisticas.component.scss']

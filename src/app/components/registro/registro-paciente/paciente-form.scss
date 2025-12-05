@@ -86,7 +86,16 @@ $color-fondo: #fff;
     column-gap: 1.5rem;
   }
 }
-
+.registro-container {
+  background: $color-fondo;
+  padding: 3rem;
+  border-radius: 10px;
+  width: 60%;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: 87vh;
+}
 @media (max-width: 768px) {
   .form-columns {
     grid-template-columns: 1fr;
