@@ -21,6 +21,10 @@ Incluye validaciones, seguridad con captcha, animaciones de transición y descar
   - Habilitar/inhabilitar especialistas.
   - Crear nuevos usuarios (Paciente, Especialista, Administrador).
   
+![Diseño 1](src/assets/images/login.png)
+![Diseño 2](src/assets/images/form.png)
+![Diseño 3](src/assets/images/registro.png)
+
 
 ---
 
@@ -55,6 +59,14 @@ Incluye validaciones, seguridad con captcha, animaciones de transición y descar
 - **Filtro de turnos mejorado**:
   - Buscar por cualquier campo, incluyendo historia clínica.
 
+
+  
+![Diseño 5](src/assets/images/solicitar.png)
+![Diseño 6](src/assets/images/turnos.png)
+![Diseño 7](src/assets/images/miperfil.png)
+![Diseño 8](src/assets/images/miperfil.png)
+
+
 ---
 
 ##  Sprint 4 - Estadísticas
@@ -80,6 +92,9 @@ Incluye validaciones, seguridad con captcha, animaciones de transición y descar
   - Opción de deshabilitar captcha.
 - Animaciones de transición:
   -Animaciones entre componentes.
+
+![Diseño 5](src/assets/images/usuarios.png)
+
 
 ---
 
