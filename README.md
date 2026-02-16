@@ -21,7 +21,7 @@ Incluye validaciones, seguridad con captcha, animaciones de transición y descar
   - Habilitar/inhabilitar especialistas.
   - Crear nuevos usuarios (Paciente, Especialista, Administrador).
 
-![Diseño 0](src/assets/images/Screenshot(772).png)
+![Diseño 0](src/assets/images/Screenshot.png)
 ![Diseño 1](src/assets/images/login.png)
 ![Diseño 2](src/assets/images/form.png)
 ![Diseño 3](src/assets/images/registro.png)
